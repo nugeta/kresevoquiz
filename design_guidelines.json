@@ -1,0 +1,95 @@
+{
+  "project_name": "Croatian School Quiz App",
+  "theme_and_archetype": {
+    "theme": "LIGHT",
+    "archetype": "3 (Pastel & Soft)",
+    "description": "A visually appealing, approachable, and playful design tailored for a school environment. Emphasizes the 'liquid glass' aesthetic (refined glassmorphism) with soft pastel colors, translucent surfaces, and minimalistic icons to keep the interface engaging but not overwhelming."
+  },
+  "color_palette": {
+    "background": "#F5F8FA",
+    "surface": "rgba(255, 255, 255, 0.6)",
+    "primary": "#8AB4F8",
+    "primary_hover": "#aecbfa",
+    "accent_1": "#FDCB6E",
+    "accent_2": "#55EFC4",
+    "accent_3": "#FF9FF3",
+    "text_primary": "#2D3436",
+    "text_secondary": "#636E72",
+    "border": "rgba(255, 255, 255, 0.4)",
+    "glass_highlight": "rgba(255, 255, 255, 0.8)",
+    "success": "#00b894",
+    "error": "#d63031"
+  },
+  "typography": {
+    "heading_font": "Nunito, sans-serif",
+    "body_font": "Figtree, sans-serif",
+    "rules": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-bold",
+      "body": "text-base leading-relaxed font-medium",
+      "labels": "text-xs tracking-[0.2em] uppercase font-bold"
+    }
+  },
+  "surface_strategies": {
+    "primary_strategy": "Glassmorphism (The Crystal Variant)",
+    "details": "Use backdrop-blur-xl or backdrop-blur-2xl. Background should be bg-white/50 to bg-white/70. Add an inner 1px border of border-white/60 to simulate light catching the edge of the glass. Soft shadow-xl or shadow-[0_8px_32px_rgba(0,0,0,0.08)] for elevation. Important: Add backdrop-saturate-150 to make the background colors pop through the glass."
+  },
+  "spacing_and_layout": {
+    "general": "Generous spacing. Use p-6, p-8, p-12 for containers. Let the liquid glass elements breathe.",
+    "grid_system": "Bento Grid Mode A for Landing Page Categories. Mode B for Admin Dashboard.",
+    "alignment": "Left-align dense text and questions for readability. Center align hero elements and final score pages."
+  },
+  "components": {
+    "cards": "Liquid glass cards with hover lift (-translate-y-1) and increased shadow. border-white/50.",
+    "buttons": "Pill-shaped (rounded-full) or heavily rounded (rounded-2xl). Primary buttons use a soft pastel gradient or solid pastel with a subtle white inner border and drop shadow. Hover states must increase brightness and slightly lift. Text must maintain a 4.5:1 contrast ratio.",
+    "inputs": "Shadcn UI customized. Soft backgrounds (bg-white/40), rounded-xl, focus:ring-2 focus:ring-primary/50.",
+    "timer": "Circular progress or soft pill-shaped floating element at the top. Use accent colors that shift to red/orange as time runs out.",
+    "leaderboard": "List items as distinct glass strips with generous padding. Highlight the current user with a primary-tinted glass strip."
+  },
+  "animations_and_interactions": {
+    "scroll": "Smooth scroll with staggered entrance animations for quiz options and leaderboards.",
+    "hover": "All interactive elements must scale slightly (scale-105) or shift colors on hover.",
+    "feedback": "Use Sonner for toasts (glass styled). Micro-interactions on clicking answers (e.g., a quick pulse or border glow)."
+  },
+  "icons_and_assets": {
+    "icon_library": "lucide-react",
+    "style": "Minimalistic, stroke width 2, matching text color or primary color.",
+    "images": [
+      {
+        "category": "hero_background",
+        "url": "https://static.prod-images.emergentagent.com/jobs/25005068-c042-4484-a657-aa5285618b54/images/59f50ed042324382f0362433d2ebb7d4a816e046e1031b0a39f22a0a88c458ab.png",
+        "description": "Abstract 3D liquid glass spheres, soft pastel baby blue and lavender, frosted glass effect. Use as a full-screen background or hero section background image with object-cover."
+      },
+      {
+        "category": "card_bg_warm",
+        "url": "https://static.prod-images.emergentagent.com/jobs/25005068-c042-4484-a657-aa5285618b54/images/d867bec7cc1514bc0b5a357f8fd9e7e0aac842d27a750d22789774810800e432.png",
+        "description": "Abstract 3D liquid glass shapes, pastel peach and warm yellow. Use as background for specific category cards (e.g., History/Arts)."
+      },
+      {
+        "category": "card_bg_cool",
+        "url": "https://static.prod-images.emergentagent.com/jobs/25005068-c042-4484-a657-aa5285618b54/images/8af0e43fec221e8fc0be7e772f6266f9b8fa8d46b4770a3c5832c678624aefeb.png",
+        "description": "Abstract 3D liquid glass shapes, pastel mint green. Use as background for specific category cards (e.g., Science/Math)."
+      },
+      {
+        "category": "auth_background",
+        "url": "https://static.prod-images.emergentagent.com/jobs/25005068-c042-4484-a657-aa5285618b54/images/0d2cbc7072f463310334ab813946facc8add16e2bfbe97e47d9cc2073d6fd446.png",
+        "description": "Beautiful abstract liquid glass waves, gradient of baby blue and pink. Perfect for the login/register page background."
+      },
+      {
+        "category": "student_learning",
+        "url": "https://images.unsplash.com/photo-1542810634-71277d95dcbb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwyfHxoYXBweSUyMHN0dWRlbnRzJTIwbGVhcm5pbmd8ZW58MHx8fHwxNzc1Mzk5MTI5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Group of children sitting on ground. Good for an 'About', 'Welcome', or generic marketing section."
+      }
+    ]
+  },
+  "specific_pages_guidance": {
+    "landing_page": "Use the 'hero_background' as a fixed background. Floating glass header. Big playful heading in Croatian. Main CTA: 'Započni Kviz' (Start Quiz).",
+    "quiz_interface": "Ensure no background noise behind the text. Use a very subtle pastel gradient or flat color (e.g., #F5F8FA) so questions are highly readable. The question container is the primary liquid glass card. Answer options are smaller glass strips.",
+    "admin_dashboard": "Bento Grid layout (Mode B). Keep it clean with slight borders instead of full glass to maintain performance and data clarity. Subtle pastels for chart/stat elements. Features: Question Management Panel.",
+    "leaderboard": "Gamified feel. Highlight top 3 with special borders (gold/silver/bronze tinted borders) and use minimalistic avatar icons. Croatian header: 'Poredak' or 'Najbolji Rezultati'.",
+    "login_auth": "Optional user login page uses 'auth_background' image with a central liquid glass card for the form. Implement simple anti-spam system (e.g., hidden honeypot or simple math question)."
+  },
+  "testing_attributes": "All interactive elements MUST include data-testid. E.g., data-testid='start-quiz-button', data-testid='answer-option', data-testid='login-submit-button'.",
+  "language": "Croatian (hr). Use Croatian terms for all user-facing copy (e.g., Prijava za Login, Pitanja za Questions)."
+}
