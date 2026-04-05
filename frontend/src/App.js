@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import Header from "./components/Header";
+import CardNav from "./components/CardNav";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -19,7 +19,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <div className="App min-h-screen transition-colors duration-300" style={{ background: 'var(--background)' }}>
-            <Header />
+            <CardNav />
             <Toaster 
               position="top-center" 
               toastOptions={{
