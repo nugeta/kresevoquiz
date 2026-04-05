@@ -48,3 +48,18 @@ The app currently uses MongoDB. For SQLite on your VPS:
 - P2: Quiz difficulty levels
 - P3: Export results to PDF
 - P3: Sound effects for correct/incorrect answers
+
+## Update Log - Jan 2026 (Session 2)
+
+### Implemented:
+- **GSAP CardNav**: Replaced old header with animated card-based navigation
+- **Dark Mode**: Full dark theme with purple/pink gradients, starry background, font changes
+- **Theme Persistence**: localStorage saves user preference
+- **Tailwind v3.4.17**: Kept v3 for CRA compatibility (v4 requires Vite/Next.js)
+
+### CardNav Features:
+- Hamburger menu with smooth GSAP animations
+- 3 navigation cards that slide in with stagger effect
+- Theme toggle (☀️/🌙) in header
+- Responsive design for mobile/desktop
+- Auto-close on route change
