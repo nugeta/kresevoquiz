@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { User, Lock, LogIn, UserPlus, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -11,9 +12,10 @@ const AuthPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [honeypot, setHoneypot] = useState(''); // Anti-spam honeypot
+  const [honeypot, setHoneypot] = useState('');
   
   const { login, register } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -23,13 +25,11 @@ const AuthPage = () => {
     e.preventDefault();
     setError('');
     
-    // Anti-spam: if honeypot is filled, silently reject
     if (honeypot) {
       setError('Nešto je pošlo po zlu. Pokušajte ponovno.');
       return;
     }
     
-    // Validation
     if (username.length < 3) {
       setError('Korisničko ime mora imati najmanje 3 znaka');
       return;
@@ -69,36 +69,34 @@ const AuthPage = () => {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4 pt-20"
-      style={{
-        backgroundImage: 'url(https://static.prod-images.emergentagent.com/jobs/25005068-c042-4484-a657-aa5285618b54/images/0d2cbc7072f463310334ab813946facc8add16e2bfbe97e47d9cc2073d6fd446.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
+      className={`min-h-screen flex items-center justify-center p-4 pt-20 ${isDark ? 'auth-dark' : 'auth-light'}`}
       data-testid="auth-page"
     >
-      <div className="w-full max-w-md">
-        {/* Back Button */}
+      {isDark && <div className="stars absolute inset-0" />}
+      
+      <div className="w-full max-w-md relative z-10">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 text-sm font-medium mb-6 hover:text-[#8AB4F8] transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-medium mb-6 hover:opacity-70 transition-opacity"
           data-testid="back-to-home"
         >
           <ArrowLeft className="w-4 h-4" />
           Natrag na početnu
         </Link>
         
-        {/* Auth Card */}
         <div className="glass-strong rounded-3xl p-8 animate-fade-in-up">
-          {/* Toggle */}
-          <div className="flex rounded-2xl bg-white/40 p-1 mb-8">
+          <div className="flex rounded-2xl p-1 mb-8" style={{ background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.4)' }}>
             <button
               onClick={() => { setIsLogin(true); setError(''); }}
               className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
                 isLogin 
-                  ? 'bg-white shadow-md text-[#2D3436]' 
-                  : 'text-[#636E72] hover:text-[#2D3436]'
+                  ? 'shadow-md' 
+                  : 'hover:opacity-70'
               }`}
+              style={{ 
+                background: isLogin ? 'var(--surface-solid)' : 'transparent',
+                color: isLogin ? 'var(--text-primary)' : 'var(--text-secondary)'
+              }}
               data-testid="login-tab"
             >
               <LogIn className="w-4 h-4 inline-block mr-2" />
@@ -108,9 +106,13 @@ const AuthPage = () => {
               onClick={() => { setIsLogin(false); setError(''); }}
               className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
                 !isLogin 
-                  ? 'bg-white shadow-md text-[#2D3436]' 
-                  : 'text-[#636E72] hover:text-[#2D3436]'
+                  ? 'shadow-md' 
+                  : 'hover:opacity-70'
               }`}
+              style={{ 
+                background: !isLogin ? 'var(--surface-solid)' : 'transparent',
+                color: !isLogin ? 'var(--text-primary)' : 'var(--text-secondary)'
+              }}
               data-testid="register-tab"
             >
               <UserPlus className="w-4 h-4 inline-block mr-2" />
@@ -118,27 +120,31 @@ const AuthPage = () => {
             </button>
           </div>
 
-          {/* Title */}
-          <h1 className="font-['Nunito'] text-2xl font-bold text-center mb-2">
+          <h1 className="text-2xl font-bold text-center mb-2">
             {isLogin ? 'Dobrodošli natrag!' : 'Kreiraj račun'}
           </h1>
-          <p className="text-[#636E72] text-center text-sm mb-8">
+          <p className="text-center text-sm mb-8" style={{ color: 'var(--text-secondary)' }}>
             {isLogin 
               ? 'Prijavi se za nastavak kvizova' 
               : 'Registriraj se za praćenje rezultata'}
           </p>
 
-          {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-2 p-4 rounded-xl bg-[#d63031]/10 border border-[#d63031]/20 text-[#d63031] text-sm mb-6 animate-fade-in" data-testid="auth-error">
+            <div 
+              className="flex items-center gap-2 p-4 rounded-xl text-sm mb-6 animate-fade-in" 
+              style={{ 
+                background: 'rgba(239, 68, 68, 0.1)', 
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                color: 'var(--error)'
+              }}
+              data-testid="auth-error"
+            >
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Honeypot - hidden from users, bots fill it */}
             <input
               type="text"
               name="website"
@@ -152,7 +158,7 @@ const AuthPage = () => {
             <div>
               <label className="block text-sm font-medium mb-2">Korisničko ime</label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#636E72]" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
                 <input
                   type="text"
                   value={username}
@@ -168,7 +174,7 @@ const AuthPage = () => {
             <div>
               <label className="block text-sm font-medium mb-2">Lozinka</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#636E72]" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
                 <input
                   type="password"
                   value={password}
@@ -185,7 +191,7 @@ const AuthPage = () => {
               <div className="animate-fade-in">
                 <label className="block text-sm font-medium mb-2">Potvrdi lozinku</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#636E72]" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
                   <input
                     type="password"
                     value={confirmPassword}
@@ -216,8 +222,7 @@ const AuthPage = () => {
             </button>
           </form>
 
-          {/* Optional Notice */}
-          <p className="text-center text-xs text-[#636E72] mt-6">
+          <p className="text-center text-xs mt-6" style={{ color: 'var(--text-secondary)' }}>
             Prijava nije obavezna za igranje kvizova.
             <br />
             Prijavljeni korisnici mogu pratiti svoje rezultate.

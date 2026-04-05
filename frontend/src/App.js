@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Header from "./components/Header";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
@@ -14,33 +15,36 @@ import "./App.css";
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="App min-h-screen bg-[#F5F8FA]">
-          <Header />
-          <Toaster 
-            position="top-center" 
-            toastOptions={{
-              className: 'glass-strong',
-              style: {
-                background: 'rgba(255, 255, 255, 0.85)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-              },
-            }}
-          />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/quiz/:categoryId" element={<QuizPage />} />
-            <Route path="/results/:sessionId" element={<ResultsPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <div className="App min-h-screen transition-colors duration-300" style={{ background: 'var(--background)' }}>
+            <Header />
+            <Toaster 
+              position="top-center" 
+              toastOptions={{
+                className: 'glass-strong',
+                style: {
+                  background: 'var(--glass-bg)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'var(--text-primary)',
+                },
+              }}
+            />
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/quiz/:categoryId" element={<QuizPage />} />
+              <Route path="/results/:sessionId" element={<ResultsPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

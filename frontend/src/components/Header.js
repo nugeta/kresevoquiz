@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   BookOpen, 
   Trophy, 
@@ -10,11 +11,14 @@ import {
   Menu, 
   X, 
   Home,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const Header = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -32,15 +36,16 @@ const Header = () => {
             className="flex items-center gap-2 text-xl font-bold hover:opacity-80 transition-opacity"
             data-testid="logo-link"
           >
-            <BookOpen className="w-7 h-7 text-[#8AB4F8]" />
-            <span className="font-['Nunito'] tracking-tight">Školski Kviz</span>
+            <BookOpen className="w-7 h-7" style={{ color: 'var(--primary)' }} />
+            <span className="tracking-tight">Školski Kviz</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             <Link 
               to="/" 
-              className="flex items-center gap-2 text-sm font-medium hover:text-[#8AB4F8] transition-colors"
+              className="flex items-center gap-2 text-sm font-medium hover:opacity-70 transition-opacity"
+              style={{ color: 'var(--text-primary)' }}
               data-testid="nav-home"
             >
               <Home className="w-4 h-4" />
@@ -48,7 +53,8 @@ const Header = () => {
             </Link>
             <Link 
               to="/categories" 
-              className="flex items-center gap-2 text-sm font-medium hover:text-[#8AB4F8] transition-colors"
+              className="flex items-center gap-2 text-sm font-medium hover:opacity-70 transition-opacity"
+              style={{ color: 'var(--text-primary)' }}
               data-testid="nav-categories"
             >
               <BookOpen className="w-4 h-4" />
@@ -56,7 +62,8 @@ const Header = () => {
             </Link>
             <Link 
               to="/leaderboard" 
-              className="flex items-center gap-2 text-sm font-medium hover:text-[#8AB4F8] transition-colors"
+              className="flex items-center gap-2 text-sm font-medium hover:opacity-70 transition-opacity"
+              style={{ color: 'var(--text-primary)' }}
               data-testid="nav-leaderboard"
             >
               <Trophy className="w-4 h-4" />
@@ -65,7 +72,8 @@ const Header = () => {
             {isAdmin && (
               <Link 
                 to="/admin" 
-                className="flex items-center gap-2 text-sm font-medium hover:text-[#8AB4F8] transition-colors"
+                className="flex items-center gap-2 text-sm font-medium hover:opacity-70 transition-opacity"
+                style={{ color: 'var(--text-primary)' }}
                 data-testid="nav-admin"
               >
                 <Settings className="w-4 h-4" />
@@ -74,14 +82,33 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Auth Section - Desktop */}
+          {/* Right Section - Desktop */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle"
+              data-testid="theme-toggle"
+              aria-label={isDark ? 'Prebaci na svijetli način' : 'Prebaci na tamni način'}
+            >
+              <div className="theme-toggle-circle">
+                {isDark ? (
+                  <Moon className="w-4 h-4" style={{ color: 'var(--primary)' }} />
+                ) : (
+                  <Sun className="w-4 h-4" style={{ color: '#FDCB6E' }} />
+                )}
+              </div>
+            </button>
+
             {isAuthenticated ? (
               <>
                 <div className="flex items-center gap-2 text-sm">
-                  <User className="w-4 h-4 text-[#8AB4F8]" />
+                  <User className="w-4 h-4" style={{ color: 'var(--primary)' }} />
                   <span className="font-medium">{user.username}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#8AB4F8]/20">
+                  <span 
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{ background: 'var(--glass-highlight)', color: 'var(--primary)' }}
+                  >
                     {user.total_score} bodova
                   </span>
                 </div>
@@ -107,85 +134,102 @@ const Header = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-white/50 transition-colors"
-            data-testid="mobile-menu-button"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="flex items-center gap-3 md:hidden">
+            {/* Theme Toggle - Mobile */}
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle"
+              data-testid="mobile-theme-toggle"
+            >
+              <div className="theme-toggle-circle">
+                {isDark ? (
+                  <Moon className="w-4 h-4" style={{ color: 'var(--primary)' }} />
+                ) : (
+                  <Sun className="w-4 h-4" style={{ color: '#FDCB6E' }} />
+                )}
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+              data-testid="mobile-menu-button"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass-strong border-t border-white/30 animate-fade-in">
+        <div className="md:hidden glass-strong border-t animate-fade-in" style={{ borderColor: 'var(--glass-border)' }}>
           <nav className="px-4 py-4 space-y-2">
             <Link
               to="/"
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 dark:hover:bg-white/5 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
               data-testid="mobile-nav-home"
             >
-              <Home className="w-5 h-5 text-[#8AB4F8]" />
+              <Home className="w-5 h-5" style={{ color: 'var(--primary)' }} />
               <span className="font-medium">Početna</span>
             </Link>
             <Link
               to="/categories"
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 dark:hover:bg-white/5 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
               data-testid="mobile-nav-categories"
             >
-              <BookOpen className="w-5 h-5 text-[#8AB4F8]" />
+              <BookOpen className="w-5 h-5" style={{ color: 'var(--primary)' }} />
               <span className="font-medium">Kategorije</span>
             </Link>
             <Link
               to="/leaderboard"
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 dark:hover:bg-white/5 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
               data-testid="mobile-nav-leaderboard"
             >
-              <Trophy className="w-5 h-5 text-[#8AB4F8]" />
+              <Trophy className="w-5 h-5" style={{ color: 'var(--primary)' }} />
               <span className="font-medium">Poredak</span>
             </Link>
             {isAdmin && (
               <Link
                 to="/admin"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 dark:hover:bg-white/5 transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
                 data-testid="mobile-nav-admin"
               >
-                <Settings className="w-5 h-5 text-[#8AB4F8]" />
+                <Settings className="w-5 h-5" style={{ color: 'var(--primary)' }} />
                 <span className="font-medium">Admin</span>
               </Link>
             )}
-            <div className="border-t border-white/30 pt-2 mt-2">
+            <div className="border-t pt-2 mt-2" style={{ borderColor: 'var(--glass-border)' }}>
               {isAuthenticated ? (
                 <>
                   <div className="flex items-center gap-3 p-3">
-                    <User className="w-5 h-5 text-[#8AB4F8]" />
+                    <User className="w-5 h-5" style={{ color: 'var(--primary)' }} />
                     <div>
                       <span className="font-medium block">{user.username}</span>
-                      <span className="text-xs text-[#636E72]">{user.total_score} bodova</span>
+                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{user.total_score} bodova</span>
                     </div>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 dark:hover:bg-white/5 transition-colors text-left"
                     data-testid="mobile-logout-button"
                   >
-                    <LogOut className="w-5 h-5 text-[#d63031]" />
-                    <span className="font-medium text-[#d63031]">Odjava</span>
+                    <LogOut className="w-5 h-5" style={{ color: 'var(--error)' }} />
+                    <span className="font-medium" style={{ color: 'var(--error)' }}>Odjava</span>
                   </button>
                 </>
               ) : (
                 <Link
                   to="/auth"
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 dark:hover:bg-white/5 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                   data-testid="mobile-login-button"
                 >
-                  <LogIn className="w-5 h-5 text-[#8AB4F8]" />
+                  <LogIn className="w-5 h-5" style={{ color: 'var(--primary)' }} />
                   <span className="font-medium">Prijava</span>
                 </Link>
               )}

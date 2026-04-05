@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useTheme } from '../context/ThemeContext';
 import { 
   BookOpen, 
   Calculator, 
@@ -19,14 +20,8 @@ const iconMap = {
   Lightbulb: Lightbulb,
 };
 
-const colorBgMap = {
-  '#55EFC4': 'bg-[#55EFC4]/20',
-  '#8AB4F8': 'bg-[#8AB4F8]/20',
-  '#FDCB6E': 'bg-[#FDCB6E]/20',
-  '#FF9FF3': 'bg-[#FF9FF3]/20',
-};
-
 const CategoriesPage = () => {
+  const { isDark } = useTheme();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,10 +42,23 @@ const CategoriesPage = () => {
     fetchCategories();
   }, []);
 
+  // Get color for dark mode
+  const getColor = (color) => {
+    if (!isDark) return color;
+    // Map light colors to dark mode equivalents
+    const colorMap = {
+      '#55EFC4': '#10B981',
+      '#8AB4F8': '#7C3AED',
+      '#FDCB6E': '#F59E0B',
+      '#FF9FF3': '#EC4899',
+    };
+    return colorMap[color] || color;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center" data-testid="categories-loading">
-        <Loader2 className="w-8 h-8 animate-spin text-[#8AB4F8]" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
       </div>
     );
   }
@@ -59,7 +67,7 @@ const CategoriesPage = () => {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center" data-testid="categories-error">
         <div className="text-center">
-          <p className="text-[#d63031] mb-4">{error}</p>
+          <p style={{ color: 'var(--error)' }} className="mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="btn-primary"
@@ -76,10 +84,10 @@ const CategoriesPage = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in-up">
-          <h1 className="font-['Nunito'] text-3xl sm:text-4xl lg:text-5xl font-black mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4">
             Odaberi Kategoriju
           </h1>
-          <p className="text-[#636E72] max-w-xl mx-auto">
+          <p style={{ color: 'var(--text-secondary)' }} className="max-w-xl mx-auto">
             Izaberi područje znanja koje želiš testirati i započni kviz!
           </p>
         </div>
@@ -87,14 +95,14 @@ const CategoriesPage = () => {
         {/* Categories Grid */}
         {categories.length === 0 ? (
           <div className="text-center py-12 glass-card rounded-3xl" data-testid="no-categories">
-            <BookOpen className="w-12 h-12 mx-auto mb-4 text-[#636E72]" />
-            <p className="text-[#636E72]">Nema dostupnih kategorija</p>
+            <BookOpen className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--text-secondary)' }} />
+            <p style={{ color: 'var(--text-secondary)' }}>Nema dostupnih kategorija</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
             {categories.map((category) => {
               const IconComponent = iconMap[category.icon] || BookOpen;
-              const bgClass = colorBgMap[category.color] || 'bg-[#8AB4F8]/20';
+              const themeColor = getColor(category.color);
               
               return (
                 <Link
@@ -104,20 +112,26 @@ const CategoriesPage = () => {
                   data-testid={`category-card-${category.id}`}
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`w-14 h-14 rounded-2xl ${bgClass} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"
+                      style={{ background: `${themeColor}20` }}
+                    >
                       <IconComponent 
                         className="w-7 h-7" 
-                        style={{ color: category.color }} 
+                        style={{ color: themeColor }} 
                       />
                     </div>
-                    <ArrowRight className="w-5 h-5 text-[#636E72] group-hover:text-[#8AB4F8] group-hover:translate-x-1 transition-all" />
+                    <ArrowRight 
+                      className="w-5 h-5 group-hover:translate-x-1 transition-all" 
+                      style={{ color: 'var(--text-secondary)' }}
+                    />
                   </div>
                   
-                  <h3 className="font-['Nunito'] text-xl font-bold mb-2 group-hover:text-[#8AB4F8] transition-colors">
+                  <h3 className="text-xl font-bold mb-2 transition-colors" style={{ color: 'var(--text-primary)' }}>
                     {category.name}
                   </h3>
                   
-                  <p className="text-[#636E72] text-sm mb-4 line-clamp-2">
+                  <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
                     {category.description || 'Testiraj svoje znanje iz ove kategorije'}
                   </p>
                   
@@ -125,8 +139,8 @@ const CategoriesPage = () => {
                     <span 
                       className="text-xs px-3 py-1 rounded-full font-medium"
                       style={{ 
-                        backgroundColor: `${category.color}20`,
-                        color: category.color 
+                        backgroundColor: `${themeColor}20`,
+                        color: themeColor 
                       }}
                     >
                       {category.question_count} pitanja
@@ -140,10 +154,10 @@ const CategoriesPage = () => {
 
         {/* Info Card */}
         <div className="mt-12 glass-card rounded-3xl p-8 text-center animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-          <h3 className="font-['Nunito'] text-xl font-bold mb-3">
+          <h3 className="text-xl font-bold mb-3">
             Kako funkcionira kviz?
           </h3>
-          <p className="text-[#636E72] text-sm max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
             Svaka kategorija sadrži pitanja različitih tipova: višestruki izbor, točno/netočno i odabir jednog odgovora.
             Svako pitanje ima vremensko ograničenje. Brži odgovori donose bonus bodove!
             Prijavljeni korisnici mogu pratiti svoje rezultate i natjecati se na rang listi.
