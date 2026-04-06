@@ -119,6 +119,7 @@ export default function Iridescence({ speed = 1.0, amplitude = 0.1, mouseReact =
       if (ctn.contains(gl.canvas)) ctn.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDark, speed, amplitude, mouseReact]);
 
   return <div ref={ctnDom} style={{ width: '100%', height: '100%' }} />;
