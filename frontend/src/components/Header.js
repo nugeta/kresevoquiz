@@ -37,7 +37,7 @@ const Header = () => {
             data-testid="logo-link"
           >
             <BookOpen className="w-7 h-7" style={{ color: 'var(--primary)' }} />
-            <span className="tracking-tight">Školski Kviz</span>
+            <span className="tracking-tight">Kreševo Kviz</span>
           </Link>
 
           {/* Desktop Navigation */}
