@@ -63,6 +63,8 @@ const AdminPage = () => {
   const [bulkJson, setBulkJson] = useState('');
   const [bulkError, setBulkError] = useState('');
   const [bulkResult, setBulkResult] = useState(null);
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('category');
 
   // Redirect if not admin
   useEffect(() => {
@@ -438,29 +440,62 @@ const AdminPage = () => {
 
           {/* Questions Tab */}
           <TabsContent value="questions">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
               <h2 className="font-['Nunito'] text-xl font-bold">Pitanja ({questions.length})</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => { setBulkModalOpen(true); setBulkError(''); setBulkResult(null); }}
-                className="btn-secondary flex items-center gap-2 !py-2 !px-4"
-              >
-                <Plus className="w-4 h-4" />
-                Bulk Uvoz
-              </button>
-              <button
-                onClick={() => openQuestionModal()}
-                className="btn-primary flex items-center gap-2 !py-2 !px-4"
-                data-testid="add-question-button"
-              >
-                <Plus className="w-4 h-4" />
-                Novo Pitanje
-              </button>
-            </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Category filter */}
+                <select
+                  value={filterCategory}
+                  onChange={e => setFilterCategory(e.target.value)}
+                  className="glass-input !py-1.5 !px-3 text-sm w-auto"
+                >
+                  <option value="all">Sve kategorije</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {/* Sort */}
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                  className="glass-input !py-1.5 !px-3 text-sm w-auto"
+                >
+                  <option value="category">Sortiraj: Kategorija</option>
+                  <option value="type">Sortiraj: Tip</option>
+                  <option value="points">Sortiraj: Bodovi</option>
+                </select>
+                <button
+                  onClick={() => { setBulkModalOpen(true); setBulkError(''); setBulkResult(null); }}
+                  className="btn-secondary flex items-center gap-2 !py-2 !px-4"
+                >
+                  <Plus className="w-4 h-4" />
+                  Bulk Uvoz
+                </button>
+                <button
+                  onClick={() => openQuestionModal()}
+                  className="btn-primary flex items-center gap-2 !py-2 !px-4"
+                  data-testid="add-question-button"
+                >
+                  <Plus className="w-4 h-4" />
+                  Novo Pitanje
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">
-              {questions.map((question) => {
+              {[...questions]
+                .filter(q => filterCategory === 'all' || q.category_id === filterCategory)
+                .sort((a, b) => {
+                  if (sortBy === 'category') {
+                    const catA = categories.find(c => c.id === a.category_id)?.name || '';
+                    const catB = categories.find(c => c.id === b.category_id)?.name || '';
+                    return catA.localeCompare(catB);
+                  }
+                  if (sortBy === 'type') return a.question_type.localeCompare(b.question_type);
+                  if (sortBy === 'points') return b.points - a.points;
+                  return 0;
+                })
+                .map((question) => {
                 const category = categories.find(c => c.id === question.category_id);
                 return (
                   <div key={question.id} className="glass-card rounded-2xl p-4">
