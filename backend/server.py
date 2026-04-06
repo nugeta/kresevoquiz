@@ -272,8 +272,8 @@ async def register(user_data: UserCreate, request: Request, response: Response):
     refresh_token = create_refresh_token(user_id)
     
     # Set cookies
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=86400, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none", max_age=86400, path="/")
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
     
     await clear_rate_limit(client_ip, "register")
     
@@ -314,8 +314,8 @@ async def login(user_data: UserLogin, request: Request, response: Response):
     refresh_token = create_refresh_token(user_id)
     
     # Set cookies
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=86400, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none", max_age=86400, path="/")
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
     
     return {
         "id": user_id,
@@ -460,6 +460,39 @@ async def create_question(question: QuestionCreate, request: Request):
     }
     result = await db.questions.insert_one(doc)
     return {"id": str(result.inserted_id), "message": "Pitanje kreirano"}
+
+@api_router.post("/questions/bulk")
+async def bulk_create_questions(questions: List[QuestionCreate], request: Request):
+    await require_admin(request)
+    if not questions:
+        raise HTTPException(status_code=400, detail="Nema pitanja za uvoz")
+    if len(questions) > 500:
+        raise HTTPException(status_code=400, detail="Maksimalno 500 pitanja odjednom")
+
+    # Validate all category IDs exist
+    category_ids = list(set(q.category_id for q in questions))
+    for cat_id in category_ids:
+        try:
+            cat = await db.categories.find_one({"_id": ObjectId(cat_id)})
+        except Exception:
+            raise HTTPException(status_code=400, detail=f"Nevažeći category_id: {cat_id}")
+        if not cat:
+            raise HTTPException(status_code=404, detail=f"Kategorija nije pronađena: {cat_id}")
+
+    docs = []
+    for q in questions:
+        docs.append({
+            "category_id": q.category_id,
+            "question_text": q.question_text,
+            "question_type": q.question_type,
+            "options": [{"id": str(uuid.uuid4()), "text": o.text, "is_correct": o.is_correct} for o in q.options],
+            "points": q.points,
+            "time_limit": q.time_limit,
+            "created_at": datetime.now(timezone.utc)
+        })
+
+    result = await db.questions.insert_many(docs)
+    return {"inserted": len(result.inserted_ids), "message": f"Uvezeno {len(result.inserted_ids)} pitanja"}
 
 @api_router.put("/questions/{question_id}")
 async def update_question(question_id: str, question: QuestionCreate, request: Request):
