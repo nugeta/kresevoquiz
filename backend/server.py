@@ -924,21 +924,6 @@ async def startup_event():
             q["created_at"] = datetime.now(timezone.utc)
         await db.questions.insert_many(sample_questions)
         logger.info("Sample questions created")
-    
-    # Write test credentials
-    Path("/app/memory").mkdir(exist_ok=True)
-    with open("/app/memory/test_credentials.md", "w") as f:
-        f.write("# Test Credentials\n\n")
-        f.write("## Admin Account\n")
-        f.write(f"- Username: admin\n")
-        f.write(f"- Password: Admin123!\n")
-        f.write(f"- Role: admin\n\n")
-        f.write("## Auth Endpoints\n")
-        f.write("- POST /api/auth/register\n")
-        f.write("- POST /api/auth/login\n")
-        f.write("- POST /api/auth/logout\n")
-        f.write("- GET /api/auth/me\n")
-    logger.info("Test credentials written")
 
 async def shutdown_db_client():
     client.close()
