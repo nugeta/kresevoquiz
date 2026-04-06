@@ -5,9 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 const vertexShader = `
 attribute vec2 uv;
 attribute vec2 position;
-
 varying vec2 vUv;
-
 void main() {
   vUv = uv;
   gl_Position = vec4(position, 0, 1);
@@ -16,22 +14,18 @@ void main() {
 
 const fragmentShader = `
 precision highp float;
-
 uniform float uTime;
 uniform vec3 uColor;
 uniform vec3 uResolution;
 uniform vec2 uMouse;
 uniform float uAmplitude;
 uniform float uSpeed;
-
 varying vec2 vUv;
 
 void main() {
   float mr = min(uResolution.x, uResolution.y);
   vec2 uv = (vUv.xy * 2.0 - 1.0) * uResolution.xy / mr;
-
   uv += (uMouse - vec2(0.5)) * uAmplitude;
-
   float d = -uTime * 0.5 * uSpeed;
   float a = 0.0;
   for (float i = 0.0; i < 8.0; ++i) {
@@ -45,30 +39,21 @@ void main() {
 }
 `;
 
-export default function Iridescence({ 
-  speed = 1.0, 
-  amplitude = 0.1, 
-  mouseReact = true,
-  className = '',
-  ...rest 
-}) {
+export default function Iridescence({ speed = 1.0, amplitude = 0.1, mouseReact = true }) {
   const { isDark } = useTheme();
   const ctnDom = useRef(null);
   const mousePos = useRef({ x: 0.5, y: 0.5 });
-  const programRef = useRef(null);
 
-  // Light mode: soft blue/cyan | Dark mode: deep purple/blue
-  const lightColor = [0.5, 0.6, 0.8];
-  const darkColor = [0.2, 0.15, 0.4];
-  const currentColor = isDark ? darkColor : lightColor;
+  // lighter tones for light mode, darker/deeper for dark mode
+  // light: vibrant blue/cyan, dark: deep teal/indigo shift (different hue, not just dimmed)
+  const color = isDark ? [0.08, 0.25, 0.35] : [0.5, 0.6, 0.8];
 
   useEffect(() => {
     if (!ctnDom.current) return;
     const ctn = ctnDom.current;
     const renderer = new Renderer();
     const gl = renderer.gl;
-    
-    // Set clear color based on theme
+
     if (isDark) {
       gl.clearColor(0.04, 0.04, 0.06, 1);
     } else {
@@ -78,8 +63,7 @@ export default function Iridescence({
     let program;
 
     function resize() {
-      const scale = 1;
-      renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
+      renderer.setSize(ctn.offsetWidth, ctn.offsetHeight);
       if (program) {
         program.uniforms.uResolution.value = new Color(
           gl.canvas.width,
@@ -88,7 +72,7 @@ export default function Iridescence({
         );
       }
     }
-    window.addEventListener('resize', resize, false);
+    window.addEventListener('resize', resize);
     resize();
 
     const geometry = new Triangle(gl);
@@ -97,16 +81,15 @@ export default function Iridescence({
       fragment: fragmentShader,
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: new Color(...currentColor) },
+        uColor: { value: new Color(...color) },
         uResolution: {
-          value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
+          value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height),
         },
         uMouse: { value: new Float32Array([mousePos.current.x, mousePos.current.y]) },
         uAmplitude: { value: amplitude },
-        uSpeed: { value: speed }
-      }
+        uSpeed: { value: speed },
+      },
     });
-    programRef.current = program;
 
     const mesh = new Mesh(gl, { geometry, program });
     let animateId;
@@ -127,29 +110,16 @@ export default function Iridescence({
       program.uniforms.uMouse.value[0] = x;
       program.uniforms.uMouse.value[1] = y;
     }
-    if (mouseReact) {
-      ctn.addEventListener('mousemove', handleMouseMove);
-    }
+    if (mouseReact) ctn.addEventListener('mousemove', handleMouseMove);
 
     return () => {
       cancelAnimationFrame(animateId);
       window.removeEventListener('resize', resize);
-      if (mouseReact) {
-        ctn.removeEventListener('mousemove', handleMouseMove);
-      }
-      if (ctn.contains(gl.canvas)) {
-        ctn.removeChild(gl.canvas);
-      }
+      if (mouseReact) ctn.removeEventListener('mousemove', handleMouseMove);
+      if (ctn.contains(gl.canvas)) ctn.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
   }, [isDark, speed, amplitude, mouseReact]);
 
-  // Update color when theme changes
-  useEffect(() => {
-    if (programRef.current) {
-      programRef.current.uniforms.uColor.value = new Color(...currentColor);
-    }
-  }, [isDark, currentColor]);
-
-  return <div ref={ctnDom} className={`w-full h-full ${className}`} {...rest} />;
+  return <div ref={ctnDom} style={{ width: '100%', height: '100%' }} />;
 }

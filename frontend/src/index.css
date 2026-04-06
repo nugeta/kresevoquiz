@@ -1,19 +1,8 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Theme Configuration via @theme */
-@theme {
-  --font-heading: 'Nunito', sans-serif;
-  --font-body: 'Figtree', sans-serif;
-  --font-space: 'Space Grotesk', sans-serif;
-  
-  --color-primary: #8AB4F8;
-  --color-primary-hover: #aecbfa;
-  --color-accent-1: #FDCB6E;
-  --color-accent-2: #55EFC4;
-  --color-accent-3: #FF9FF3;
-  --color-success: #00b894;
-  --color-error: #d63031;
-}
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 /* CSS Variables for Dynamic Theming */
 :root {
@@ -27,17 +16,16 @@
   --accent-3: #FF9FF3;
   --text-primary: #2D3436;
   --text-secondary: #636E72;
+  --border: rgba(255, 255, 255, 0.4);
   --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-border: rgba(255, 255, 255, 0.5);
   --glass-highlight: rgba(255, 255, 255, 0.8);
   --success: #00b894;
   --error: #d63031;
   --card-shadow: rgba(0, 0, 0, 0.08);
-  
-  /* Iridescence colors for light mode */
-  --iridescence-r: 0.5;
-  --iridescence-g: 0.6;
-  --iridescence-b: 0.8;
+  --font-heading: 'Nunito', sans-serif;
+  --font-body: 'Figtree', sans-serif;
+  --font-space: 'Space Grotesk', sans-serif;
 }
 
 .dark {
@@ -51,17 +39,13 @@
   --accent-3: #EC4899;
   --text-primary: #F1F5F9;
   --text-secondary: #94A3B8;
+  --border: rgba(124, 58, 237, 0.3);
   --glass-bg: rgba(20, 20, 35, 0.85);
   --glass-border: rgba(124, 58, 237, 0.25);
   --glass-highlight: rgba(124, 58, 237, 0.15);
   --success: #10B981;
   --error: #EF4444;
   --card-shadow: rgba(124, 58, 237, 0.15);
-  
-  /* Iridescence colors for dark mode - deeper purples/blues */
-  --iridescence-r: 0.2;
-  --iridescence-g: 0.15;
-  --iridescence-b: 0.4;
 }
 
 * {
@@ -71,24 +55,25 @@
 }
 
 body {
-  font-family: 'Figtree', sans-serif;
+  font-family: var(--font-body);
   background: var(--background);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
 .dark body {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-body);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-heading);
 }
 
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* Liquid Glass Effect */
@@ -110,8 +95,17 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.3s ease;
 }
 
-.dark .glass,
+.dark .glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px var(--card-shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
 .dark .glass-strong {
+  background: rgba(20, 20, 35, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px var(--card-shadow), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
@@ -121,7 +115,7 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   border: 1px solid var(--glass-border);
   box-shadow: 0 4px 24px var(--card-shadow);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
 .glass-card:hover {
@@ -129,8 +123,15 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 12px 40px var(--card-shadow);
 }
 
+.dark .glass-card {
+  background: rgba(20, 20, 35, 0.9);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 24px var(--card-shadow), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
 .dark .glass-card:hover {
   border-color: var(--primary);
+  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.25);
 }
 
 /* Animations */
@@ -159,13 +160,18 @@ h1, h2, h3, h4, h5, h6 {
   50% { transform: translateY(-10px); }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
 .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 .dark .animate-pulse-glow { animation: pulse-glow-dark 2s ease-in-out infinite; }
 
-/* Stagger children */
+/* Stagger children animations */
 .stagger-children > * { opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
 .stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
 .stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
@@ -173,6 +179,8 @@ h1, h2, h3, h4, h5, h6 {
 .stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
 .stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
 .stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.7s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.8s; }
 
 /* Button Styles */
 .btn-primary {
@@ -194,7 +202,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-primary:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(138, 180, 248, 0.4);
   filter: brightness(1.05);
+}
+
+.dark .btn-primary:hover {
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.5);
 }
 
 .btn-secondary {
@@ -213,6 +226,10 @@ h1, h2, h3, h4, h5, h6 {
 .btn-secondary:hover {
   background: var(--surface-solid);
   transform: translateY(-2px);
+}
+
+.dark .btn-secondary:hover {
+  border-color: var(--primary);
 }
 
 /* Quiz Option Styles */
@@ -285,10 +302,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .leaderboard-item.silver {
   border-left: 4px solid #C0C0C0;
+  background: linear-gradient(90deg, rgba(192, 192, 192, 0.1) 0%, var(--glass-bg) 100%);
 }
 
 .leaderboard-item.bronze {
   border-left: 4px solid #CD7F32;
+  background: linear-gradient(90deg, rgba(205, 127, 50, 0.1) 0%, var(--glass-bg) 100%);
 }
 
 /* Input Styles */
@@ -322,24 +341,143 @@ h1, h2, h3, h4, h5, h6 {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 4px; }
-::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; opacity: 0.5; }
+.dark ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
 
-/* Iridescence container */
-.iridescence-bg {
-  position: fixed;
+/* Hero backgrounds */
+.hero-light {
+  background-image: url('https://static.prod-images.emergentagent.com/jobs/25005068-c042-4484-a657-aa5285618b54/images/59f50ed042324382f0362433d2ebb7d4a816e046e1031b0a39f22a0a88c458ab.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-dark {
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-dark::before {
+  content: '';
+  position: absolute;
   inset: 0;
-  z-index: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.15) 0%, transparent 40%);
+  pointer-events: none;
 }
 
-.iridescence-bg canvas {
-  width: 100% !important;
-  height: 100% !important;
+.auth-light {
+  background-image: url('https://static.prod-images.emergentagent.com/jobs/25005068-c042-4484-a657-aa5285618b54/images/0d2cbc7072f463310334ab813946facc8add16e2bfbe97e47d9cc2073d6fd446.png');
+  background-size: cover;
+  background-position: center;
 }
 
-/* Line clamp */
+.auth-dark {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  position: relative;
+}
+
+.auth-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 30% 70%, rgba(124, 58, 237, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 30%, rgba(236, 72, 153, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Stars animation for dark mode */
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, white, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, white, transparent),
+    radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 160px 120px, white, transparent),
+    radial-gradient(2px 2px at 200px 50px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px at 250px 100px, white, transparent),
+    radial-gradient(2px 2px at 300px 70px, rgba(255,255,255,0.5), transparent);
+  background-repeat: repeat;
+  background-size: 350px 200px;
+  animation: shimmer 60s linear infinite;
+}
+
+/* Dark mode particles */
+.dark-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .glass-card { backdrop-filter: blur(10px); }
+  .btn-primary, .btn-secondary { padding: 0.625rem 1.5rem; font-size: 0.875rem; }
+}
+
+/* Line clamp utility */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Shadcn base styles */
+@layer base {
+  :root {
+    --background: 210 33% 98%;
+    --foreground: 192 10% 22%;
+    --card: 0 0% 100%;
+    --card-foreground: 192 10% 22%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 192 10% 22%;
+    --primary: 213 89% 76%;
+    --primary-foreground: 192 10% 22%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 192 10% 22%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 195 6% 43%;
+    --accent: 48 95% 71%;
+    --accent-foreground: 192 10% 22%;
+    --destructive: 4 90% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 213 89% 76%;
+    --radius: 0.75rem;
+  }
+  
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 210 40% 96%;
+    --card: 240 10% 8%;
+    --card-foreground: 210 40% 96%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 263 70% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 240 10% 12%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 240 10% 12%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 263 70% 58%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 263 30% 30%;
+    --input: 263 30% 20%;
+    --ring: 263 70% 58%;
+  }
+}
+
+/* Base layer handled by custom CSS variables above */

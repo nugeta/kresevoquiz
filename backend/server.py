@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -56,7 +57,13 @@ def create_refresh_token(user_id: str) -> str:
     return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
 
 # Create the main app
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await startup_event()
+    yield
+    client.close()
+
+app = FastAPI(lifespan=lifespan)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -737,7 +744,6 @@ app.add_middleware(
 # STARTUP EVENT - Seed Admin and Sample Data
 # =============================================================================
 
-@app.on_event("startup")
 async def startup_event():
     # Create indexes
     await db.users.create_index("username", unique=True)
@@ -934,6 +940,5 @@ async def startup_event():
         f.write("- GET /api/auth/me\n")
     logger.info("Test credentials written")
 
-@app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
