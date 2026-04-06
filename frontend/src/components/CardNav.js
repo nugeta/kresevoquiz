@@ -130,6 +130,7 @@ const CardNav = ({ className = '' }) => {
       tl?.kill();
       tlRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDark, isAuthenticated, isAdmin]);
 
   useLayoutEffect(() => {
@@ -157,6 +158,7 @@ const CardNav = ({ className = '' }) => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded]);
 
   // Close menu on route change
@@ -169,6 +171,7 @@ const CardNav = ({ className = '' }) => {
         tl.reverse();
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const toggleMenu = () => {
