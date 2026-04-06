@@ -59,6 +59,10 @@ const AdminPage = () => {
 
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkJson, setBulkJson] = useState('');
+  const [bulkError, setBulkError] = useState('');
+  const [bulkResult, setBulkResult] = useState(null);
 
   // Redirect if not admin
   useEffect(() => {
@@ -223,6 +227,36 @@ const AdminPage = () => {
       setDeleteTarget(null);
     } catch (err) {
       alert(err.response?.data?.detail || 'Greška');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const bulkImport = async () => {
+    setBulkError('');
+    setBulkResult(null);
+    let parsed;
+    try {
+      parsed = JSON.parse(bulkJson);
+      if (!Array.isArray(parsed)) throw new Error('JSON mora biti array ([...])');
+    } catch (e) {
+      setBulkError('Nevažeći JSON: ' + e.message);
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/questions/bulk`, parsed, { withCredentials: true });
+      setBulkResult(res.data.message);
+      setBulkJson('');
+      // Refresh questions and categories
+      const [questRes, catRes] = await Promise.all([
+        axios.get(`${API_URL}/api/questions`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/categories`, { withCredentials: true }),
+      ]);
+      setQuestions(questRes.data);
+      setCategories(catRes.data);
+    } catch (err) {
+      setBulkError(err.response?.data?.detail || 'Greška pri uvozu');
     } finally {
       setSaving(false);
     }
@@ -406,6 +440,14 @@ const AdminPage = () => {
           <TabsContent value="questions">
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-['Nunito'] text-xl font-bold">Pitanja ({questions.length})</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setBulkModalOpen(true); setBulkError(''); setBulkResult(null); }}
+                className="btn-secondary flex items-center gap-2 !py-2 !px-4"
+              >
+                <Plus className="w-4 h-4" />
+                Bulk Uvoz
+              </button>
               <button
                 onClick={() => openQuestionModal()}
                 className="btn-primary flex items-center gap-2 !py-2 !px-4"
@@ -414,6 +456,7 @@ const AdminPage = () => {
                 <Plus className="w-4 h-4" />
                 Novo Pitanje
               </button>
+            </div>
             </div>
 
             <div className="space-y-3">
@@ -723,6 +766,71 @@ const AdminPage = () => {
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 Obriši
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Import Modal */}
+        <Dialog open={bulkModalOpen} onOpenChange={setBulkModalOpen}>
+          <DialogContent className="glass-strong max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-['Nunito']">Bulk Uvoz Pitanja</DialogTitle>
+              <DialogDescription>
+                Zalijepi JSON array pitanja. Svako pitanje mora imati: category_id, question_text, question_type, options.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                <p className="font-semibold mb-1">Format primjer:</p>
+                <pre className="overflow-x-auto whitespace-pre-wrap">{`[
+  {
+    "category_id": "ID_KATEGORIJE",
+    "question_text": "Koliko je 2+2?",
+    "question_type": "single_choice",
+    "options": [
+      { "text": "3", "is_correct": false },
+      { "text": "4", "is_correct": true }
+    ],
+    "points": 10,
+    "time_limit": 30
+  }
+]`}</pre>
+              </div>
+              <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                <p className="font-semibold mb-1">ID-evi kategorija:</p>
+                {categories.map(c => (
+                  <p key={c.id}><span className="font-mono">{c.id}</span> — {c.name}</p>
+                ))}
+              </div>
+              <textarea
+                value={bulkJson}
+                onChange={e => { setBulkJson(e.target.value); setBulkError(''); setBulkResult(null); }}
+                className="glass-input font-mono text-xs min-h-[200px]"
+                placeholder='[{"category_id": "...", ...}]'
+              />
+              {bulkError && (
+                <div className="flex items-center gap-2 text-sm text-[#d63031]">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {bulkError}
+                </div>
+              )}
+              {bulkResult && (
+                <div className="flex items-center gap-2 text-sm text-[#00b894]">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  {bulkResult}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <button onClick={() => setBulkModalOpen(false)} className="btn-secondary">Zatvori</button>
+              <button
+                onClick={bulkImport}
+                disabled={saving || !bulkJson.trim()}
+                className="btn-primary flex items-center gap-2"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Uvezi
               </button>
             </DialogFooter>
           </DialogContent>
