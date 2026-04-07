@@ -67,11 +67,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, password) => {
+  const register = async (username, password, invite_code = null) => {
     try {
       const response = await axios.post(
         `${API_URL}/api/auth/register`,
-        { username, password },
+        { username, password, invite_code },
         { withCredentials: true }
       );
       setUser({

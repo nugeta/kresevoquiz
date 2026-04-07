@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { User, Lock, LogIn, UserPlus, AlertCircle, ArrowLeft } from 'lucide-react';
+import { User, Lock, LogIn, UserPlus, AlertCircle, ArrowLeft, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Ballpit from '../components/Ballpit';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const AuthPage = () => {
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState(searchParams.get('invite') || '');
+  const [inviteRequired, setInviteRequired] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [honeypot, setHoneypot] = useState('');
@@ -19,43 +25,34 @@ const AuthPage = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-
   const from = location.state?.from?.pathname || '/categories';
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/auth/registration-status`)
+      .then(r => setInviteRequired(r.data.invite_required))
+      .catch(() => {});
+  }, []);
+
+  // If invite code in URL, switch to register tab
+  useEffect(() => {
+    if (searchParams.get('invite')) setIsLogin(false);
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (honeypot) {
-      setError('Nešto je pošlo po zlu. Pokušajte ponovno.');
-      return;
-    }
-
-    if (username.length < 3) {
-      setError('Korisničko ime mora imati najmanje 3 znaka');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Lozinka mora imati najmanje 6 znakova');
-      return;
-    }
-
-    if (!isLogin && password !== confirmPassword) {
-      setError('Lozinke se ne podudaraju');
-      return;
-    }
-
+    if (honeypot) return;
+    if (username.length < 3) { setError('Korisničko ime mora imati najmanje 3 znaka'); return; }
+    if (password.length < 6) { setError('Lozinka mora imati najmanje 6 znakova'); return; }
+    if (!isLogin && password !== confirmPassword) { setError('Lozinke se ne podudaraju'); return; }
     setLoading(true);
-
     try {
       let result;
       if (isLogin) {
         result = await login(username, password);
       } else {
-        result = await register(username, password);
+        result = await register(username, password, inviteRequired ? inviteCode : undefined);
       }
-
       if (result.success) {
         navigate(from, { replace: true });
       } else {
@@ -211,6 +208,26 @@ const AuthPage = () => {
                     data-testid="confirm-password-input"
                   />
                 </div>
+              </div>
+            )}
+
+            {!isLogin && inviteRequired && (
+              <div className="animate-fade-in">
+                <label className="block text-sm font-medium mb-2">Pozivni kod</label>
+                <div className="relative">
+                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
+                  <input
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    placeholder="Unesite pozivni kod"
+                    className="glass-input pl-12 uppercase tracking-widest"
+                    required
+                  />
+                </div>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  Nemaš pozivni kod? Kontaktiraj admina putem chata.
+                </p>
               </div>
             )}
 
