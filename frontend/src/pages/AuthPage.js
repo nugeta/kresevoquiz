@@ -14,40 +14,40 @@ const AuthPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [honeypot, setHoneypot] = useState('');
-  
+
   const { login, register } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const from = location.state?.from?.pathname || '/categories';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (honeypot) {
       setError('Nešto je pošlo po zlu. Pokušajte ponovno.');
       return;
     }
-    
+
     if (username.length < 3) {
       setError('Korisničko ime mora imati najmanje 3 znaka');
       return;
     }
-    
+
     if (password.length < 6) {
       setError('Lozinka mora imati najmanje 6 znakova');
       return;
     }
-    
+
     if (!isLogin && password !== confirmPassword) {
       setError('Lozinke se ne podudaraju');
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       let result;
       if (isLogin) {
@@ -55,7 +55,7 @@ const AuthPage = () => {
       } else {
         result = await register(username, password);
       }
-      
+
       if (result.success) {
         navigate(from, { replace: true });
       } else {
@@ -80,31 +80,30 @@ const AuthPage = () => {
           gravity={0.4}
           friction={0.9975}
           wallBounce={0.95}
-          followCursor={true}
+          followCursor={false}
           colors={[0x8AB4F8, 0x55EFC4, 0xFF9FF3, 0xFDCB6E, 0x7C3AED]}
         />
       </div>
-      
+
       <div className="w-full max-w-md relative z-10">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-sm font-medium mb-6 hover:opacity-70 transition-opacity"
           data-testid="back-to-home"
         >
           <ArrowLeft className="w-4 h-4" />
           Natrag na početnu
         </Link>
-        
+
         <div className="glass-strong rounded-3xl p-8 animate-fade-in-up">
           <div className="flex rounded-2xl p-1 mb-8" style={{ background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.4)' }}>
             <button
               onClick={() => { setIsLogin(true); setError(''); }}
-              className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
-                isLogin 
-                  ? 'shadow-md' 
+              className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${isLogin
+                  ? 'shadow-md'
                   : 'hover:opacity-70'
-              }`}
-              style={{ 
+                }`}
+              style={{
                 background: isLogin ? 'var(--surface-solid)' : 'transparent',
                 color: isLogin ? 'var(--text-primary)' : 'var(--text-secondary)'
               }}
@@ -115,12 +114,11 @@ const AuthPage = () => {
             </button>
             <button
               onClick={() => { setIsLogin(false); setError(''); }}
-              className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
-                !isLogin 
-                  ? 'shadow-md' 
+              className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${!isLogin
+                  ? 'shadow-md'
                   : 'hover:opacity-70'
-              }`}
-              style={{ 
+                }`}
+              style={{
                 background: !isLogin ? 'var(--surface-solid)' : 'transparent',
                 color: !isLogin ? 'var(--text-primary)' : 'var(--text-secondary)'
               }}
@@ -135,16 +133,16 @@ const AuthPage = () => {
             {isLogin ? 'Dobrodošli natrag!' : 'Kreiraj račun'}
           </h1>
           <p className="text-center text-sm mb-8" style={{ color: 'var(--text-secondary)' }}>
-            {isLogin 
-              ? 'Prijavi se za nastavak kvizova' 
+            {isLogin
+              ? 'Prijavi se za nastavak kvizova'
               : 'Registriraj se za praćenje rezultata'}
           </p>
 
           {error && (
-            <div 
-              className="flex items-center gap-2 p-4 rounded-xl text-sm mb-6 animate-fade-in" 
-              style={{ 
-                background: 'rgba(239, 68, 68, 0.1)', 
+            <div
+              className="flex items-center gap-2 p-4 rounded-xl text-sm mb-6 animate-fade-in"
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.2)',
                 color: 'var(--error)'
               }}
@@ -165,7 +163,7 @@ const AuthPage = () => {
               tabIndex={-1}
               autoComplete="off"
             />
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">Korisničko ime</label>
               <div className="relative">
