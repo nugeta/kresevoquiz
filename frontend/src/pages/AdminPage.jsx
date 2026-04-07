@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const AdminPage = () => {
   const navigate = useNavigate();

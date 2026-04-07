@@ -33,6 +33,9 @@ dist
 # Backend (managed separately on server)
 backend/
 
+# Local backups
+frontend_backup/
+
 *token.json*
 *credentials.json*
 
