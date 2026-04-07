@@ -11,6 +11,8 @@ import QuizPage from "./pages/QuizPage";
 import ResultsPage from "./pages/ResultsPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import AdminPage from "./pages/AdminPage";
+import CreditsPage from "./pages/CreditsPage";
+import StatsPage from "./pages/StatsPage";
 import "./App.css";
 
 function App() {
@@ -40,6 +42,8 @@ function App() {
               <Route path="/results/:sessionId" element={<ResultsPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/credits" element={<CreditsPage />} />
+              <Route path="/stats" element={<StatsPage />} />
             </Routes>
           </div>
         </BrowserRouter>

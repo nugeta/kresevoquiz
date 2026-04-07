@@ -13,7 +13,9 @@ import {
   LogOut, 
   User,
   Sun,
-  Moon
+  Moon,
+  Heart,
+  BarChart3
 } from 'lucide-react';
 
 const CardNav = ({ className = '' }) => {
@@ -41,6 +43,7 @@ const CardNav = ({ className = '' }) => {
       links: [
         { label: 'Početna stranica', href: '/', icon: Home },
         { label: 'O kvizu', href: '/#features', icon: BookOpen },
+        { label: 'Zahvale', href: '/credits', icon: Heart },
       ]
     },
     {
@@ -59,7 +62,10 @@ const CardNav = ({ className = '' }) => {
       links: isAuthenticated 
         ? [
             { label: `${user?.username} (${user?.total_score} bodova)`, href: '/leaderboard', icon: User },
-            ...(isAdmin ? [{ label: 'Admin panel', href: '/admin', icon: Settings }] : []),
+            ...(isAdmin ? [
+              { label: 'Admin panel', href: '/admin', icon: Settings },
+              { label: 'Statistike', href: '/stats', icon: BarChart3 },
+            ] : []),
             { label: 'Odjava', href: '#logout', icon: LogOut, onClick: logout },
           ]
         : [
@@ -196,6 +202,17 @@ const CardNav = ({ className = '' }) => {
     if (link.onClick) {
       e.preventDefault();
       link.onClick();
+    }
+    // Handle hash scroll links
+    if (link.href === '/#features') {
+      e.preventDefault();
+      const el = document.getElementById('features');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        // Not on landing page, navigate there first
+        window.location.href = '/#features';
+      }
     }
     // Close menu after clicking
     if (isExpanded) {
