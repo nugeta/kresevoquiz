@@ -470,8 +470,6 @@ const AdminPage = () => {
               Pozivnice
             </TabsTrigger>
           </TabsList>
-            </TabsTrigger>
-          </TabsList>
 
           {/* Categories Tab */}
           <TabsContent value="categories">
