@@ -6,10 +6,12 @@ import { User, Lock, LogIn, UserPlus, AlertCircle, ArrowLeft, Key } from 'lucide
 import { Link } from 'react-router-dom';
 import Ballpit from '../components/Ballpit';
 import axios from 'axios';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const AuthPage = () => {
+  usePageTitle('Prijava');
   const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');

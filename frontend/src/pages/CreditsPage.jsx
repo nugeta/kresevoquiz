@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink, Heart, Code, Lightbulb, School } from 'lucide-react';
+import usePageTitle from '../hooks/usePageTitle';
 
 const credits = [
   {
@@ -50,6 +51,7 @@ const credits = [
 ];
 
 const CreditsPage = () => {
+  usePageTitle('Zahvale');
   return (
     <div className="min-h-screen pt-24 pb-12 px-4">
       <div className="max-w-3xl mx-auto">

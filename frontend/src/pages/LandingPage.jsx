@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { Play, Trophy, BookOpen, Users, Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Iridescence from '../components/Iridescence';
+import usePageTitle from '../hooks/usePageTitle';
 
 const LandingPage = () => {
+  usePageTitle(null);
   const { isDark } = useTheme();
   const heroRef = useRef(null);
 

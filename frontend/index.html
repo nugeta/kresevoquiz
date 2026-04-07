@@ -8,6 +8,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
         <title>Kreševo Kviz</title>
     </head>
     <body>
@@ -17,6 +18,18 @@
         <!--Start of Tawk.to Script-->
         <script type="text/javascript">
         var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+        Tawk_API.onLoad = function() {
+            Tawk_API.hideWidget && Tawk_API.hideWidget();
+            Tawk_API.showWidget && Tawk_API.showWidget();
+        };
+        // Prevent tawk from overriding page title
+        var _originalTitle = document.title;
+        var _titleObserver = new MutationObserver(function() {
+            if (document.title !== _originalTitle) {
+                document.title = _originalTitle;
+            }
+        });
+        _titleObserver.observe(document.querySelector('title') || document.head, { subtree: true, characterData: true, childList: true });
         (function(){
         var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
         s1.async=true;
