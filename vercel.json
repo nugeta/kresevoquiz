@@ -1,0 +1,5 @@
+{
+  "outputDirectory": "frontend/dist",
+  "buildCommand": "yarn --cwd frontend build",
+  "installCommand": "yarn --cwd frontend install"
+}
