@@ -2,24 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useTheme } from '../context/ThemeContext';
-import { 
-  BookOpen, 
-  Calculator, 
-  Globe, 
-  Lightbulb,
-  ArrowRight,
-  Loader2
-} from 'lucide-react';
+import { BookOpen, ArrowRight, Loader2 } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-const iconMap = {
-  BookOpen: BookOpen,
-  Calculator: Calculator,
-  Globe: Globe,
-  Lightbulb: Lightbulb,
-};
+// Fallback lucide icons for old categories that still use icon names
+import { Calculator, Globe, Lightbulb } from 'lucide-react';
+const iconMap = { BookOpen, Calculator, Globe, Lightbulb };
+
+const isEmoji = (str) => str && !str.match(/^[A-Za-z]/);
 
 const CategoriesPage = () => {
   usePageTitle('Kategorije');
@@ -29,33 +21,11 @@ const CategoriesPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/categories`);
-        setCategories(response.data);
-      } catch (err) {
-        setError('Greška pri učitavanju kategorija');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
+    axios.get(`${API_URL}/api/categories`)
+      .then(r => setCategories(r.data))
+      .catch(() => setError('Greška pri učitavanju kategorija'))
+      .finally(() => setLoading(false));
   }, []);
-
-  // Get color for dark mode
-  const getColor = (color) => {
-    if (!isDark) return color;
-    // Map light colors to dark mode equivalents
-    const colorMap = {
-      '#55EFC4': '#10B981',
-      '#8AB4F8': '#7C3AED',
-      '#FDCB6E': '#F59E0B',
-      '#FF9FF3': '#EC4899',
-    };
-    return colorMap[color] || color;
-  };
 
   if (loading) {
     return (
@@ -103,50 +73,47 @@ const CategoriesPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
             {categories.map((category) => {
-              const IconComponent = iconMap[category.icon] || BookOpen;
-              const themeColor = getColor(category.color);
-              
+              const themeColor = category.color || '#8AB4F8';
+              const emoji = isEmoji(category.icon);
+              const IconComponent = !emoji ? (iconMap[category.icon] || BookOpen) : null;
+
               return (
                 <Link
                   key={category.id}
                   to={`/quiz/${category.id}`}
-                  className="glass-card rounded-3xl p-6 group cursor-pointer"
+                  className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                  style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: `1px solid ${themeColor}30`, boxShadow: `0 4px 24px ${themeColor}15` }}
                   data-testid={`category-card-${category.id}`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"
-                      style={{ background: `${themeColor}20` }}
-                    >
-                      <IconComponent 
-                        className="w-7 h-7" 
-                        style={{ color: themeColor }} 
-                      />
+                  {/* Color accent bar */}
+                  <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${themeColor}, ${themeColor}88)` }} />
+
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0"
+                        style={{ background: `${themeColor}20` }}>
+                        {emoji
+                          ? <span className="text-2xl">{category.icon}</span>
+                          : <IconComponent className="w-7 h-7" style={{ color: themeColor }} />
+                        }
+                      </div>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-all mt-1" style={{ color: themeColor }} />
                     </div>
-                    <ArrowRight 
-                      className="w-5 h-5 group-hover:translate-x-1 transition-all" 
-                      style={{ color: 'var(--text-secondary)' }}
-                    />
-                  </div>
-                  
-                  <h3 className="text-xl font-bold mb-2 transition-colors" style={{ color: 'var(--text-primary)' }}>
-                    {category.name}
-                  </h3>
-                  
-                  <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                    {category.description || 'Testiraj svoje znanje iz ove kategorije'}
-                  </p>
-                  
-                  <div className="flex items-center gap-2">
-                    <span 
-                      className="text-xs px-3 py-1 rounded-full font-medium"
-                      style={{ 
-                        backgroundColor: `${themeColor}20`,
-                        color: themeColor 
-                      }}
-                    >
-                      {category.question_count} pitanja
-                    </span>
+
+                    <h3 className="text-xl font-bold mb-2">{category.name}</h3>
+                    <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                      {category.description || 'Testiraj svoje znanje iz ove kategorije'}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs px-3 py-1 rounded-full font-medium"
+                        style={{ backgroundColor: `${themeColor}20`, color: themeColor }}>
+                        {category.question_count} pitanja
+                      </span>
+                      <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: themeColor }}>
+                        Igraj →
+                      </span>
+                    </div>
                   </div>
                 </Link>
               );
