@@ -17,7 +17,11 @@ import {
   ChevronUp,
   Users,
   Trophy,
-  BarChart3
+  BarChart3,
+  Shield,
+  ShieldOff,
+  UserPlus,
+  Crown
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -65,6 +69,11 @@ const AdminPage = () => {
   const [bulkResult, setBulkResult] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
   const [sortBy, setSortBy] = useState('category');
+  const [users, setUsers] = useState([]);
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [userForm, setUserForm] = useState({ username: '', password: '', role: 'user' });
+  const [userSaving, setUserSaving] = useState(false);
+  const [userError, setUserError] = useState('');
 
   // Redirect if not admin
   useEffect(() => {
@@ -79,14 +88,16 @@ const AdminPage = () => {
 
     const fetchData = async () => {
       try {
-        const [catRes, questRes, statsRes] = await Promise.all([
+        const [catRes, questRes, statsRes, usersRes] = await Promise.all([
           axios.get(`${API_URL}/api/categories`, { withCredentials: true }),
           axios.get(`${API_URL}/api/questions`, { withCredentials: true }),
-          axios.get(`${API_URL}/api/stats`, { withCredentials: true })
+          axios.get(`${API_URL}/api/stats`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/users`, { withCredentials: true }),
         ]);
         setCategories(catRes.data);
         setQuestions(questRes.data);
         setStats(statsRes.data);
+        setUsers(usersRes.data);
       } catch (err) {
         setError('Greška pri učitavanju podataka');
       } finally {
@@ -234,6 +245,46 @@ const AdminPage = () => {
     }
   };
 
+  const createUser = async () => {
+    setUserError('');
+    if (!userForm.username.trim() || !userForm.password.trim()) {
+      setUserError('Korisničko ime i lozinka su obavezni');
+      return;
+    }
+    setUserSaving(true);
+    try {
+      await axios.post(`${API_URL}/api/users`, userForm, { withCredentials: true });
+      const res = await axios.get(`${API_URL}/api/users`, { withCredentials: true });
+      setUsers(res.data);
+      setUserModalOpen(false);
+      setUserForm({ username: '', password: '', role: 'user' });
+    } catch (err) {
+      setUserError(err.response?.data?.detail || 'Greška');
+    } finally {
+      setUserSaving(false);
+    }
+  };
+
+  const toggleUserRole = async (u) => {
+    const newRole = u.role === 'admin' ? 'user' : 'admin';
+    try {
+      await axios.put(`${API_URL}/api/users/${u.id}/role`, { role: newRole }, { withCredentials: true });
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: newRole } : x));
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Greška');
+    }
+  };
+
+  const deleteUser = async (u) => {
+    if (!window.confirm(`Obrisati korisnika "${u.username}"?`)) return;
+    try {
+      await axios.delete(`${API_URL}/api/users/${u.id}`, { withCredentials: true });
+      setUsers(prev => prev.filter(x => x.id !== u.id));
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Greška');
+    }
+  };
+
   const bulkImport = async () => {
     setBulkError('');
     setBulkResult(null);
@@ -355,6 +406,10 @@ const AdminPage = () => {
             <TabsTrigger value="questions" className="data-[state=active]:bg-white">
               <HelpCircle className="w-4 h-4 mr-2" />
               Pitanja
+            </TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-white">
+              <Users className="w-4 h-4 mr-2" />
+              Korisnici
             </TabsTrigger>
           </TabsList>
 
@@ -551,9 +606,126 @@ const AdminPage = () => {
               })}
             </div>
           </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-['Nunito'] text-xl font-bold">Korisnici ({users.length})</h2>
+              <button
+                onClick={() => { setUserModalOpen(true); setUserError(''); setUserForm({ username: '', password: '', role: 'user' }); }}
+                className="btn-primary flex items-center gap-2 !py-2 !px-4"
+              >
+                <UserPlus className="w-4 h-4" />
+                Novi Korisnik
+              </button>
+            </div>
+            <div className="space-y-3">
+              {users.map(u => (
+                <div key={u.id} className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold truncate">{u.username}</span>
+                      {u.is_global_admin && (
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#FDCB6E]/20 text-[#FDCB6E]">
+                          <Crown className="w-3 h-3" /> Global Admin
+                        </span>
+                      )}
+                      {!u.is_global_admin && u.role === 'admin' && (
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#7C3AED]/20 text-[#7C3AED]">
+                          <Shield className="w-3 h-3" /> Admin
+                        </span>
+                      )}
+                      {u.role === 'user' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/30 text-[#636E72]">Korisnik</span>
+                      )}
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      {u.quizzes_taken} kvizova · {u.total_score} bodova · {new Date(u.created_at).toLocaleDateString('hr')}
+                    </p>
+                  </div>
+                  {!u.is_global_admin && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => toggleUserRole(u)}
+                        className="p-2 rounded-lg hover:bg-white/50 transition-colors"
+                        title={u.role === 'admin' ? 'Ukloni admin prava' : 'Dodaj admin prava'}
+                      >
+                        {u.role === 'admin'
+                          ? <ShieldOff className="w-4 h-4 text-[#636E72]" />
+                          : <Shield className="w-4 h-4 text-[#7C3AED]" />
+                        }
+                      </button>
+                      <button
+                        onClick={() => deleteUser(u)}
+                        className="p-2 rounded-lg hover:bg-[#d63031]/10 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 text-[#d63031]" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </TabsContent>
         </Tabs>
 
-        {/* Category Modal */}
+        {/* Create User Modal */}
+        <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
+          <DialogContent className="glass-strong">
+            <DialogHeader>
+              <DialogTitle className="font-['Nunito']">Novi Korisnik</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Korisničko ime</label>
+                <input
+                  type="text"
+                  value={userForm.username}
+                  onChange={e => setUserForm(p => ({ ...p, username: e.target.value }))}
+                  className="glass-input"
+                  placeholder="korisnik123"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Lozinka</label>
+                <input
+                  type="password"
+                  value={userForm.password}
+                  onChange={e => setUserForm(p => ({ ...p, password: e.target.value }))}
+                  className="glass-input"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Uloga</label>
+                <select
+                  value={userForm.role}
+                  onChange={e => setUserForm(p => ({ ...p, role: e.target.value }))}
+                  className="glass-input"
+                >
+                  <option value="user">Korisnik</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              {userError && (
+                <div className="flex items-center gap-2 text-sm text-[#d63031]">
+                  <AlertCircle className="w-4 h-4 shrink-0" />{userError}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <button onClick={() => setUserModalOpen(false)} className="btn-secondary">Odustani</button>
+              <button
+                onClick={createUser}
+                disabled={userSaving}
+                className="btn-primary flex items-center gap-2"
+              >
+                {userSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                Kreiraj
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog open={categoryModalOpen} onOpenChange={setCategoryModalOpen}>
           <DialogContent className="glass-strong">
             <DialogHeader>
