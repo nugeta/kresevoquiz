@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Loader2
 } from 'lucide-react';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -21,6 +22,7 @@ const iconMap = {
 };
 
 const CategoriesPage = () => {
+  usePageTitle('Kategorije');
   const { isDark } = useTheme();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);

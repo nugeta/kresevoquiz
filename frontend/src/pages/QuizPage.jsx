@@ -10,9 +10,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+import usePageTitle from '../hooks/usePageTitle';
+
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const QuizPage = () => {
+  usePageTitle('Kviz');
   const { categoryId } = useParams();
   const navigate = useNavigate();
   

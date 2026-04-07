@@ -15,9 +15,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+import usePageTitle from '../hooks/usePageTitle';
+
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const ResultsPage = () => {
+  usePageTitle('Rezultati');
   const { sessionId } = useParams();
   const { isAuthenticated, refreshUser } = useAuth();
   

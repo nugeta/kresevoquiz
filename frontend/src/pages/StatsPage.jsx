@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Trophy, Users, BookOpen, HelpCircle, BarChart3, Clock, Star, Zap, Loader2 } from 'lucide-react';
 
+import usePageTitle from '../hooks/usePageTitle';
+
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const StatCard = ({ icon: Icon, label, value, color }) => (
@@ -15,6 +17,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 );
 
 const StatsPage = () => {
+  usePageTitle('Statistike');
   const navigate = useNavigate();
   const { isAdmin, loading: authLoading } = useAuth();
   const [stats, setStats] = useState(null);

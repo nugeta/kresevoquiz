@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import usePageTitle from '../hooks/usePageTitle';
 import { 
   Plus, Edit2, Trash2, BookOpen, HelpCircle, Save, X, CheckCircle2,
   Loader2, AlertCircle, ChevronDown, ChevronUp, Users, Trophy, BarChart3,
@@ -19,6 +20,7 @@ const DIFF_LABELS = { easy: 'Lako', medium: 'Srednje', hard: 'Teško' };
 const AdminPage = () => {
   const navigate = useNavigate();
   const { user, isAdmin, loading: authLoading } = useAuth();
+  usePageTitle('Admin Panel');
 
   const [categories, setCategories] = useState([]);
   const [questions, setQuestions] = useState([]);
