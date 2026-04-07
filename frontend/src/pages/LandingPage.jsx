@@ -104,7 +104,7 @@ const LandingPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children">
             {/* Feature 1 */}
-            <div className="glass-card rounded-3xl p-8 text-center">
+            <div className="rounded-3xl p-8 text-center" style={{ background: isDark ? 'rgba(20,20,35,0.6)' : 'rgba(255,255,255,0.25)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.3)' }}>
               <div 
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
                 style={{ background: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(138, 180, 248, 0.2)' }}
@@ -118,7 +118,7 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 2 */}
-            <div className="glass-card rounded-3xl p-8 text-center">
+            <div className="rounded-3xl p-8 text-center" style={{ background: isDark ? 'rgba(20,20,35,0.6)' : 'rgba(255,255,255,0.25)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.3)' }}>
               <div 
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
                 style={{ background: isDark ? 'rgba(245, 158, 11, 0.2)' : 'rgba(253, 203, 110, 0.2)' }}
@@ -132,7 +132,7 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 3 */}
-            <div className="glass-card rounded-3xl p-8 text-center">
+            <div className="rounded-3xl p-8 text-center" style={{ background: isDark ? 'rgba(20,20,35,0.6)' : 'rgba(255,255,255,0.25)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.3)' }}>
               <div 
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
                 style={{ background: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(85, 239, 196, 0.2)' }}
@@ -151,7 +151,7 @@ const LandingPage = () => {
       {/* CTA Section */}
       <section className="py-20 px-4 relative" style={{ zIndex: 2 }}>
         <div className="max-w-4xl mx-auto">
-          <div className="glass-strong rounded-3xl p-10 md:p-16 text-center scroll-animate opacity-0">
+          <div className="rounded-3xl p-10 md:p-16 text-center scroll-animate opacity-0" style={{ background: isDark ? 'rgba(20,20,35,0.6)' : 'rgba(255,255,255,0.25)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.3)' }}>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4">
               Spreman za izazov?
             </h2>
@@ -173,7 +173,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="py-8 px-4 border-t relative" style={{ borderColor: 'var(--glass-border)', zIndex: 2 }}>
         <div className="max-w-6xl mx-auto text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-          <p>&copy; 2026 Kreševo Kviz. Sva prava pridržana.</p>
+          <p>&copy; 2026 Ghost Productions. Sva prava pridržana.</p>
         </div>
       </footer>
     </div>
