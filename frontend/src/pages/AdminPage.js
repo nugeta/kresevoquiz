@@ -399,15 +399,15 @@ const AdminPage = () => {
         {/* Tabs */}
         <Tabs defaultValue="categories" className="animate-fade-in-up">
           <TabsList className="glass mb-6">
-            <TabsTrigger value="categories" className="data-[state=active]:bg-white">
+            <TabsTrigger value="categories" className="data-[state=active]:bg-white/20 dark:data-[state=active]:bg-white/10 data-[state=active]:text-[var(--text-primary)]">
               <BookOpen className="w-4 h-4 mr-2" />
               Kategorije
             </TabsTrigger>
-            <TabsTrigger value="questions" className="data-[state=active]:bg-white">
+            <TabsTrigger value="questions" className="data-[state=active]:bg-white/20 dark:data-[state=active]:bg-white/10 data-[state=active]:text-[var(--text-primary)]">
               <HelpCircle className="w-4 h-4 mr-2" />
               Pitanja
             </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-white">
+            <TabsTrigger value="users" className="data-[state=active]:bg-white/20 dark:data-[state=active]:bg-white/10 data-[state=active]:text-[var(--text-primary)]">
               <Users className="w-4 h-4 mr-2" />
               Korisnici
             </TabsTrigger>
