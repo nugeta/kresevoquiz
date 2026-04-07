@@ -873,56 +873,58 @@ const AdminPage = () => {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Live Preview */}
+              <div className="rounded-2xl p-4 flex items-center gap-4 transition-all" style={{ background: `${categoryForm.color}18`, border: `1px solid ${categoryForm.color}40` }}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ background: `${categoryForm.color}30` }}>
+                  {categoryForm.icon}
+                </div>
+                <div>
+                  <p className="font-bold">{categoryForm.name || 'Naziv kategorije'}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{categoryForm.description || 'Opis kategorije'}</p>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium mb-2">Naziv</label>
-                <input
-                  type="text"
-                  value={categoryForm.name}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="glass-input"
-                  placeholder="npr. Matematika"
-                  data-testid="category-name-input"
-                />
+                <input type="text" value={categoryForm.name} onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))} className="glass-input" placeholder="npr. Matematika" data-testid="category-name-input" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Opis</label>
-                <textarea
-                  value={categoryForm.description}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="glass-input min-h-[80px]"
-                  placeholder="Kratki opis kategorije..."
-                  data-testid="category-description-input"
-                />
+                <textarea value={categoryForm.description} onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))} className="glass-input min-h-[60px]" placeholder="Kratki opis kategorije..." data-testid="category-description-input" />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Emoji ikona</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {['📚','🧮','🌍','💡','🔬','🎨','🏆','⚽','🎵','🖥️','🧬','📐','🗺️','🎭','🚀','🌿','🏛️','🔭','🎯','💬'].map(e => (
+                    <button key={e} onClick={() => setCategoryForm(prev => ({ ...prev, icon: e }))}
+                      className={`w-9 h-9 rounded-lg text-lg transition-all hover:scale-110 ${categoryForm.icon === e ? 'ring-2 scale-110' : ''}`}
+                      style={{ background: categoryForm.icon === e ? `${categoryForm.color}30` : 'rgba(255,255,255,0.1)', ringColor: categoryForm.color }}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+                <input type="text" value={categoryForm.icon} onChange={e => setCategoryForm(prev => ({ ...prev, icon: e.target.value }))} className="glass-input !py-2 text-center text-xl" placeholder="ili upiši emoji" maxLength={2} />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium mb-2">Boja</label>
-                <div className="flex gap-2">
-                  {['#8AB4F8', '#55EFC4', '#FDCB6E', '#FF9FF3'].map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setCategoryForm(prev => ({ ...prev, color }))}
-                      className={`w-10 h-10 rounded-xl transition-transform ${
-                        categoryForm.color === color ? 'ring-2 ring-offset-2 ring-[#8AB4F8] scale-110' : ''
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {['#8AB4F8','#55EFC4','#FDCB6E','#FF9FF3','#FF7675','#A29BFE','#00CEC9','#FD79A8','#E17055','#74B9FF','#6C5CE7','#00B894','#FDCB6E','#E84393','#2D3436'].map(color => (
+                    <button key={color} onClick={() => setCategoryForm(prev => ({ ...prev, color }))}
+                      className={`w-8 h-8 rounded-lg transition-all hover:scale-110 ${categoryForm.color === color ? 'ring-2 ring-offset-1 scale-110' : ''}`}
+                      style={{ backgroundColor: color, ringColor: color }} />
                   ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={categoryForm.color} onChange={e => setCategoryForm(prev => ({ ...prev, color: e.target.value }))} className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent" />
+                  <input type="text" value={categoryForm.color} onChange={e => setCategoryForm(prev => ({ ...prev, color: e.target.value }))} className="glass-input !py-2 font-mono text-sm" placeholder="#8AB4F8" />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <button 
-                onClick={() => setCategoryModalOpen(false)} 
-                className="btn-secondary"
-              >
-                Odustani
-              </button>
-              <button 
-                onClick={saveCategory} 
-                disabled={saving || !categoryForm.name.trim()}
-                className="btn-primary flex items-center gap-2"
-                data-testid="save-category-button"
-              >
+              <button onClick={() => setCategoryModalOpen(false)} className="btn-secondary">Odustani</button>
+              <button onClick={saveCategory} disabled={saving || !categoryForm.name.trim()} className="btn-primary flex items-center gap-2" data-testid="save-category-button">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Spremi
               </button>
