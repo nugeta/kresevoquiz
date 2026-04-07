@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import usePageTitle from '../hooks/usePageTitle';
+import Confetti from '../components/Confetti';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -67,7 +68,17 @@ const ResultsPage = () => {
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4" data-testid="results-page">
+      <Confetti active={results.accuracy === 100} />
       <div className="max-w-3xl mx-auto">
+
+        {/* Perfect score banner */}
+        {results.accuracy === 100 && (
+          <div className="glass-strong rounded-3xl p-6 text-center mb-6 animate-fade-in-up" style={{ border: '2px solid #FDCB6E', background: 'rgba(253,203,110,0.08)' }}>
+            <div className="text-4xl mb-2">🎉🏆🎉</div>
+            <h2 className="font-['Nunito'] text-2xl font-black text-[#FDCB6E]">Savršen rezultat!</h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Odgovorio/la si točno na sva pitanja. Nevjerojatno!</p>
+          </div>
+        )}
 
         {/* Score Card */}
         <div className="glass-strong rounded-3xl p-8 text-center mb-6 animate-fade-in-up">
