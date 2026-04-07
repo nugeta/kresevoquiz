@@ -18,6 +18,12 @@ const QuizPage = () => {
   usePageTitle('Kviz');
   const { categoryId } = useParams();
   const navigate = useNavigate();
+
+  // Hide tawk during quiz, restore on unmount
+  useEffect(() => {
+    if (window.Tawk_API?.hideWidget) window.Tawk_API.hideWidget();
+    return () => { if (window.Tawk_API?.showWidget) window.Tawk_API.showWidget(); };
+  }, []);
   
   const [sessionId, setSessionId] = useState(null);
   const [categoryName, setCategoryName] = useState('');
