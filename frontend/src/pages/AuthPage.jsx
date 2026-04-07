@@ -44,16 +44,37 @@ const AuthPage = () => {
     e.preventDefault();
     setError('');
     if (honeypot) return;
-    if (username.length < 3) { setError('Korisničko ime mora imati najmanje 3 znaka'); return; }
-    if (password.length < 6) { setError('Lozinka mora imati najmanje 6 znakova'); return; }
-    if (!isLogin && password !== confirmPassword) { setError('Lozinke se ne podudaraju'); return; }
+
+    const trimmedUser = username.trim();
+    const trimmedPass = password.trim();
+
+    // Empty checks
+    if (!trimmedUser) { setError('Unesite korisničko ime'); return; }
+    if (!trimmedPass) { setError('Unesite lozinku'); return; }
+
+    // Length checks
+    if (trimmedUser.length < 3) { setError('Korisničko ime mora imati najmanje 3 znaka'); return; }
+    if (trimmedPass.length < 6) { setError('Lozinka mora imati najmanje 6 znakova'); return; }
+
+    // No spaces in username
+    if (/\s/.test(trimmedUser)) { setError('Korisničko ime ne smije sadržavati razmake'); return; }
+
+    // Only allow letters, numbers, underscores, hyphens
+    if (!/^[a-zA-Z0-9_\-]+$/.test(trimmedUser)) { setError('Korisničko ime smije sadržavati samo slova, brojeve, _ i -'); return; }
+
+    if (!isLogin) {
+      if (!trimmedPass) { setError('Unesite lozinku'); return; }
+      if (password !== confirmPassword) { setError('Lozinke se ne podudaraju'); return; }
+      if (inviteRequired && !inviteCode.trim()) { setError('Unesite pozivni kod'); return; }
+    }
+
     setLoading(true);
     try {
       let result;
       if (isLogin) {
-        result = await login(username, password);
+        result = await login(trimmedUser, password);
       } else {
-        result = await register(username, password, inviteRequired ? inviteCode : undefined);
+        result = await register(trimmedUser, password, inviteRequired ? inviteCode.trim() : undefined);
       }
       if (result.success) {
         navigate(from, { replace: true });
