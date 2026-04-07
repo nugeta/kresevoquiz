@@ -399,15 +399,15 @@ const AdminPage = () => {
         {/* Tabs */}
         <Tabs defaultValue="categories" className="animate-fade-in-up">
           <TabsList className="glass mb-6">
-            <TabsTrigger value="categories" className="data-[state=active]:bg-white/20 dark:data-[state=active]:bg-white/10 data-[state=active]:text-[var(--text-primary)]">
+            <TabsTrigger value="categories" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
               <BookOpen className="w-4 h-4 mr-2" />
               Kategorije
             </TabsTrigger>
-            <TabsTrigger value="questions" className="data-[state=active]:bg-white/20 dark:data-[state=active]:bg-white/10 data-[state=active]:text-[var(--text-primary)]">
+            <TabsTrigger value="questions" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
               <HelpCircle className="w-4 h-4 mr-2" />
               Pitanja
             </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-white/20 dark:data-[state=active]:bg-white/10 data-[state=active]:text-[var(--text-primary)]">
+            <TabsTrigger value="users" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
               <Users className="w-4 h-4 mr-2" />
               Korisnici
             </TabsTrigger>
