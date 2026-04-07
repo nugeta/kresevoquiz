@@ -19,21 +19,15 @@ const LeaderboardPage = () => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [timeframe, setTimeframe] = useState('all');
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/leaderboard`);
-        setLeaderboard(response.data);
-      } catch (err) {
-        setError('Greška pri učitavanju rang liste');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeaderboard();
-  }, []);
+    setLoading(true);
+    axios.get(`${API_URL}/api/leaderboard?timeframe=${timeframe}`)
+      .then(r => setLeaderboard(r.data))
+      .catch(() => setError('Greška pri učitavanju rang liste'))
+      .finally(() => setLoading(false));
+  }, [timeframe]);
 
   const getRankIcon = (rank) => {
     switch (rank) {
@@ -101,9 +95,14 @@ const LeaderboardPage = () => {
           <h1 className="font-['Nunito'] text-3xl sm:text-4xl lg:text-5xl font-black mb-4">
             Rang Lista
           </h1>
-          <p className="text-[#636E72] max-w-xl mx-auto">
+          <p className="text-[#636E72] max-w-xl mx-auto mb-4">
             Najbolji igrači našeg kviza. Prijavi se i osvoji svoje mjesto!
           </p>
+          <select value={timeframe} onChange={e => setTimeframe(e.target.value)} className="glass-input !w-auto !py-2 !px-4 text-sm mx-auto">
+            <option value="all">Svo vrijeme</option>
+            <option value="monthly">Ovaj mjesec</option>
+            <option value="weekly">Ovaj tjedan</option>
+          </select>
         </div>
 
         {/* Current User Stats (if authenticated) */}

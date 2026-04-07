@@ -3,25 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  BookOpen, 
-  HelpCircle,
-  Save,
-  X,
-  CheckCircle2,
-  Loader2,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Users,
-  Trophy,
-  BarChart3,
-  Shield,
-  ShieldOff,
-  UserPlus,
-  Crown
+  Plus, Edit2, Trash2, BookOpen, HelpCircle, Save, X, CheckCircle2,
+  Loader2, AlertCircle, ChevronDown, ChevronUp, Users, Trophy, BarChart3,
+  Shield, ShieldOff, UserPlus, Crown, Link2, Copy, Download, ChevronLeft, ChevronRight, Key
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -29,36 +13,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
+const DIFF_COLORS = { easy: '#55EFC4', medium: '#FDCB6E', hard: '#FF7675' };
+const DIFF_LABELS = { easy: 'Lako', medium: 'Srednje', hard: 'Teško' };
+
 const AdminPage = () => {
   const navigate = useNavigate();
   const { user, isAdmin, loading: authLoading } = useAuth();
 
   const [categories, setCategories] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [questionTotal, setQuestionTotal] = useState(0);
+  const [questionPage, setQuestionPage] = useState(1);
+  const [questionPages, setQuestionPages] = useState(1);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Modal states
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Form states
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: 'BookOpen', color: '#8AB4F8' });
   const [questionForm, setQuestionForm] = useState({
-    category_id: '',
-    question_text: '',
-    question_type: 'single_choice',
-    options: [
-      { id: crypto.randomUUID(), text: '', is_correct: false },
-      { id: crypto.randomUUID(), text: '', is_correct: false },
-    ],
-    points: 10,
-    time_limit: 30
+    category_id: '', question_text: '', question_type: 'single_choice',
+    options: [{ id: crypto.randomUUID(), text: '', is_correct: false }, { id: crypto.randomUUID(), text: '', is_correct: false }],
+    points: 10, time_limit: 30, difficulty: 'medium'
   });
 
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -68,12 +50,19 @@ const AdminPage = () => {
   const [bulkError, setBulkError] = useState('');
   const [bulkResult, setBulkResult] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('category');
   const [users, setUsers] = useState([]);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [userForm, setUserForm] = useState({ username: '', password: '', role: 'user' });
   const [userSaving, setUserSaving] = useState(false);
   const [userError, setUserError] = useState('');
+  const [invites, setInvites] = useState([]);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ max_uses: 1, note: '' });
+  const [inviteSaving, setInviteSaving] = useState(false);
+  const [inviteRequired, setInviteRequired] = useState(true);
+  const [copiedCode, setCopiedCode] = useState(null);  const [userError, setUserError] = useState('');
 
   // Redirect if not admin
   useEffect(() => {
@@ -88,16 +77,22 @@ const AdminPage = () => {
 
     const fetchData = async () => {
       try {
-        const [catRes, questRes, statsRes, usersRes] = await Promise.all([
+        const [catRes, questRes, statsRes, usersRes, invitesRes, regRes] = await Promise.all([
           axios.get(`${API_URL}/api/categories`, { withCredentials: true }),
-          axios.get(`${API_URL}/api/questions`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/questions?page=1&limit=50`, { withCredentials: true }),
           axios.get(`${API_URL}/api/stats`, { withCredentials: true }),
           axios.get(`${API_URL}/api/users`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/invites`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/settings/registration`, { withCredentials: true }),
         ]);
         setCategories(catRes.data);
-        setQuestions(questRes.data);
+        setQuestions(questRes.data.questions);
+        setQuestionTotal(questRes.data.total);
+        setQuestionPages(questRes.data.pages);
         setStats(statsRes.data);
         setUsers(usersRes.data);
+        setInvites(invitesRes.data);
+        setInviteRequired(regRes.data.invite_required);
       } catch (err) {
         setError('Greška pri učitavanju podataka');
       } finally {
@@ -154,7 +149,8 @@ const AdminPage = () => {
         question_type: question.question_type,
         options: question.options.map(o => ({ ...o })),
         points: question.points,
-        time_limit: question.time_limit
+        time_limit: question.time_limit,
+        difficulty: question.difficulty || 'medium'
       });
     } else {
       setEditingQuestion(null);
@@ -167,7 +163,8 @@ const AdminPage = () => {
           { id: crypto.randomUUID(), text: '', is_correct: false },
         ],
         points: 10,
-        time_limit: 30
+        time_limit: 30,
+        difficulty: 'medium'
       });
     }
     setQuestionModalOpen(true);
@@ -243,6 +240,63 @@ const AdminPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const loadQuestionPage = async (page) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/questions?page=${page}&limit=50`, { withCredentials: true });
+      setQuestions(res.data.questions);
+      setQuestionTotal(res.data.total);
+      setQuestionPages(res.data.pages);
+      setQuestionPage(page);
+    } catch (err) {}
+  };
+
+  const exportQuestions = async () => {
+    try {
+      const catParam = filterCategory !== 'all' ? `?category_id=${filterCategory}` : '';
+      const res = await axios.get(`${API_URL}/api/questions/export${catParam}`, { withCredentials: true });
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'questions.json'; a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) { alert('Greška pri izvozu'); }
+  };
+
+  const createInvite = async () => {
+    setInviteSaving(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/invites`, inviteForm, { withCredentials: true });
+      const invRes = await axios.get(`${API_URL}/api/invites`, { withCredentials: true });
+      setInvites(invRes.data);
+      setInviteModalOpen(false);
+      setInviteForm({ max_uses: 1, note: '' });
+    } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
+    finally { setInviteSaving(false); }
+  };
+
+  const deleteInvite = async (id) => {
+    if (!window.confirm('Obrisati pozivni kod?')) return;
+    await axios.delete(`${API_URL}/api/invites/${id}`, { withCredentials: true });
+    setInvites(prev => prev.filter(i => i.id !== id));
+  };
+
+  const toggleInvite = async (id) => {
+    await axios.put(`${API_URL}/api/invites/${id}/toggle`, {}, { withCredentials: true });
+    setInvites(prev => prev.map(i => i.id === id ? { ...i, active: !i.active } : i));
+  };
+
+  const toggleInviteRequired = async () => {
+    const newVal = !inviteRequired;
+    await axios.put(`${API_URL}/api/settings/registration`, { invite_required: newVal }, { withCredentials: true });
+    setInviteRequired(newVal);
+  };
+
+  const copyInviteLink = (code) => {
+    const url = `${window.location.origin}/auth?invite=${code}`;
+    navigator.clipboard.writeText(url);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const createUser = async () => {
@@ -411,6 +465,12 @@ const AdminPage = () => {
               <Users className="w-4 h-4 mr-2" />
               Korisnici
             </TabsTrigger>
+            <TabsTrigger value="invites" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
+              <Key className="w-4 h-4 mr-2" />
+              Pozivnice
+            </TabsTrigger>
+          </TabsList>
+            </TabsTrigger>
           </TabsList>
 
           {/* Categories Tab */}
@@ -496,43 +556,32 @@ const AdminPage = () => {
           {/* Questions Tab */}
           <TabsContent value="questions">
             <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-              <h2 className="font-['Nunito'] text-xl font-bold">Pitanja ({questions.length})</h2>
+              <h2 className="font-['Nunito'] text-xl font-bold">Pitanja ({questionTotal})</h2>
               <div className="flex flex-wrap items-center gap-2">
-                {/* Category filter */}
-                <select
-                  value={filterCategory}
-                  onChange={e => setFilterCategory(e.target.value)}
-                  className="glass-input !py-1.5 !px-3 text-sm w-auto"
-                >
+                <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="glass-input !py-1.5 !px-3 text-sm w-auto">
                   <option value="all">Sve kategorije</option>
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                {/* Sort */}
-                <select
-                  value={sortBy}
-                  onChange={e => setSortBy(e.target.value)}
-                  className="glass-input !py-1.5 !px-3 text-sm w-auto"
-                >
+                <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)} className="glass-input !py-1.5 !px-3 text-sm w-auto">
+                  <option value="all">Sve težine</option>
+                  <option value="easy">Lako</option>
+                  <option value="medium">Srednje</option>
+                  <option value="hard">Teško</option>
+                </select>
+                <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="glass-input !py-1.5 !px-3 text-sm w-auto">
                   <option value="category">Sortiraj: Kategorija</option>
                   <option value="type">Sortiraj: Tip</option>
                   <option value="points">Sortiraj: Bodovi</option>
+                  <option value="difficulty">Sortiraj: Težina</option>
                 </select>
-                <button
-                  onClick={() => { setBulkModalOpen(true); setBulkError(''); setBulkResult(null); }}
-                  className="btn-secondary flex items-center gap-2 !py-2 !px-4"
-                >
-                  <Plus className="w-4 h-4" />
-                  Bulk Uvoz
+                <button onClick={exportQuestions} className="btn-secondary flex items-center gap-2 !py-2 !px-3">
+                  <Download className="w-4 h-4" /> Export
                 </button>
-                <button
-                  onClick={() => openQuestionModal()}
-                  className="btn-primary flex items-center gap-2 !py-2 !px-4"
-                  data-testid="add-question-button"
-                >
-                  <Plus className="w-4 h-4" />
-                  Novo Pitanje
+                <button onClick={() => { setBulkModalOpen(true); setBulkError(''); setBulkResult(null); }} className="btn-secondary flex items-center gap-2 !py-2 !px-4">
+                  <Plus className="w-4 h-4" /> Bulk Uvoz
+                </button>
+                <button onClick={() => openQuestionModal()} className="btn-primary flex items-center gap-2 !py-2 !px-4" data-testid="add-question-button">
+                  <Plus className="w-4 h-4" /> Novo Pitanje
                 </button>
               </div>
             </div>
@@ -540,14 +589,12 @@ const AdminPage = () => {
             <div className="space-y-3">
               {[...questions]
                 .filter(q => filterCategory === 'all' || q.category_id === filterCategory)
+                .filter(q => filterDifficulty === 'all' || (q.difficulty || 'medium') === filterDifficulty)
                 .sort((a, b) => {
-                  if (sortBy === 'category') {
-                    const catA = categories.find(c => c.id === a.category_id)?.name || '';
-                    const catB = categories.find(c => c.id === b.category_id)?.name || '';
-                    return catA.localeCompare(catB);
-                  }
+                  if (sortBy === 'category') { const catA = categories.find(c => c.id === a.category_id)?.name || ''; const catB = categories.find(c => c.id === b.category_id)?.name || ''; return catA.localeCompare(catB); }
                   if (sortBy === 'type') return a.question_type.localeCompare(b.question_type);
                   if (sortBy === 'points') return b.points - a.points;
+                  if (sortBy === 'difficulty') { const order = { easy: 0, medium: 1, hard: 2 }; return (order[a.difficulty || 'medium'] || 1) - (order[b.difficulty || 'medium'] || 1); }
                   return 0;
                 })
                 .map((question) => {
@@ -566,6 +613,9 @@ const AdminPage = () => {
                           <span className="text-xs px-2 py-0.5 rounded-full bg-[#8AB4F8]/20 text-[#8AB4F8]">
                             {question.question_type === 'multiple_choice' ? 'Višestruki' : 
                              question.question_type === 'true_false' ? 'Točno/Netočno' : 'Jedan odgovor'}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${DIFF_COLORS[question.difficulty || 'medium']}20`, color: DIFF_COLORS[question.difficulty || 'medium'] }}>
+                            {DIFF_LABELS[question.difficulty || 'medium']}
                           </span>
                           <span className="text-xs text-[#636E72]">{question.points} bod.</span>
                         </div>
@@ -605,6 +655,19 @@ const AdminPage = () => {
                 );
               })}
             </div>
+
+            {/* Pagination */}
+            {questionPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-6">
+                <button onClick={() => loadQuestionPage(questionPage - 1)} disabled={questionPage === 1} className="p-2 rounded-lg glass disabled:opacity-40">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm">{questionPage} / {questionPages}</span>
+                <button onClick={() => loadQuestionPage(questionPage + 1)} disabled={questionPage === questionPages} className="p-2 rounded-lg glass disabled:opacity-40">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </TabsContent>
 
           {/* Users Tab */}
@@ -667,7 +730,83 @@ const AdminPage = () => {
               ))}
             </div>
           </TabsContent>
+
+          {/* Invites Tab */}
+          <TabsContent value="invites">
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+              <div>
+                <h2 className="font-['Nunito'] text-xl font-bold">Pozivnice ({invites.length})</h2>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Registracija zahtijeva pozivnicu:</span>
+                  <button
+                    onClick={toggleInviteRequired}
+                    className={`relative w-10 h-5 rounded-full transition-colors ${inviteRequired ? 'bg-[var(--primary)]' : 'bg-gray-400'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${inviteRequired ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+              <button onClick={() => setInviteModalOpen(true)} className="btn-primary flex items-center gap-2 !py-2 !px-4">
+                <Plus className="w-4 h-4" /> Nova Pozivnica
+              </button>
+            </div>
+            <div className="space-y-3">
+              {invites.map(inv => (
+                <div key={inv.id} className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono font-bold tracking-widest text-lg" style={{ color: 'var(--primary)' }}>{inv.code}</span>
+                      {!inv.active && <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Neaktivan</span>}
+                      {inv.note && <span className="text-xs px-2 py-0.5 rounded-full glass">{inv.note}</span>}
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      {inv.uses}/{inv.max_uses} iskorišteno
+                      {inv.used_by?.length > 0 && ` · ${inv.used_by.join(', ')}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => copyInviteLink(inv.code)} className="p-2 rounded-lg hover:bg-white/10 transition-colors" title="Kopiraj link">
+                      {copiedCode === inv.code ? <CheckCircle2 className="w-4 h-4 text-[#55EFC4]" /> : <Copy className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />}
+                    </button>
+                    <button onClick={() => toggleInvite(inv.id)} className="p-2 rounded-lg hover:bg-white/10 transition-colors" title={inv.active ? 'Deaktiviraj' : 'Aktiviraj'}>
+                      <Link2 className="w-4 h-4" style={{ color: inv.active ? 'var(--primary)' : 'var(--text-secondary)' }} />
+                    </button>
+                    <button onClick={() => deleteInvite(inv.id)} className="p-2 rounded-lg hover:bg-[#d63031]/10 transition-colors">
+                      <Trash2 className="w-4 h-4 text-[#d63031]" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {invites.length === 0 && <p className="text-center py-8 text-sm" style={{ color: 'var(--text-secondary)' }}>Nema pozivnica. Kreiraj prvu!</p>}
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Create Invite Modal */}
+        <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
+          <DialogContent className="glass-strong">
+            <DialogHeader>
+              <DialogTitle className="font-['Nunito']">Nova Pozivnica</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Maks. broj korištenja</label>
+                <input type="number" min="1" max="100" value={inviteForm.max_uses} onChange={e => setInviteForm(p => ({ ...p, max_uses: parseInt(e.target.value) }))} className="glass-input" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Napomena (opcionalno)</label>
+                <input type="text" value={inviteForm.note} onChange={e => setInviteForm(p => ({ ...p, note: e.target.value }))} className="glass-input" placeholder="npr. Razred 3B" />
+              </div>
+            </div>
+            <DialogFooter>
+              <button onClick={() => setInviteModalOpen(false)} className="btn-secondary">Odustani</button>
+              <button onClick={createInvite} disabled={inviteSaving} className="btn-primary flex items-center gap-2">
+                {inviteSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Kreiraj
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Create User Modal */}
         <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
@@ -871,6 +1010,14 @@ const AdminPage = () => {
                     data-testid="question-time-input"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Težina</label>
+                  <select value={questionForm.difficulty} onChange={e => setQuestionForm(prev => ({ ...prev, difficulty: e.target.value }))} className="glass-input">
+                    <option value="easy">Lako</option>
+                    <option value="medium">Srednje</option>
+                    <option value="hard">Teško</option>
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -1000,7 +1147,8 @@ const AdminPage = () => {
       { "text": "4", "is_correct": true }
     ],
     "points": 10,
-    "time_limit": 30
+    "time_limit": 30,
+    "difficulty": "easy"
   }
 ]`}</pre>
               </div>
