@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Clock, 
@@ -17,6 +17,7 @@ const API_URL = import.meta.env.VITE_BACKEND_URL;
 const QuizPage = () => {
   usePageTitle('Kviz');
   const { categoryId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   // Hide tawk during quiz, restore on unmount
@@ -49,7 +50,7 @@ const QuizPage = () => {
       try {
         const response = await axios.post(
           `${API_URL}/api/quiz/start`,
-          { category_id: categoryId, question_count: 10 },
+          { category_id: categoryId, question_count: parseInt(searchParams.get('count') || '10') },
           { withCredentials: true }
         );
         

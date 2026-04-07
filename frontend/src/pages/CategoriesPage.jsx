@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useTheme } from '../context/ThemeContext';
-import { BookOpen, ArrowRight, Loader2 } from 'lucide-react';
+import { BookOpen, ArrowRight, Loader2, Play, X } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-// Fallback lucide icons for old categories that still use icon names
 import { Calculator, Globe, Lightbulb } from 'lucide-react';
 const iconMap = { BookOpen, Calculator, Globe, Lightbulb };
-
 const isEmoji = (str) => str && !str.match(/^[A-Za-z]/);
 
 const CategoriesPage = () => {
   usePageTitle('Kategorije');
   const { isDark } = useTheme();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [questionCount, setQuestionCount] = useState(10);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/categories`)
@@ -78,46 +79,73 @@ const CategoriesPage = () => {
               const IconComponent = !emoji ? (iconMap[category.icon] || BookOpen) : null;
 
               return (
-                <Link
+                <button
                   key={category.id}
-                  to={`/quiz/${category.id}`}
-                  className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                  onClick={() => { setSelected(category); setQuestionCount(Math.min(10, category.question_count)); }}
+                  disabled={category.question_count === 0}
+                  className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                   style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: `1px solid ${themeColor}30`, boxShadow: `0 4px 24px ${themeColor}15` }}
                   data-testid={`category-card-${category.id}`}
                 >
-                  {/* Color accent bar */}
                   <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${themeColor}, ${themeColor}88)` }} />
-
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0"
-                        style={{ background: `${themeColor}20` }}>
-                        {emoji
-                          ? <span className="text-2xl">{category.icon}</span>
-                          : <IconComponent className="w-7 h-7" style={{ color: themeColor }} />
-                        }
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0" style={{ background: `${themeColor}20` }}>
+                        {emoji ? <span className="text-2xl">{category.icon}</span> : <IconComponent className="w-7 h-7" style={{ color: themeColor }} />}
                       </div>
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-all mt-1" style={{ color: themeColor }} />
                     </div>
-
                     <h3 className="text-xl font-bold mb-2">{category.name}</h3>
                     <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
                       {category.description || 'Testiraj svoje znanje iz ove kategorije'}
                     </p>
-
                     <div className="flex items-center justify-between">
-                      <span className="text-xs px-3 py-1 rounded-full font-medium"
-                        style={{ backgroundColor: `${themeColor}20`, color: themeColor }}>
-                        {category.question_count} pitanja
+                      <span className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: `${themeColor}20`, color: themeColor }}>
+                        {category.question_count === 0 ? 'Nema pitanja' : `${category.question_count} pitanja`}
                       </span>
-                      <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: themeColor }}>
-                        Igraj →
-                      </span>
+                      <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: themeColor }}>Igraj →</span>
                     </div>
                   </div>
-                </Link>
+                </button>
               );
             })}
+          </div>
+        )}
+
+        {/* Question count modal — outside ternary */}
+        {selected && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setSelected(null)}>
+            <div className="glass-strong rounded-3xl p-8 max-w-sm w-full animate-fade-in-up" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{isEmoji(selected.icon) ? selected.icon : '📚'}</span>
+                  <div>
+                    <h3 className="font-['Nunito'] text-xl font-bold">{selected.name}</h3>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selected.question_count} dostupnih pitanja</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelected(null)} className="p-2 rounded-xl hover:opacity-70 transition-opacity">
+                  <X className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
+                </button>
+              </div>
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium">Broj pitanja</label>
+                  <span className="font-['Nunito'] text-2xl font-black" style={{ color: selected.color }}>{questionCount}</span>
+                </div>
+                <input type="range" min={Math.min(5, selected.question_count)} max={Math.min(20, selected.question_count)} step={5}
+                  value={questionCount} onChange={e => setQuestionCount(Number(e.target.value))} className="w-full accent-[var(--primary)]" />
+                <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {[5, 10, 15, 20].filter(n => n <= selected.question_count).map(n => <span key={n}>{n}</span>)}
+                </div>
+              </div>
+              <button onClick={() => { navigate(`/quiz/${selected.id}?count=${questionCount}`); setSelected(null); }}
+                className="btn-primary w-full flex items-center justify-center gap-2 !py-4"
+                style={{ background: `linear-gradient(135deg, ${selected.color}, ${selected.color}cc)` }}>
+                <Play className="w-5 h-5" /> Započni Kviz
+              </button>
+            </div>
           </div>
         )}
 
