@@ -91,7 +91,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 relative" style={{ zIndex: 2 }}>
+      <section id="features" className="py-20 px-4 relative" style={{ zIndex: 2 }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 scroll-animate opacity-0">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4">
@@ -173,7 +173,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="py-8 px-4 border-t relative" style={{ borderColor: 'var(--glass-border)', zIndex: 2 }}>
         <div className="max-w-6xl mx-auto text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-          <p>&copy; 2026 Ghost Productions. Sva prava pridržana.</p>
+          <p>&copy; 2026 Ghost Productions. Sva prava pridržana. · <Link to="/credits" style={{ color: 'var(--text-secondary)' }} className="hover:opacity-70 transition-opacity">Zahvale</Link></p>
         </div>
       </footer>
     </div>
