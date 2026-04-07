@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { User, Lock, LogIn, UserPlus, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Ballpit from '../components/Ballpit';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -68,11 +69,21 @@ const AuthPage = () => {
   };
 
   return (
-    <div 
-      className={`min-h-screen flex items-center justify-center p-4 pt-20 ${isDark ? 'auth-dark' : 'auth-light'}`}
+    <div
+      className="min-h-screen flex items-center justify-center p-4 pt-20 relative overflow-hidden"
       data-testid="auth-page"
     >
-      {isDark && <div className="stars absolute inset-0" />}
+      {/* Ballpit background */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+        <Ballpit
+          count={80}
+          gravity={0.4}
+          friction={0.9975}
+          wallBounce={0.95}
+          followCursor={true}
+          colors={[0x8AB4F8, 0x55EFC4, 0xFF9FF3, 0xFDCB6E, 0x7C3AED]}
+        />
+      </div>
       
       <div className="w-full max-w-md relative z-10">
         <Link 
