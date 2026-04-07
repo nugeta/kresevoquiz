@@ -62,7 +62,7 @@ const AdminPage = () => {
   const [inviteForm, setInviteForm] = useState({ max_uses: 1, note: '' });
   const [inviteSaving, setInviteSaving] = useState(false);
   const [inviteRequired, setInviteRequired] = useState(true);
-  const [copiedCode, setCopiedCode] = useState(null);  const [userError, setUserError] = useState('');
+  const [copiedCode, setCopiedCode] = useState(null);
 
   // Redirect if not admin
   useEffect(() => {
