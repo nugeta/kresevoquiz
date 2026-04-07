@@ -13,6 +13,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import AdminPage from "./pages/AdminPage";
 import CreditsPage from "./pages/CreditsPage";
 import StatsPage from "./pages/StatsPage";
+import HistoryPage from "./pages/HistoryPage";
 import "./App.css";
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/credits" element={<CreditsPage />} />
               <Route path="/stats" element={<StatsPage />} />
+              <Route path="/history" element={<HistoryPage />} />
             </Routes>
           </div>
         </BrowserRouter>

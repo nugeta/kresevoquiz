@@ -6,7 +6,7 @@ import usePageTitle from '../hooks/usePageTitle';
 import { 
   Plus, Edit2, Trash2, BookOpen, HelpCircle, Save, X, CheckCircle2,
   Loader2, AlertCircle, ChevronDown, ChevronUp, Users, Trophy, BarChart3,
-  Shield, ShieldOff, UserPlus, Crown, Link2, Copy, Download, ChevronLeft, ChevronRight, Key
+  Shield, ShieldOff, UserPlus, Crown, Link2, Copy, Download, ChevronLeft, ChevronRight, Key, RotateCcw
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -337,6 +337,19 @@ const AdminPage = () => {
       await axios.delete(`${API_URL}/api/users/${u.id}`, { withCredentials: true });
       setUsers(prev => prev.filter(x => x.id !== u.id));
     } catch (err) {
+      alert(err.response?.data?.detail || 'Greška');
+    }
+  };
+
+  const resetUserScore = async (u) => {
+    if (!window.confirm(`Resetirati rezultate za "${u.username}"?`)) return;
+    try {
+      await axios.put(`${API_URL}/api/users/${u.id}/reset-score`, {}, { withCredentials: true });
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, total_score: 0, quizzes_taken: 0 } : x));
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Greška');
+    }
+  };
       alert(err.response?.data?.detail || 'Greška');
     }
   };
@@ -723,6 +736,13 @@ const AdminPage = () => {
                         className="p-2 rounded-lg hover:bg-[#d63031]/10 transition-colors"
                       >
                         <Trash2 className="w-4 h-4 text-[#d63031]" />
+                      </button>
+                      <button
+                        onClick={() => resetUserScore(u)}
+                        className="p-2 rounded-lg hover:bg-[#FDCB6E]/10 transition-colors"
+                        title="Resetiraj rezultate"
+                      >
+                        <RotateCcw className="w-4 h-4 text-[#FDCB6E]" />
                       </button>
                     </div>
                   )}

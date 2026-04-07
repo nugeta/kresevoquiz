@@ -62,6 +62,7 @@ const CardNav = ({ className = '' }) => {
       links: isAuthenticated 
         ? [
             { label: `${user?.username} (${user?.total_score} bodova)`, href: '/leaderboard', icon: User },
+            { label: 'Moja povijest', href: '/history', icon: Trophy },
             ...(isAdmin ? [
               { label: 'Admin panel', href: '/admin', icon: Settings },
               { label: 'Statistike', href: '/stats', icon: BarChart3 },
