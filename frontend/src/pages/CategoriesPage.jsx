@@ -11,7 +11,7 @@ import {
   Loader2
 } from 'lucide-react';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const iconMap = {
   BookOpen: BookOpen,
