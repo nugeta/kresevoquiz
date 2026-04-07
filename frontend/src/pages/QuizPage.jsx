@@ -32,6 +32,7 @@ const QuizPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [streak, setStreak] = useState(0);
   
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -127,6 +128,7 @@ const QuizPage = () => {
       setIsAnswered(true);
       setAnswerResult(response.data);
       setScore(response.data.total_score);
+      setStreak(prev => response.data.is_correct ? prev + 1 : 0);
 
       if (response.data.is_last_question) {
         // Navigate to results after short delay
@@ -258,26 +260,38 @@ const QuizPage = () => {
         </div>
 
         {/* Score */}
-        <div className="glass-card rounded-2xl px-6 py-3 inline-flex items-center gap-2 mb-8">
-          <span className="text-sm text-[#636E72]">Bodovi:</span>
-          <span className="font-['Nunito'] text-xl font-bold text-[#8AB4F8]" data-testid="quiz-score">
-            {score}
-          </span>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="glass-card rounded-2xl px-6 py-3 inline-flex items-center gap-2">
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Bodovi:</span>
+            <span className="font-['Nunito'] text-xl font-bold text-[#8AB4F8]" data-testid="quiz-score">{score}</span>
+          </div>
+          {streak >= 2 && (
+            <div className="glass-card rounded-2xl px-4 py-3 inline-flex items-center gap-2 animate-fade-in" style={{ border: '1px solid #FDCB6E50' }}>
+              <span className="text-lg">🔥</span>
+              <span className="font-bold text-sm text-[#FDCB6E]">{streak} zaredom!</span>
+            </div>
+          )}
         </div>
 
         {/* Question Card */}
         <div className="glass-strong rounded-3xl p-8 mb-8 animate-fade-in-up">
           {/* Question Type Badge */}
-          <div className="mb-4">
+          <div className="mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-xs px-3 py-1 rounded-full bg-[#8AB4F8]/20 text-[#8AB4F8] font-medium">
               {currentQuestion.question_type === 'multiple_choice' && 'Višestruki izbor'}
               {currentQuestion.question_type === 'single_choice' && 'Odaberi jedan'}
               {currentQuestion.question_type === 'true_false' && 'Točno / Netočno'}
             </span>
-            {currentQuestion.question_type === 'multiple_choice' && (
-              <span className="text-xs text-[#636E72] ml-2">
-                (odaberi više odgovora)
+            {currentQuestion.difficulty && (
+              <span className="text-xs px-3 py-1 rounded-full font-medium" style={{
+                background: currentQuestion.difficulty === 'easy' ? 'rgba(85,239,196,0.2)' : currentQuestion.difficulty === 'hard' ? 'rgba(255,118,117,0.2)' : 'rgba(253,203,110,0.2)',
+                color: currentQuestion.difficulty === 'easy' ? '#55EFC4' : currentQuestion.difficulty === 'hard' ? '#FF7675' : '#FDCB6E'
+              }}>
+                {currentQuestion.difficulty === 'easy' ? 'Lako' : currentQuestion.difficulty === 'hard' ? 'Teško' : 'Srednje'}
               </span>
+            )}
+            {currentQuestion.question_type === 'multiple_choice' && (
+              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>(odaberi više odgovora)</span>
             )}
           </div>
 
