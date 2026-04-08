@@ -50,7 +50,7 @@ const LandingPage = () => {
 
       {/* Install banner for mobile */}
       {showInstall && (
-        <div className="fixed bottom-4 left-4 right-4 z-50 animate-fade-in-up" style={{ maxWidth: '480px', margin: '0 auto' }}>
+        <div className="fixed top-20 left-4 right-4 z-50 animate-fade-in-up" style={{ maxWidth: '480px', margin: '0 auto' }}>
           <div className="glass-strong rounded-2xl p-4 flex items-start gap-3"
             style={{ border: '1px solid var(--primary)', boxShadow: '0 8px 32px rgba(124,58,237,0.3)' }}>
             <Smartphone className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--primary)' }} />
