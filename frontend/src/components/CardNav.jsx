@@ -53,6 +53,7 @@ const CardNav = ({ className = '' }) => {
       links: [
         { label: 'Kategorije', href: '/categories', icon: BookOpen },
         { label: 'Rang lista', href: '/leaderboard', icon: Trophy },
+        { label: 'Moja povijest', href: '/history', icon: BarChart3 },
       ]
     },
     {
@@ -62,7 +63,6 @@ const CardNav = ({ className = '' }) => {
       links: isAuthenticated 
         ? [
             { label: `${user?.username} (${user?.total_score} bodova)`, href: '/leaderboard', icon: User },
-            { label: 'Moja povijest', href: '/history', icon: Trophy },
             ...(isAdmin ? [
               { label: 'Admin panel', href: '/admin', icon: Settings },
               { label: 'Statistike', href: '/stats', icon: BarChart3 },

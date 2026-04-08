@@ -201,10 +201,11 @@ const AdminPage = () => {
       }
       // Refresh
       const [questRes, catRes] = await Promise.all([
-        axios.get(`${API_URL}/api/questions`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/questions?page=${questionPage}&limit=50`, { withCredentials: true }),
         axios.get(`${API_URL}/api/categories`, { withCredentials: true })
       ]);
-      setQuestions(questRes.data);
+      setQuestions(questRes.data.questions || questRes.data);
+      setQuestionTotal(questRes.data.total || questRes.data.length);
       setCategories(catRes.data);
       setQuestionModalOpen(false);
     } catch (err) {
@@ -372,7 +373,7 @@ const AdminPage = () => {
         axios.get(`${API_URL}/api/questions`, { withCredentials: true }),
         axios.get(`${API_URL}/api/categories`, { withCredentials: true }),
       ]);
-      setQuestions(questRes.data);
+      setQuestions(questRes.data.questions || questRes.data);
       setCategories(catRes.data);
     } catch (err) {
       setBulkError(err.response?.data?.detail || 'Greška pri uvozu');
