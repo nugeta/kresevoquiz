@@ -60,9 +60,9 @@ const RoomPage = () => {
         ws.current = socket;
 
         socket.onmessage = (e) => handleMessage(JSON.parse(e.data));
-        socket.onerror = () => setError('Greška pri spajanju na sobu');
+        socket.onerror = () => setError(prev => prev || 'Greška pri spajanju na sobu');
         socket.onclose = (e) => {
-          if (e.code !== 1000) setError('Veza prekinuta');
+          if (e.code !== 1000) setError(prev => prev || 'Veza prekinuta');
         };
       } catch {
         setError('Greška pri spajanju');
