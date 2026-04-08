@@ -59,10 +59,17 @@ const RoomPage = () => {
         const socket = new WebSocket(`${wsUrl}/ws/room/${roomCode}?token=${token}`);
         ws.current = socket;
 
-        socket.onmessage = (e) => handleMessage(JSON.parse(e.data));
+        socket.onmessage = (e) => {
+          const msg = JSON.parse(e.data);
+          // Capture server error before connection closes
+          if (msg.type === 'error') {
+            setError(msg.message);
+          }
+          handleMessage(msg);
+        };
         socket.onerror = () => setError(prev => prev || 'Greška pri spajanju na sobu');
         socket.onclose = (e) => {
-          if (e.code !== 1000) setError(prev => prev || 'Veza prekinuta');
+          if (e.code !== 1000) setError(prev => prev || `Veza prekinuta (${e.code})`);
         };
       } catch {
         setError('Greška pri spajanju');
