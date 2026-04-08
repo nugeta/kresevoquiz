@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Copy, CheckCircle2, Play, Loader2, Trophy, Swords } from 'lucide-react';
+import { Copy, CheckCircle2, Play, Loader2, Trophy, Swords, Eye } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
 
 const TournamentPage = () => {
@@ -129,9 +129,9 @@ const TournamentPage = () => {
             style={{ border: '2px solid #FDCB6E', background: 'rgba(253,203,110,0.1)' }}>
             <p className="text-lg font-bold mb-2">⚔️ Tvoj meč je spreman!</p>
             <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Kod sobe: <span className="font-mono font-bold">{myMatchRoom}</span></p>
-            <button onClick={() => navigate(`/multiplayer/room/${myMatchRoom}`)}
+            <button onClick={() => window.open(`/multiplayer/room/${myMatchRoom}`, '_blank')}
               className="btn-primary flex items-center justify-center gap-2 mx-auto">
-              <Swords className="w-5 h-5" /> Uđi u meč
+              <Swords className="w-5 h-5" /> Uđi u meč (novi tab)
             </button>
           </div>
         )}
@@ -189,7 +189,17 @@ const TournamentPage = () => {
                         <div key={match.match_id} className="rounded-xl overflow-hidden"
                           style={{ border: `1px solid ${match.state === 'playing' ? '#FDCB6E' : 'var(--glass-border)'}`, background: match.state === 'playing' ? 'rgba(253,203,110,0.08)' : 'var(--glass-bg)' }}>
                           {match.state === 'playing' && (
-                            <div className="text-center text-xs py-0.5" style={{ background: 'rgba(253,203,110,0.2)', color: '#FDCB6E' }}>⚔️ Live</div>
+                            <div className="flex items-center justify-between px-2 py-0.5" style={{ background: 'rgba(253,203,110,0.2)' }}>
+                              <span className="text-xs" style={{ color: '#FDCB6E' }}>⚔️ Live</span>
+                              <button
+                                onClick={() => window.open(`/multiplayer/room/${match.room_code}`, '_blank')}
+                                className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-lg transition-all hover:opacity-80"
+                                style={{ background: 'rgba(253,203,110,0.3)', color: '#FDCB6E' }}
+                                title="Gledaj meč"
+                              >
+                                <Eye className="w-3 h-3" /> Gledaj
+                              </button>
+                            </div>
                           )}
                           {[match.player1, match.player2].map((name, pi) => (
                             <div key={pi} className="px-3 py-2 flex items-center gap-2"
