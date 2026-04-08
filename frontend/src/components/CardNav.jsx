@@ -132,6 +132,11 @@ const CardNav = ({ className = '' }) => {
   };
 
   useLayoutEffect(() => {
+    // If nav is open when theme changes, close it first then recreate timeline
+    if (isExpanded) {
+      setIsHamburgerOpen(false);
+      setIsExpanded(false);
+    }
     const tl = createTimeline();
     tlRef.current = tl;
 
