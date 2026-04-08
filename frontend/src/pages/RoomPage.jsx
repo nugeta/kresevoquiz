@@ -13,8 +13,10 @@ const RoomPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [phase, setPhase] = useState('lobby'); // lobby | countdown | playing | finished
+  const [phase, setPhase] = useState('lobby');
   const [players, setPlayers] = useState([]);
+  const [roomMode, setRoomMode] = useState('ffa');
+  const [teamScores, setTeamScores] = useState({ A: 0, B: 0 });
   const [countdown, setCountdown] = useState(3);
   const [question, setQuestion] = useState(null);
   const [qIndex, setQIndex] = useState(0);
@@ -99,6 +101,8 @@ const RoomPage = () => {
       case 'score_update':
       case 'player_left':
         setPlayers(msg.players || []);
+        if (msg.mode) setRoomMode(msg.mode);
+        if (msg.team_scores) setTeamScores(msg.team_scores);
         break;
 
       case 'countdown':
@@ -148,7 +152,7 @@ const RoomPage = () => {
 
       case 'game_over':
         setPhase('finished');
-        setResults(msg.results);
+        setResults(msg);
         if (timerRef.current) clearInterval(timerRef.current);
         break;
 
@@ -222,11 +226,28 @@ const RoomPage = () => {
           <div className="space-y-3 mb-8">
             {players.map((p, i) => (
               <div key={p.user_id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold" style={{ background: i === 0 ? 'rgba(138,180,248,0.3)' : 'rgba(85,239,196,0.3)', color: i === 0 ? '#8AB4F8' : '#55EFC4' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                  style={{ background: i === 0 ? 'rgba(138,180,248,0.3)' : 'rgba(85,239,196,0.3)', color: i === 0 ? '#8AB4F8' : '#55EFC4' }}>
                   {i === 0 ? '👑' : '🎮'}
                 </div>
-                <span className="font-medium">{p.username}</span>
-                {i === 0 && <span className="ml-auto text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(138,180,248,0.2)', color: '#8AB4F8' }}>Host</span>}
+                <span className="font-medium flex-1">{p.username}</span>
+                {roomMode === 'teams' && p.team && (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                    style={{ background: p.team === 'A' ? 'rgba(138,180,248,0.3)' : 'rgba(85,239,196,0.3)', color: p.team === 'A' ? '#8AB4F8' : '#55EFC4' }}>
+                    Tim {p.team}
+                  </span>
+                )}
+                {roomMode === 'teams' && isHost && (
+                  <div className="flex gap-1">
+                    <button onClick={() => sendMsg({ type: 'assign_team', user_id: p.user_id, team: 'A' })}
+                      className="text-xs px-2 py-1 rounded-lg transition-all hover:opacity-80"
+                      style={{ background: 'rgba(138,180,248,0.2)', color: '#8AB4F8' }}>A</button>
+                    <button onClick={() => sendMsg({ type: 'assign_team', user_id: p.user_id, team: 'B' })}
+                      className="text-xs px-2 py-1 rounded-lg transition-all hover:opacity-80"
+                      style={{ background: 'rgba(85,239,196,0.2)', color: '#55EFC4' }}>B</button>
+                  </div>
+                )}
+                {i === 0 && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(138,180,248,0.2)', color: '#8AB4F8' }}>Host</span>}
               </div>
             ))}
             {players.length < 2 && (
@@ -236,6 +257,13 @@ const RoomPage = () => {
               </div>
             )}
           </div>
+
+          {isHost && roomMode === 'teams' && players.length >= 2 && (
+            <button onClick={() => sendMsg({ type: 'auto_assign_teams' })}
+              className="btn-secondary w-full mb-3 text-sm">
+              🎲 Nasumično rasporedi timove
+            </button>
+          )}
 
           {isHost && (
             <button onClick={() => sendMsg({ type: 'start_game' })} disabled={players.length < 2}
@@ -260,48 +288,94 @@ const RoomPage = () => {
   );
 
   // FINISHED
-  if (phase === 'finished' && results) return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
-      <div className="max-w-lg mx-auto">
-        <div className="glass-strong rounded-3xl p-8 text-center animate-fade-in-up">
-          <div className="text-5xl mb-4">{results[0]?.user_id === user?._id ? '🏆' : '💪'}</div>
-          <h1 className="font-['Nunito'] text-3xl font-black mb-6">
-            {results[0]?.user_id === user?._id ? 'Pobijedio/la si!' : 'Dobra igra!'}
-          </h1>
-          <div className="space-y-3 mb-8">
-            {results.map((r, i) => (
-              <div key={r.user_id} className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: i === 0 ? 'rgba(253,203,110,0.15)' : 'var(--glass-bg)', border: i === 0 ? '1px solid rgba(253,203,110,0.4)' : '1px solid var(--glass-border)' }}>
-                <span className="text-2xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
-                <span className="flex-1 font-bold">{r.username}</span>
-                <span className="font-['Nunito'] text-2xl font-black" style={{ color: 'var(--primary)' }}>{r.score}</span>
+  if (phase === 'finished' && results) {
+    const isTeams = results.mode === 'teams';
+    const myResult = results.results?.find(r => r.user_id === (user?.id || user?._id));
+    const iWon = isTeams
+      ? results.winner_team === myResult?.team
+      : results.results?.[0]?.user_id === (user?.id || user?._id);
+
+    return (
+      <div className="min-h-screen pt-24 pb-12 px-4">
+        <div className="max-w-lg mx-auto">
+          <div className="glass-strong rounded-3xl p-8 text-center animate-fade-in-up">
+            <div className="text-5xl mb-4">{iWon ? '🏆' : '💪'}</div>
+            <h1 className="font-['Nunito'] text-3xl font-black mb-2">
+              {isTeams
+                ? `Tim ${results.winner_team} pobijedio!`
+                : iWon ? 'Pobijedio/la si!' : 'Dobra igra!'}
+            </h1>
+
+            {isTeams && (
+              <div className="flex gap-4 justify-center mb-6">
+                {['A', 'B'].map(team => (
+                  <div key={team} className="flex-1 rounded-2xl p-4"
+                    style={{ background: results.winner_team === team ? (team === 'A' ? 'rgba(138,180,248,0.2)' : 'rgba(85,239,196,0.2)') : 'rgba(255,255,255,0.05)', border: `2px solid ${results.winner_team === team ? (team === 'A' ? '#8AB4F8' : '#55EFC4') : 'transparent'}` }}>
+                    <p className="font-bold text-sm mb-1">Tim {team}</p>
+                    <p className="font-['Nunito'] text-3xl font-black" style={{ color: team === 'A' ? '#8AB4F8' : '#55EFC4' }}>{results.team_scores?.[team]}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => navigate('/multiplayer')} className="btn-secondary flex-1">Nova igra</button>
-            <button onClick={() => navigate('/categories')} className="btn-primary flex-1">Solo kviz</button>
+            )}
+
+            <div className="space-y-3 mb-8">
+              {results.results?.map((r, i) => (
+                <div key={r.user_id} className="flex items-center gap-4 p-4 rounded-2xl"
+                  style={{ background: i === 0 ? 'rgba(253,203,110,0.15)' : 'var(--glass-bg)', border: i === 0 ? '1px solid rgba(253,203,110,0.4)' : '1px solid var(--glass-border)' }}>
+                  <span className="text-2xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`}</span>
+                  <span className="flex-1 font-bold text-left">{r.username}</span>
+                  {isTeams && r.team && (
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: r.team === 'A' ? 'rgba(138,180,248,0.2)' : 'rgba(85,239,196,0.2)', color: r.team === 'A' ? '#8AB4F8' : '#55EFC4' }}>
+                      Tim {r.team}
+                    </span>
+                  )}
+                  <span className="font-['Nunito'] text-2xl font-black" style={{ color: 'var(--primary)' }}>{r.score}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => navigate('/multiplayer')} className="btn-secondary flex-1">Nova igra</button>
+              <button onClick={() => navigate('/categories')} className="btn-primary flex-1">Solo kviz</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   // PLAYING
   if (phase === 'playing' && question) return (
     <div className="min-h-screen pt-20 pb-12 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Scoreboard */}
-        <div className="flex gap-3 mb-6">
-          {players.map(p => (
-            <div key={p.user_id} className="flex-1 glass-card rounded-2xl p-3 text-center" style={{ border: p.user_id === user?._id ? '1px solid var(--primary)' : undefined }}>
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{p.username}</p>
-              <p className="font-['Nunito'] text-xl font-black" style={{ color: p.user_id === user?._id ? 'var(--primary)' : 'var(--text-primary)' }}>{p.score}</p>
-              <div className="h-1 rounded-full mt-1" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <div className="h-1 rounded-full transition-all" style={{ width: `${(p.current_index / qTotal) * 100}%`, background: p.user_id === user?._id ? 'var(--primary)' : '#55EFC4' }} />
+        {roomMode === 'teams' ? (
+          <div className="flex gap-3 mb-6">
+            {['A', 'B'].map(team => (
+              <div key={team} className="flex-1 glass-card rounded-2xl p-3 text-center"
+                style={{ border: players.find(p => p.user_id === (user?.id || user?._id))?.team === team ? '1px solid var(--primary)' : undefined }}>
+                <p className="text-xs font-bold mb-1" style={{ color: team === 'A' ? '#8AB4F8' : '#55EFC4' }}>Tim {team}</p>
+                <p className="font-['Nunito'] text-2xl font-black" style={{ color: team === 'A' ? '#8AB4F8' : '#55EFC4' }}>{teamScores[team]}</p>
+                <div className="flex flex-wrap gap-1 mt-1 justify-center">
+                  {players.filter(p => p.team === team).map(p => (
+                    <span key={p.user_id} className="text-xs truncate max-w-[60px]" style={{ color: 'var(--text-secondary)' }}>{p.username}</span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+            {players.map(p => (
+              <div key={p.user_id} className="flex-1 min-w-[80px] glass-card rounded-2xl p-3 text-center" style={{ border: p.user_id === (user?.id || user?._id) ? '1px solid var(--primary)' : undefined }}>
+                <p className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{p.username}</p>
+                <p className="font-['Nunito'] text-xl font-black" style={{ color: p.user_id === (user?.id || user?._id) ? 'var(--primary)' : 'var(--text-primary)' }}>{p.score}</p>
+                <div className="h-1 rounded-full mt-1" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <div className="h-1 rounded-full transition-all" style={{ width: `${(p.current_index / qTotal) * 100}%`, background: p.user_id === (user?.id || user?._id) ? 'var(--primary)' : '#55EFC4' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Progress */}
         <div className="flex items-center justify-between mb-4">
