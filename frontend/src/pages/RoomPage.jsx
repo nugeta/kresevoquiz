@@ -31,7 +31,7 @@ const RoomPage = () => {
   const ws = useRef(null);
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
-  const isHost = players.length > 0 && players[0]?.user_id === user?._id;
+  const isHost = players.length > 0 && players[0]?.user_id === (user?.id || user?._id);
 
   const sendMsg = useCallback((msg) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
