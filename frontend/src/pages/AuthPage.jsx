@@ -107,7 +107,7 @@ const AuthPage = () => {
         />
       </div>
       {/* Mobile: simple gradient background */}
-      <div className="sm:hidden" style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'linear-gradient(135deg, rgba(138,180,248,0.3), rgba(85,239,196,0.2), rgba(124,58,237,0.3))' }} />
+      <div className="sm:hidden" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: 'linear-gradient(135deg, rgba(138,180,248,0.3), rgba(85,239,196,0.2), rgba(124,58,237,0.3))' }} />
 
       <div className="w-full max-w-md relative z-10">
         <Link
