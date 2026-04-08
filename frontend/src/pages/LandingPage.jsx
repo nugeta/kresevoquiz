@@ -1,14 +1,27 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Trophy, BookOpen, Users, Sparkles } from 'lucide-react';
+import { Play, Trophy, BookOpen, Users, Sparkles, X, Smartphone } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Iridescence from '../components/Iridescence';
 import usePageTitle from '../hooks/usePageTitle';
+
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = () => /android/i.test(navigator.userAgent);
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
 const LandingPage = () => {
   usePageTitle(null);
   const { isDark } = useTheme();
   const heroRef = useRef(null);
+  const [showInstall, setShowInstall] = useState(false);
+
+  useEffect(() => {
+    // Show banner only on mobile, not already installed
+    if (!isStandalone() && (isIOS() || isAndroid())) {
+      const dismissed = sessionStorage.getItem('install-dismissed');
+      if (!dismissed) setShowInstall(true);
+    }
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -35,7 +48,31 @@ const LandingPage = () => {
         <Iridescence speed={1.0} amplitude={0.1} mouseReact={true} />
       </div>
 
-      {/* Hero Section */}
+      {/* Install banner for mobile */}
+      {showInstall && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 animate-fade-in-up" style={{ maxWidth: '480px', margin: '0 auto' }}>
+          <div className="glass-strong rounded-2xl p-4 flex items-start gap-3"
+            style={{ border: '1px solid var(--primary)', boxShadow: '0 8px 32px rgba(124,58,237,0.3)' }}>
+            <Smartphone className="w-5 h-5 shrink-0 mt-0.5" style={{ color: 'var(--primary)' }} />
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm mb-1">Instaliraj kao aplikaciju</p>
+              {isIOS() ? (
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  Tapni <strong>Share</strong> (□↑) u Safariju → <strong>"Add to Home Screen"</strong>
+                </p>
+              ) : (
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  Tapni <strong>⋮</strong> u Chromeu → <strong>"Add to Home Screen"</strong> ili <strong>"Install app"</strong>
+                </p>
+              )}
+            </div>
+            <button onClick={() => { setShowInstall(false); sessionStorage.setItem('install-dismissed', '1'); }}
+              className="shrink-0 p-1 rounded-lg hover:opacity-70 transition-opacity">
+              <X className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+            </button>
+          </div>
+        </div>
+      )}
       <section
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16"
