@@ -350,9 +350,6 @@ const AdminPage = () => {
       alert(err.response?.data?.detail || 'Greška');
     }
   };
-      alert(err.response?.data?.detail || 'Greška');
-    }
-  };
 
   const bulkImport = async () => {
     setBulkError('');
