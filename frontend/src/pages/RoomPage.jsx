@@ -56,8 +56,13 @@ const RoomPage = () => {
         const wsUrl = import.meta.env.VITE_BACKEND_URL
           .replace('https://', 'wss://')
           .replace('http://', 'ws://');
-        const socket = new WebSocket(`${wsUrl}/ws/room/${roomCode}?token=${token}`);
+        const socket = new WebSocket(`${wsUrl}/ws/room/${roomCode}`);
         ws.current = socket;
+
+        socket.onopen = () => {
+          // Send auth token as first message instead of URL param
+          socket.send(JSON.stringify({ type: 'auth', token }));
+        };
 
         socket.onmessage = (e) => {
           const msg = JSON.parse(e.data);
