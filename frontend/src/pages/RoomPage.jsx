@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Copy, CheckCircle2, XCircle, Users, Play, Loader2, Trophy, Clock, ArrowRight } from 'lucide-react';
+import { Copy, CheckCircle2, XCircle, Users, Play, Loader2, Trophy, Clock, ArrowRight, Eye } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
 
 const DIFF_COLORS = { easy: '#55EFC4', medium: '#FDCB6E', hard: '#FF7675' };
@@ -17,6 +17,7 @@ const RoomPage = () => {
   const [players, setPlayers] = useState([]);
   const [roomMode, setRoomMode] = useState('ffa');
   const [teamScores, setTeamScores] = useState({ A: 0, B: 0 });
+  const [isSpectator, setIsSpectator] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [question, setQuestion] = useState(null);
   const [qIndex, setQIndex] = useState(0);
@@ -97,6 +98,14 @@ const RoomPage = () => {
 
   const handleMessage = (msg) => {
     switch (msg.type) {
+      case 'spectator_join':
+        setIsSpectator(true);
+        setPhase('playing');
+        setPlayers(msg.players || []);
+        if (msg.mode) setRoomMode(msg.mode);
+        if (msg.team_scores) setTeamScores(msg.team_scores);
+        break;
+
       case 'room_update':
       case 'score_update':
       case 'player_left':
@@ -342,6 +351,51 @@ const RoomPage = () => {
       </div>
     );
   }
+
+  // SPECTATOR VIEW
+  if (isSpectator) return (
+    <div className="min-h-screen pt-24 pb-12 px-4">
+      <div className="max-w-lg mx-auto">
+        <div className="glass-strong rounded-3xl p-8 animate-fade-in-up">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <Eye className="w-5 h-5" style={{ color: '#FDCB6E' }} />
+            <h1 className="font-['Nunito'] text-2xl font-black">Gledaš meč</h1>
+          </div>
+          {roomMode === 'teams' ? (
+            <div className="flex gap-4 mb-6">
+              {['A', 'B'].map(team => (
+                <div key={team} className="flex-1 rounded-2xl p-4 text-center"
+                  style={{ background: `rgba(${team === 'A' ? '138,180,248' : '85,239,196'},0.1)`, border: `1px solid rgba(${team === 'A' ? '138,180,248' : '85,239,196'},0.3)` }}>
+                  <p className="font-bold text-sm mb-1" style={{ color: team === 'A' ? '#8AB4F8' : '#55EFC4' }}>Tim {team}</p>
+                  <p className="font-['Nunito'] text-3xl font-black" style={{ color: team === 'A' ? '#8AB4F8' : '#55EFC4' }}>{teamScores[team]}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <div className="space-y-3">
+            {[...players].sort((a, b) => b.score - a.score).map((p, i) => (
+              <div key={p.user_id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                <span className="text-lg">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`}</span>
+                <span className="flex-1 font-medium">{p.username}</span>
+                {roomMode === 'teams' && p.team && (
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: p.team === 'A' ? 'rgba(138,180,248,0.2)' : 'rgba(85,239,196,0.2)', color: p.team === 'A' ? '#8AB4F8' : '#55EFC4' }}>
+                    Tim {p.team}
+                  </span>
+                )}
+                <div className="text-right">
+                  <p className="font-['Nunito'] text-xl font-black" style={{ color: 'var(--primary)' }}>{p.score}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.current_index}/{phase === 'playing' ? '?' : p.current_index} pit.</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {phase === 'finished' && (
+            <button onClick={() => window.close()} className="btn-secondary w-full mt-6">Zatvori</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   // PLAYING
   if (phase === 'playing' && question) return (
