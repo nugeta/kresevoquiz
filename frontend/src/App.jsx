@@ -11,6 +11,7 @@ import "./App.css";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import CategoriesPage from "./pages/CategoriesPage";
+import BannedPage from "./pages/BannedPage";
 
 // Lazily loaded — only fetched when navigated to
 const QuizPage = lazy(() => import("./pages/QuizPage"));
@@ -53,6 +54,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/banned" element={<BannedPage />} />
                 <Route path="/categories" element={<CategoriesPage />} />
                 <Route path="/quiz/:categoryId" element={<QuizPage />} />
                 <Route path="/results/:sessionId" element={<ResultsPage />} />
