@@ -163,7 +163,7 @@ const TournamentPage = () => {
 
             {state === 'lobby' && isHost && (
               <button onClick={() => sendMsg({ type: 'start_tournament' })}
-                disabled={playerCount < 4}
+                disabled={playerCount < 2}
                 className="btn-primary w-full flex items-center justify-center gap-2 mt-4 disabled:opacity-40">
                 <Play className="w-4 h-4" /> Pokreni turnir
               </button>
