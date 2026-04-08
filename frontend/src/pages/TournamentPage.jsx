@@ -58,14 +58,16 @@ const TournamentPage = () => {
         setBracket(msg.bracket || []);
         setCurrentRound(msg.current_round || 0);
         break;
-      case 'match_start':
+      case 'match_start': {
         setBracket(msg.bracket || []);
-        // Check if I'm in this match
         const myUsername = user?.username;
         if (msg.player1 === myUsername || msg.player2 === myUsername) {
           setMyMatchRoom(msg.room_code);
+          // Auto-open the match in a new tab
+          window.open(`/multiplayer/room/${msg.room_code}`, '_blank');
         }
         break;
+      }
       case 'match_done':
         setBracket(msg.bracket || []);
         setMyMatchRoom(null);
@@ -127,11 +129,13 @@ const TournamentPage = () => {
         {myMatchRoom && (
           <div className="glass-strong rounded-3xl p-6 mb-6 text-center animate-fade-in-up"
             style={{ border: '2px solid #FDCB6E', background: 'rgba(253,203,110,0.1)' }}>
-            <p className="text-lg font-bold mb-2">⚔️ Tvoj meč je spreman!</p>
-            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Kod sobe: <span className="font-mono font-bold">{myMatchRoom}</span></p>
+            <p className="text-lg font-bold mb-2">⚔️ Tvoj meč je otvoren u novom tabu!</p>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              Ako se tab nije otvorio, klikni ovdje:
+            </p>
             <button onClick={() => window.open(`/multiplayer/room/${myMatchRoom}`, '_blank')}
               className="btn-primary flex items-center justify-center gap-2 mx-auto">
-              <Swords className="w-5 h-5" /> Uđi u meč (novi tab)
+              <Swords className="w-5 h-5" /> Otvori meč
             </button>
           </div>
         )}
