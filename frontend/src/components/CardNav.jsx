@@ -15,7 +15,8 @@ import {
   Sun,
   Moon,
   Heart,
-  BarChart3
+  BarChart3,
+  Swords
 } from 'lucide-react';
 
 const CardNav = ({ className = '' }) => {
@@ -54,6 +55,7 @@ const CardNav = ({ className = '' }) => {
         { label: 'Kategorije', href: '/categories', icon: BookOpen },
         { label: 'Rang lista', href: '/leaderboard', icon: Trophy },
         { label: 'Moja povijest', href: '/history', icon: BarChart3 },
+        { label: 'Multiplayer', href: '/multiplayer', icon: Swords },
       ]
     },
     {
