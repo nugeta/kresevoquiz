@@ -81,7 +81,7 @@ const AdminPage = () => {
       try {
         const [catRes, questRes, statsRes, usersRes, invitesRes, regRes] = await Promise.all([
           axios.get(`${API_URL}/api/categories`, { withCredentials: true }),
-          axios.get(`${API_URL}/api/questions?page=1&limit=50`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/questions?page=1&limit=500`, { withCredentials: true }),
           axios.get(`${API_URL}/api/stats`, { withCredentials: true }),
           axios.get(`${API_URL}/api/users`, { withCredentials: true }),
           axios.get(`${API_URL}/api/invites`, { withCredentials: true }),
@@ -247,7 +247,7 @@ const AdminPage = () => {
 
   const loadQuestionPage = async (page) => {
     try {
-      const res = await axios.get(`${API_URL}/api/questions?page=${page}&limit=50`, { withCredentials: true });
+      const res = await axios.get(`${API_URL}/api/questions?page=${page}&limit=500`, { withCredentials: true });
       setQuestions(res.data.questions);
       setQuestionTotal(res.data.total);
       setQuestionPages(res.data.pages);
@@ -756,12 +756,10 @@ const AdminPage = () => {
                 <h2 className="font-['Nunito'] text-xl font-bold">Pozivnice ({invites.length})</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Registracija zahtijeva pozivnicu:</span>
-                  <button
-                    onClick={toggleInviteRequired}
-                    className={`relative w-10 h-5 rounded-full transition-colors ${inviteRequired ? 'bg-[var(--primary)]' : 'bg-gray-400'}`}
-                  >
-                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${inviteRequired ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                  </button>
+                  <label className="switch">
+                    <input type="checkbox" checked={inviteRequired} onChange={toggleInviteRequired} />
+                    <span className="slider"></span>
+                  </label>
                 </div>
               </div>
               <button onClick={() => setInviteModalOpen(true)} className="btn-primary flex items-center gap-2 !py-2 !px-4">
