@@ -60,6 +60,10 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: true };
     } catch (error) {
+      // Special case: banned user
+      if (error.response?.status === 403 && error.response?.data?.detail === 'BANNED') {
+        return { success: false, banned: true };
+      }
       return {
         success: false,
         error: formatApiErrorDetail(error.response?.data?.detail) || error.message

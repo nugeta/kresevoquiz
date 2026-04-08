@@ -78,6 +78,8 @@ const AuthPage = () => {
       }
       if (result.success) {
         navigate(from, { replace: true });
+      } else if (result.banned) {
+        navigate('/banned', { replace: true });
       } else {
         setError(result.error);
       }

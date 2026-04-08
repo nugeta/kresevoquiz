@@ -352,6 +352,18 @@ const AdminPage = () => {
     }
   };
 
+  const toggleBan = async (u) => {
+    const action = u.is_banned ? 'unban' : 'ban';
+    const msg = u.is_banned ? `Ukloniti ban za "${u.username}"?` : `Banirati "${u.username}"?`;
+    if (!window.confirm(msg)) return;
+    try {
+      await axios.put(`${API_URL}/api/users/${u.id}/${action}`, {}, { withCredentials: true });
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_banned: !u.is_banned } : x));
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Greška');
+    }
+  };
+
   const bulkImport = async () => {
     setBulkError('');
     setBulkResult(null);
@@ -709,8 +721,11 @@ const AdminPage = () => {
                           <Shield className="w-3 h-3" /> Admin
                         </span>
                       )}
-                      {u.role === 'user' && (
+                      {u.role === 'user' && !u.is_banned && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-white/30 text-[#636E72]">Korisnik</span>
+                      )}
+                      {u.is_banned && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#d63031]/20 text-[#d63031] font-bold">🔨 Baniran</span>
                       )}
                     </div>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
@@ -741,6 +756,13 @@ const AdminPage = () => {
                         title="Resetiraj rezultate"
                       >
                         <RotateCcw className="w-4 h-4 text-[#FDCB6E]" />
+                      </button>
+                      <button
+                        onClick={() => toggleBan(u)}
+                        className={`p-2 rounded-lg transition-colors ${u.is_banned ? 'hover:bg-[#55EFC4]/10' : 'hover:bg-[#d63031]/10'}`}
+                        title={u.is_banned ? 'Ukloni ban' : 'Baniraj'}
+                      >
+                        <span className="text-sm">{u.is_banned ? '✅' : '🔨'}</span>
                       </button>
                     </div>
                   )}
