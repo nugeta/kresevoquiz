@@ -93,10 +93,11 @@ const AuthPage = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 pt-20 relative overflow-hidden"
+      style={{ background: 'var(--background)' }}
       data-testid="auth-page"
     >
-      {/* Ballpit background - desktop only, hidden on mobile to prevent click blocking */}
-      <div className="hidden sm:block" style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+      {/* Ballpit background - desktop only */}
+      <div className="hidden sm:block" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
         <Ballpit
           count={60}
           gravity={0.4}
@@ -106,8 +107,6 @@ const AuthPage = () => {
           colors={[0x8AB4F8, 0x55EFC4, 0xFF9FF3, 0xFDCB6E, 0x7C3AED]}
         />
       </div>
-      {/* Mobile: simple gradient background */}
-      <div className="sm:hidden" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: 'linear-gradient(135deg, rgba(138,180,248,0.3), rgba(85,239,196,0.2), rgba(124,58,237,0.3))' }} />
 
       <div className="w-full max-w-md relative z-10">
         <Link
