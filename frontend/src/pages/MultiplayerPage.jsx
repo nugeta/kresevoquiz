@@ -180,7 +180,7 @@ const MultiplayerPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Veličina turnira</label>
                 <div className="flex gap-3">
-                  {[4, 8, 16].map(s => (
+                  {[2, 4, 8, 16].map(s => (
                     <button key={s} onClick={() => setTournamentSize(s)}
                       className="flex-1 py-3 rounded-xl font-bold transition-all"
                       style={{ background: tournamentSize === s ? 'rgba(253,203,110,0.2)' : 'rgba(255,255,255,0.05)', border: `2px solid ${tournamentSize === s ? '#FDCB6E' : 'transparent'}`, color: tournamentSize === s ? '#FDCB6E' : 'var(--text-secondary)' }}>
@@ -196,6 +196,7 @@ const MultiplayerPage = () => {
                 )}
                 <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
                   Točno {tournamentSize} igrača mora se pridružiti prije početka.
+                  {tournamentSize === 2 && ' Idealno za testiranje!'}
                 </p>
               </div>
             )}
