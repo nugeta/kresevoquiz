@@ -20,6 +20,8 @@ const AdminPage = lazy(() => import("./pages/AdminPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const HistoryPage = lazy(() => import("./pages/HistoryPage"));
 const CreditsPage = lazy(() => import("./pages/CreditsPage"));
+const MultiplayerPage = lazy(() => import("./pages/MultiplayerPage"));
+const RoomPage = lazy(() => import("./pages/RoomPage"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -58,6 +60,8 @@ function App() {
                 <Route path="/credits" element={<CreditsPage />} />
                 <Route path="/stats" element={<StatsPage />} />
                 <Route path="/history" element={<HistoryPage />} />
+                <Route path="/multiplayer" element={<MultiplayerPage />} />
+                <Route path="/multiplayer/room/:roomCode" element={<RoomPage />} />
               </Routes>
             </Suspense>
           </div>
