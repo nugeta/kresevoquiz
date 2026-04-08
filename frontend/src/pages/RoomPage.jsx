@@ -4,8 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { Copy, CheckCircle2, XCircle, Users, Play, Loader2, Trophy, Clock, ArrowRight } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
 
-const WS_URL = import.meta.env.VITE_BACKEND_URL?.replace('https://', 'wss://').replace('http://', 'ws://');
-
 const DIFF_COLORS = { easy: '#55EFC4', medium: '#FDCB6E', hard: '#FF7675' };
 const DIFF_LABELS = { easy: 'Lako', medium: 'Srednje', hard: 'Teško' };
 
@@ -41,45 +39,47 @@ const RoomPage = () => {
     }
   }, []);
 
+  const wsConnected = useRef(false);
+
   useEffect(() => {
-    // Get token from cookie — we pass it as query param for WS auth
+    if (wsConnected.current) return;
+    wsConnected.current = true;
+
     const getToken = async () => {
-      // Token is httpOnly cookie, so we need to get it via a dedicated endpoint
-      // Instead, we'll use the access_token from document.cookie if accessible
-      // Since it's httpOnly, we need a different approach: fetch a temp token
       try {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/ws-token`, {
           credentials: 'include'
         });
         if (!res.ok) { setError('Prijavi se za multiplayer'); return; }
         const { token } = await res.json();
-        connect(token);
+
+        const wsUrl = import.meta.env.VITE_BACKEND_URL
+          .replace('https://', 'wss://')
+          .replace('http://', 'ws://');
+        const socket = new WebSocket(`${wsUrl}/ws/room/${roomCode}?token=${token}`);
+        ws.current = socket;
+
+        socket.onmessage = (e) => handleMessage(JSON.parse(e.data));
+        socket.onerror = () => setError('Greška pri spajanju na sobu');
+        socket.onclose = (e) => {
+          if (e.code !== 1000) setError('Veza prekinuta');
+        };
       } catch {
         setError('Greška pri spajanju');
       }
     };
+
     getToken();
 
     return () => {
-      if (ws.current) ws.current.close();
+      if (ws.current) {
+        ws.current.close(1000, 'unmount');
+        ws.current = null;
+      }
       if (timerRef.current) clearInterval(timerRef.current);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode]);
-
-  const connect = (token) => {
-    const socket = new WebSocket(`${WS_URL}/ws/room/${roomCode}?token=${token}`);
-    ws.current = socket;
-
-    socket.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      handleMessage(msg);
-    };
-
-    socket.onerror = () => setError('Greška pri spajanju na sobu');
-    socket.onclose = () => {
-      if (phase !== 'finished') setError('Veza prekinuta');
-    };
-  };
 
   const handleMessage = (msg) => {
     switch (msg.type) {
