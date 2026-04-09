@@ -53,6 +53,8 @@ const AdminPage = () => {
   const [bulkResult, setBulkResult] = useState(null);
   const [aiTopic, setAiTopic] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiCount, setAiCount] = useState(10);
+  const [aiDiff, setAiDiff] = useState('mix');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('category');
@@ -372,7 +374,7 @@ const AdminPage = () => {
     setAiGenerating(true); setBulkError(''); setBulkResult(null);
     try {
       const res = await axios.post(`${API_URL}/api/questions/ai-generate`,
-        { topic: aiTopic, category_id: categoryId, count: 10, difficulty: difficulty || 'medium' },
+        { topic: aiTopic, category_id: categoryId, count: aiCount, difficulty: difficulty || 'medium' },
         { withCredentials: true }
       );
       setBulkJson(JSON.stringify(res.data.questions, null, 2));
@@ -1219,19 +1221,26 @@ const AdminPage = () => {
                   <select id="ai-cat" className="glass-input text-sm !py-2 !w-auto">
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
-                  <select id="ai-diff" className="glass-input text-sm !py-2 !w-auto">
+                  <select value={aiDiff} onChange={e => setAiDiff(e.target.value)} className="glass-input text-sm !py-2 !w-auto">
+                    <option value="mix">Mix težina</option>
                     <option value="easy">Lako</option>
                     <option value="medium">Srednje</option>
                     <option value="hard">Teško</option>
                   </select>
                 </div>
-                <button onClick={() => aiGenerate(
-                  document.getElementById('ai-cat')?.value,
-                  document.getElementById('ai-diff')?.value
-                )} disabled={aiGenerating || !aiTopic.trim()} className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm disabled:opacity-50">
-                  {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : '✨'}
-                  {aiGenerating ? 'Generiranje...' : 'Generiraj 10 pitanja'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-1">
+                    <label className="text-xs shrink-0" style={{ color: 'var(--text-secondary)' }}>Broj pitanja:</label>
+                    <input type="range" min={5} max={20} step={5} value={aiCount}
+                      onChange={e => setAiCount(Number(e.target.value))} className="flex-1 accent-[var(--primary)]" />
+                    <span className="text-sm font-bold w-6 text-center" style={{ color: 'var(--primary)' }}>{aiCount}</span>
+                  </div>
+                  <button onClick={() => aiGenerate(document.getElementById('ai-cat')?.value, aiDiff)}
+                    disabled={aiGenerating || !aiTopic.trim()} className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm disabled:opacity-50 shrink-0">
+                    {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : '✨'}
+                    {aiGenerating ? 'Generiranje...' : 'Generiraj'}
+                  </button>
+                </div>
               </div>
 
               <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
