@@ -1231,9 +1231,9 @@ const AdminPage = () => {
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1">
                     <label className="text-xs shrink-0" style={{ color: 'var(--text-secondary)' }}>Broj pitanja:</label>
-                    <input type="range" min={5} max={20} step={5} value={aiCount}
-                      onChange={e => setAiCount(Number(e.target.value))} className="flex-1 accent-[var(--primary)]" />
-                    <span className="text-sm font-bold w-6 text-center" style={{ color: 'var(--primary)' }}>{aiCount}</span>
+                    <input type="number" min={1} max={100} value={aiCount}
+                      onChange={e => setAiCount(Number(e.target.value))}
+                      className="glass-input text-sm !py-2 !w-20 text-center" />
                   </div>
                   <button onClick={() => aiGenerate(document.getElementById('ai-cat')?.value, aiDiff)}
                     disabled={aiGenerating || !aiTopic.trim()} className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm disabled:opacity-50 shrink-0">
