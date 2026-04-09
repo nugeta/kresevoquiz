@@ -434,13 +434,14 @@ const RoomPage = () => {
         {/* Progress */}
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Pitanje {qIndex + 1} / {qTotal}</span>
-          <div className="timer-circle w-16 h-16">
-            <svg width="64" height="64">
+          <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0 }}>
+            <svg width="64" height="64" style={{ display: 'block' }}>
               <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="5" />
               <circle cx="32" cy="32" r="28" fill="none" stroke={timerColor} strokeWidth="5" strokeLinecap="round"
-                strokeDasharray={circumference} strokeDashoffset={strokeOffset} className="progress" style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }} />
+                strokeDasharray={circumference} strokeDashoffset={strokeOffset} className="progress"
+                style={{ transform: 'rotate(-90deg)', transformOrigin: '32px 32px' }} />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span className="font-bold text-sm" style={{ color: timerColor }}>{timeLeft}</span>
             </div>
           </div>
