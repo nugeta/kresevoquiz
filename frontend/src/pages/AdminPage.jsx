@@ -51,6 +51,8 @@ const AdminPage = () => {
   const [bulkJson, setBulkJson] = useState('');
   const [bulkError, setBulkError] = useState('');
   const [bulkResult, setBulkResult] = useState(null);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('category');
@@ -362,6 +364,22 @@ const AdminPage = () => {
     } catch (err) {
       alert(err.response?.data?.detail || 'Greška');
     }
+  };
+
+  const aiGenerate = async (categoryId, difficulty) => {
+    if (!aiTopic.trim()) { setBulkError('Unesite temu za generiranje'); return; }
+    if (!categoryId) { setBulkError('Odaberi kategoriju prije generiranja'); return; }
+    setAiGenerating(true); setBulkError(''); setBulkResult(null);
+    try {
+      const res = await axios.post(`${API_URL}/api/questions/ai-generate`,
+        { topic: aiTopic, category_id: categoryId, count: 10, difficulty: difficulty || 'medium' },
+        { withCredentials: true }
+      );
+      setBulkJson(JSON.stringify(res.data.questions, null, 2));
+      setBulkResult(`AI generirao ${res.data.count} pitanja — provjeri i klikni Uvezi`);
+    } catch (err) {
+      setBulkError(err.response?.data?.detail || 'AI greška');
+    } finally { setAiGenerating(false); }
   };
 
   const bulkImport = async () => {
@@ -1192,16 +1210,64 @@ const AdminPage = () => {
   }
 ]`}</pre>
               </div>
+              {/* AI Generator */}
+              <div className="glass rounded-xl p-3 space-y-2">
+                <p className="text-sm font-semibold flex items-center gap-2">✨ AI Generiranje <span className="text-xs font-normal" style={{ color: 'var(--text-secondary)' }}>(Gemini)</span></p>
+                <div className="flex gap-2 flex-wrap">
+                  <input type="text" value={aiTopic} onChange={e => setAiTopic(e.target.value)}
+                    placeholder="Tema (npr. Drugi svjetski rat)" className="glass-input text-sm flex-1 !py-2" style={{ minWidth: '140px' }} />
+                  <select id="ai-cat" className="glass-input text-sm !py-2 !w-auto">
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <select id="ai-diff" className="glass-input text-sm !py-2 !w-auto">
+                    <option value="easy">Lako</option>
+                    <option value="medium">Srednje</option>
+                    <option value="hard">Teško</option>
+                  </select>
+                </div>
+                <button onClick={() => aiGenerate(
+                  document.getElementById('ai-cat')?.value,
+                  document.getElementById('ai-diff')?.value
+                )} disabled={aiGenerating || !aiTopic.trim()} className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm disabled:opacity-50">
+                  {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : '✨'}
+                  {aiGenerating ? 'Generiranje...' : 'Generiraj 10 pitanja'}
+                </button>
+              </div>
+
               <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
                 <p className="font-semibold mb-1">ID-evi kategorija:</p>
                 {categories.map(c => (
                   <p key={c.id}><span className="font-mono">{c.id}</span> — {c.name}</p>
                 ))}
               </div>
+
+              {/* File upload */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Uvezi JSON datoteku</label>
+                <input
+                  type="file"
+                  accept=".json"
+                  className="glass-input text-sm"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      setBulkJson(ev.target.result);
+                      setBulkError('');
+                      setBulkResult(null);
+                    };
+                    reader.readAsText(file);
+                    e.target.value = '';
+                  }}
+                />
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>ili zalijepi JSON ispod</p>
+              </div>
+
               <textarea
                 value={bulkJson}
                 onChange={e => { setBulkJson(e.target.value); setBulkError(''); setBulkResult(null); }}
-                className="glass-input font-mono text-xs min-h-[200px]"
+                className="glass-input font-mono text-xs min-h-[150px]"
                 placeholder='[{"category_id": "...", ...}]'
               />
               {bulkError && (
