@@ -73,6 +73,29 @@ const CategoriesPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+            {/* Mix card — always first */}
+            <button
+              onClick={() => { setSelected({ id: 'mix', name: '🎲 Mix', icon: '🎲', color: '#A29BFE', question_count: 999, description: 'Nasumična pitanja iz svih kategorija' }); setQuestionCount(10); }}
+              className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
+              style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(162,155,254,0.3)', boxShadow: '0 4px 24px rgba(162,155,254,0.15)' }}
+            >
+              <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #A29BFE, #6C5CE7)' }} />
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0" style={{ background: 'rgba(162,155,254,0.2)' }}>
+                    <span className="text-2xl">🎲</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-all mt-1" style={{ color: '#A29BFE' }} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Mix</h3>
+                <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                  Nasumična pitanja iz svih kategorija — iznenadi se!
+                </p>
+                <span className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: 'rgba(162,155,254,0.2)', color: '#A29BFE' }}>
+                  Sve kategorije
+                </span>
+              </div>
+            </button>
             {categories.map((category) => {
               const themeColor = category.color || '#8AB4F8';
               const emoji = isEmoji(category.icon);
@@ -122,7 +145,7 @@ const CategoriesPage = () => {
                   <span className="text-3xl">{isEmoji(selected.icon) ? selected.icon : '📚'}</span>
                   <div>
                     <h3 className="font-['Nunito'] text-xl font-bold">{selected.name}</h3>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selected.question_count} dostupnih pitanja</p>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{selected.id === 'mix' ? 'Sve kategorije' : `${selected.question_count} dostupnih pitanja`}</p>
                   </div>
                 </div>
                 <button onClick={() => setSelected(null)} className="p-2 rounded-xl hover:opacity-70 transition-opacity">
@@ -134,7 +157,7 @@ const CategoriesPage = () => {
                   <label className="text-sm font-medium">Broj pitanja</label>
                   <span className="font-['Nunito'] text-2xl font-black" style={{ color: selected.color }}>{questionCount}</span>
                 </div>
-                <input type="range" min={Math.min(5, selected.question_count)} max={Math.min(20, selected.question_count)} step={5}
+                <input type="range" min={5} max={selected.id === 'mix' ? 20 : Math.min(20, selected.question_count)} step={5}
                   value={questionCount} onChange={e => setQuestionCount(Number(e.target.value))} className="w-full accent-[var(--primary)]" />
                 <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                   {[5, 10, 15, 20].filter(n => n <= selected.question_count).map(n => <span key={n}>{n}</span>)}
