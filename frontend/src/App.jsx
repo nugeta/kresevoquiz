@@ -24,6 +24,8 @@ const CreditsPage = lazy(() => import("./pages/CreditsPage"));
 const MultiplayerPage = lazy(() => import("./pages/MultiplayerPage"));
 const RoomPage = lazy(() => import("./pages/RoomPage"));
 const TournamentPage = lazy(() => import("./pages/TournamentPage"));
+const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
+const WeeklyChallengePage = lazy(() => import("./pages/WeeklyChallengePage"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -66,6 +68,8 @@ function App() {
                 <Route path="/multiplayer" element={<MultiplayerPage />} />
                 <Route path="/multiplayer/room/:roomCode" element={<RoomPage />} />
                 <Route path="/multiplayer/tournament/:tournamentId" element={<TournamentPage />} />
+                <Route path="/achievements" element={<AchievementsPage />} />
+                <Route path="/weekly" element={<WeeklyChallengePage />} />
               </Routes>
             </Suspense>
           </div>

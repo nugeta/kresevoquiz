@@ -306,6 +306,9 @@ const QuizPage = () => {
           <h3 className="font-['Nunito'] text-xl sm:text-2xl font-bold mb-2" data-testid="question-text">
             {currentQuestion.question_text}
           </h3>
+          {currentQuestion.image_url && (
+            <img src={currentQuestion.image_url} alt="question" className="mt-3 rounded-2xl max-h-48 object-cover w-full" onError={e => e.target.style.display='none'} />
+          )}
           
           <p className="text-sm text-[#636E72]">
             {currentQuestion.points} bodova
