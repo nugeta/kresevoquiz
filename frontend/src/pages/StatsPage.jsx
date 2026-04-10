@@ -22,6 +22,7 @@ const StatsPage = () => {
   const { isAdmin, loading: authLoading } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [questionStats, setQuestionStats] = useState([]);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) navigate('/');
@@ -29,8 +30,11 @@ const StatsPage = () => {
 
   useEffect(() => {
     if (!isAdmin) return;
-    axios.get(`${API_URL}/api/stats/detailed`, { withCredentials: true })
-      .then(r => setStats(r.data))
+    Promise.all([
+      axios.get(`${API_URL}/api/stats/detailed`, { withCredentials: true }),
+      axios.get(`${API_URL}/api/stats/question-success`, { withCredentials: true })
+    ])
+      .then(([r1, r2]) => { setStats(r1.data); setQuestionStats(r2.data); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [isAdmin]);
@@ -154,6 +158,32 @@ const StatsPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Question success rate */}
+        {questionStats.length > 0 && (
+          <div className="glass-card rounded-3xl p-6 mt-6">
+            <div className="flex items-center gap-2 mb-5">
+              <HelpCircle className="w-5 h-5" style={{ color: '#FF7675' }} />
+              <h2 className="font-bold text-lg">Najtežih 20 pitanja</h2>
+              <span className="text-xs ml-auto" style={{ color: 'var(--text-secondary)' }}>po stopi točnih odgovora</span>
+            </div>
+            <div className="space-y-3">
+              {questionStats.map((q, i) => (
+                <div key={i}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="font-medium truncate flex-1 mr-4">{q.question_text}</span>
+                    <span className="shrink-0 font-bold" style={{ color: q.success_rate < 30 ? '#FF7675' : q.success_rate < 60 ? '#FDCB6E' : '#55EFC4' }}>
+                      {q.success_rate}% ({q.correct}/{q.total_attempts})
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    <div className="h-1.5 rounded-full transition-all" style={{ width: `${q.success_rate}%`, background: q.success_rate < 30 ? '#FF7675' : q.success_rate < 60 ? '#FDCB6E' : '#55EFC4' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

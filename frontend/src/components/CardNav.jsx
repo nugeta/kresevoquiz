@@ -16,7 +16,8 @@ import {
   Moon,
   Heart,
   BarChart3,
-  Swords
+  Swords,
+  Medal
 } from 'lucide-react';
 
 const CardNav = ({ className = '' }) => {
@@ -54,6 +55,7 @@ const CardNav = ({ className = '' }) => {
       links: [
         { label: 'Kategorije', href: '/categories', icon: BookOpen },
         { label: 'Rang lista', href: '/leaderboard', icon: Trophy },
+        { label: 'Tjedni izazov', href: '/weekly', icon: Medal },
         { label: 'Moja povijest', href: '/history', icon: BarChart3 },
         { label: 'Multiplayer', href: '/multiplayer', icon: Swords },
       ]
@@ -65,6 +67,7 @@ const CardNav = ({ className = '' }) => {
       links: isAuthenticated 
         ? [
             { label: `${user?.username} (${user?.total_score} bodova)`, href: '/leaderboard', icon: User },
+            { label: 'Dostignuća', href: '/achievements', icon: Medal },
             ...(isAdmin ? [
               { label: 'Admin panel', href: '/admin', icon: Settings },
               { label: 'Statistike', href: '/stats', icon: BarChart3 },

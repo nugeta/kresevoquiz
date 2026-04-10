@@ -42,7 +42,7 @@ const AdminPage = () => {
   const [questionForm, setQuestionForm] = useState({
     category_id: '', question_text: '', question_type: 'single_choice',
     options: [{ id: crypto.randomUUID(), text: '', is_correct: false }, { id: crypto.randomUUID(), text: '', is_correct: false }],
-    points: 10, time_limit: 30, difficulty: 'medium'
+    points: 10, time_limit: 30, difficulty: 'medium', image_url: null
   });
 
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -156,7 +156,8 @@ const AdminPage = () => {
         options: question.options.map(o => ({ ...o })),
         points: question.points,
         time_limit: question.time_limit,
-        difficulty: question.difficulty || 'medium'
+        difficulty: question.difficulty || 'medium',
+        image_url: question.image_url || null
       });
     } else {
       setEditingQuestion(null);
@@ -170,7 +171,8 @@ const AdminPage = () => {
         ],
         points: 10,
         time_limit: 30,
-        difficulty: 'medium'
+        difficulty: 'medium',
+        image_url: null
       });
     }
     setQuestionModalOpen(true);
@@ -1043,6 +1045,20 @@ const AdminPage = () => {
                   placeholder="Unesite pitanje..."
                   data-testid="question-text-input"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Slika (URL, opcionalno)</label>
+                <input
+                  type="url"
+                  value={questionForm.image_url || ''}
+                  onChange={e => setQuestionForm(prev => ({ ...prev, image_url: e.target.value || null }))}
+                  className="glass-input"
+                  placeholder="https://..."
+                />
+                {questionForm.image_url && (
+                  <img src={questionForm.image_url} alt="preview" className="mt-2 rounded-xl max-h-32 object-cover" onError={e => e.target.style.display='none'} />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
