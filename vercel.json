@@ -1,10 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "https://kresevoquiz.duckdns.org/api/:path*" },
-    { "source": "/ws/:path*", "destination": "https://kresevoquiz.duckdns.org/ws/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "outputDirectory": "frontend/dist",
   "buildCommand": "yarn --cwd frontend build",
-  "installCommand": "yarn --cwd frontend install"
+  "installCommand": "yarn --cwd frontend install",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

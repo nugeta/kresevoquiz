@@ -6,7 +6,7 @@ import usePageTitle from '../hooks/usePageTitle';
 import { 
   Plus, Edit2, Trash2, BookOpen, HelpCircle, Save, X, CheckCircle2,
   Loader2, AlertCircle, ChevronDown, ChevronUp, Users, Trophy, BarChart3,
-  Shield, ShieldOff, UserPlus, Crown, Link2, Copy, Download, ChevronLeft, ChevronRight, Key, RotateCcw
+  Shield, ShieldOff, UserPlus, Crown, Link2, Copy, Download, ChevronLeft, ChevronRight, Key, RotateCcw, Megaphone, MessageSquare, AlertTriangle, Pencil
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -69,6 +69,13 @@ const AdminPage = () => {
   const [inviteSaving, setInviteSaving] = useState(false);
   const [inviteRequired, setInviteRequired] = useState(true);
   const [copiedCode, setCopiedCode] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [annModalOpen, setAnnModalOpen] = useState(false);
+  const [annForm, setAnnForm] = useState({ message: '', type: 'info' });
+  const [annSaving, setAnnSaving] = useState(false);
+  const [userActionModal, setUserActionModal] = useState(null); // {user, action: 'warn'|'message'|'rename'}
+  const [userActionText, setUserActionText] = useState('');
+  const [userActionSaving, setUserActionSaving] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -83,13 +90,14 @@ const AdminPage = () => {
 
     const fetchData = async () => {
       try {
-        const [catRes, questRes, statsRes, usersRes, invitesRes, regRes] = await Promise.all([
+        const [catRes, questRes, statsRes, usersRes, invitesRes, regRes, annRes] = await Promise.all([
           axios.get(`${API_URL}/api/categories`, { withCredentials: true }),
           axios.get(`${API_URL}/api/questions?page=1&limit=500`, { withCredentials: true }),
           axios.get(`${API_URL}/api/stats`, { withCredentials: true }),
           axios.get(`${API_URL}/api/users`, { withCredentials: true }),
           axios.get(`${API_URL}/api/invites`, { withCredentials: true }),
           axios.get(`${API_URL}/api/settings/registration`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/announcements`, { withCredentials: true }),
         ]);
         setCategories(catRes.data);
         setQuestions(questRes.data.questions);
@@ -99,6 +107,7 @@ const AdminPage = () => {
         setUsers(usersRes.data);
         setInvites(invitesRes.data);
         setInviteRequired(regRes.data.invite_required);
+        setAnnouncements(annRes.data);
       } catch (err) {
         setError('Greška pri učitavanju podataka');
       } finally {
@@ -358,6 +367,43 @@ const AdminPage = () => {
     }
   };
 
+  const submitUserAction = async () => {
+    if (!userActionText.trim() || !userActionModal) return;
+    setUserActionSaving(true);
+    try {
+      const { user: u, action } = userActionModal;
+      if (action === 'rename') {
+        await axios.put(`${API_URL}/api/users/${u.id}/rename`, { username: userActionText }, { withCredentials: true });
+        setUsers(prev => prev.map(x => x.id === u.id ? { ...x, username: userActionText.toLowerCase() } : x));
+      } else if (action === 'warn') {
+        await axios.post(`${API_URL}/api/users/${u.id}/warn`, { message: userActionText }, { withCredentials: true });
+      } else if (action === 'message') {
+        await axios.post(`${API_URL}/api/users/${u.id}/message`, { message: userActionText }, { withCredentials: true });
+      }
+      setUserActionModal(null);
+      setUserActionText('');
+    } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
+    finally { setUserActionSaving(false); }
+  };
+
+  const createAnnouncement = async () => {
+    if (!annForm.message.trim()) return;
+    setAnnSaving(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/announcements`, annForm, { withCredentials: true });
+      const annRes = await axios.get(`${API_URL}/api/announcements`, { withCredentials: true });
+      setAnnouncements(annRes.data);
+      setAnnModalOpen(false);
+      setAnnForm({ message: '', type: 'info' });
+    } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
+    finally { setAnnSaving(false); }
+  };
+
+  const deleteAnnouncement = async (id) => {
+    await axios.delete(`${API_URL}/api/announcements/${id}`, { withCredentials: true });
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+  };
+
   const toggleBan = async (u) => {
     const action = u.is_banned ? 'unban' : 'ban';
     const msg = u.is_banned ? `Ukloniti ban za "${u.username}"?` : `Banirati "${u.username}"?`;
@@ -515,6 +561,10 @@ const AdminPage = () => {
             <TabsTrigger value="invites" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
               <Key className="w-4 h-4 mr-2" />
               Pozivnice
+            </TabsTrigger>
+            <TabsTrigger value="announcements" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
+              <Megaphone className="w-4 h-4 mr-2" />
+              Objave
             </TabsTrigger>
           </TabsList>
 
@@ -779,6 +829,18 @@ const AdminPage = () => {
                       >
                         <RotateCcw className="w-4 h-4 text-[#FDCB6E]" />
                       </button>
+                      <button onClick={() => { setUserActionModal({ user: u, action: 'rename' }); setUserActionText(u.username); }}
+                        className="p-2 rounded-lg hover:bg-white/10 transition-colors" title="Preimenuj">
+                        <Pencil className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+                      </button>
+                      <button onClick={() => { setUserActionModal({ user: u, action: 'warn' }); setUserActionText(''); }}
+                        className="p-2 rounded-lg hover:bg-[#FDCB6E]/10 transition-colors" title="Upozori">
+                        <AlertTriangle className="w-4 h-4 text-[#FDCB6E]" />
+                      </button>
+                      <button onClick={() => { setUserActionModal({ user: u, action: 'message' }); setUserActionText(''); }}
+                        className="p-2 rounded-lg hover:bg-[#8AB4F8]/10 transition-colors" title="Pošalji poruku">
+                        <MessageSquare className="w-4 h-4 text-[#8AB4F8]" />
+                      </button>
                       <button
                         onClick={() => toggleBan(u)}
                         className={`p-2 rounded-lg transition-colors ${u.is_banned ? 'hover:bg-[#55EFC4]/10' : 'hover:bg-[#d63031]/10'}`}
@@ -840,7 +902,65 @@ const AdminPage = () => {
               {invites.length === 0 && <p className="text-center py-8 text-sm" style={{ color: 'var(--text-secondary)' }}>Nema pozivnica. Kreiraj prvu!</p>}
             </div>
           </TabsContent>
+
+          {/* Announcements Tab */}
+          <TabsContent value="announcements">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-['Nunito'] text-xl font-bold">Objave ({announcements.length})</h2>
+              <button onClick={() => setAnnModalOpen(true)} className="btn-primary flex items-center gap-2 !py-2 !px-4">
+                <Megaphone className="w-4 h-4" /> Nova objava
+              </button>
+            </div>
+            <div className="space-y-3">
+              {announcements.map(a => (
+                <div key={a.id} className="glass-card rounded-2xl p-4 flex items-start gap-3"
+                  style={{ borderLeft: `4px solid ${a.type === 'warning' ? '#FDCB6E' : a.type === 'update' ? '#55EFC4' : '#8AB4F8'}` }}>
+                  <span className="text-xl shrink-0">{a.type === 'warning' ? '⚠️' : a.type === 'update' ? '🆕' : 'ℹ️'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{a.message}</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{new Date(a.created_at).toLocaleDateString('hr')}</p>
+                  </div>
+                  <button onClick={() => deleteAnnouncement(a.id)} className="p-1 rounded-lg hover:bg-[#d63031]/10 shrink-0">
+                    <Trash2 className="w-4 h-4 text-[#d63031]" />
+                  </button>
+                </div>
+              ))}
+              {announcements.length === 0 && <p className="text-center py-8 text-sm" style={{ color: 'var(--text-secondary)' }}>Nema aktivnih objava.</p>}
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Announcements Tab Content — added before Tabs closes */}
+
+        {/* User Action Modal */}
+        <Dialog open={!!userActionModal} onOpenChange={() => { setUserActionModal(null); setUserActionText(''); }}>
+          <DialogContent className="glass-strong">
+            <DialogHeader>
+              <DialogTitle className="font-['Nunito']">
+                {userActionModal?.action === 'rename' ? `Preimenuj "${userActionModal?.user?.username}"` :
+                 userActionModal?.action === 'warn' ? `Upozori "${userActionModal?.user?.username}"` :
+                 `Poruka za "${userActionModal?.user?.username}"`}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              {userActionModal?.action === 'rename' ? (
+                <input type="text" value={userActionText} onChange={e => setUserActionText(e.target.value)}
+                  className="glass-input" placeholder="Novo korisničko ime" />
+              ) : (
+                <textarea value={userActionText} onChange={e => setUserActionText(e.target.value)}
+                  className="glass-input min-h-[100px]"
+                  placeholder={userActionModal?.action === 'warn' ? 'Razlog upozorenja...' : 'Poruka korisniku...'} />
+              )}
+            </div>
+            <DialogFooter>
+              <button onClick={() => setUserActionModal(null)} className="btn-secondary">Odustani</button>
+              <button onClick={submitUserAction} disabled={userActionSaving || !userActionText.trim()} className="btn-primary flex items-center gap-2">
+                {userActionSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {userActionModal?.action === 'rename' ? 'Preimenuj' : userActionModal?.action === 'warn' ? 'Pošalji upozorenje' : 'Pošalji poruku'}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Create Invite Modal */}
         <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
@@ -863,6 +983,37 @@ const AdminPage = () => {
               <button onClick={createInvite} disabled={inviteSaving} className="btn-primary flex items-center gap-2">
                 {inviteSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Kreiraj
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Announcement Modal */}
+        <Dialog open={annModalOpen} onOpenChange={setAnnModalOpen}>
+          <DialogContent className="glass-strong">
+            <DialogHeader>
+              <DialogTitle className="font-['Nunito']">Nova objava</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Tip</label>
+                <select value={annForm.type} onChange={e => setAnnForm(p => ({ ...p, type: e.target.value }))} className="glass-input">
+                  <option value="info">ℹ️ Info</option>
+                  <option value="warning">⚠️ Upozorenje</option>
+                  <option value="update">🆕 Ažuriranje</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Poruka</label>
+                <textarea value={annForm.message} onChange={e => setAnnForm(p => ({ ...p, message: e.target.value }))}
+                  className="glass-input min-h-[100px]" placeholder="Poruka za sve korisnike..." />
+              </div>
+            </div>
+            <DialogFooter>
+              <button onClick={() => setAnnModalOpen(false)} className="btn-secondary">Odustani</button>
+              <button onClick={createAnnouncement} disabled={annSaving || !annForm.message.trim()} className="btn-primary flex items-center gap-2">
+                {annSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Megaphone className="w-4 h-4" />}
+                Objavi
               </button>
             </DialogFooter>
           </DialogContent>

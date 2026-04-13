@@ -50,13 +50,13 @@ const RoomPage = () => {
 
     const getToken = async () => {
       try {
-        const res = await fetch(`/api/auth/ws-token`, {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/ws-token`, {
           credentials: 'include'
         });
         if (!res.ok) { setError('Prijavi se za multiplayer'); return; }
         const { token } = await res.json();
 
-        const wsUrl = window.location.origin
+        const wsUrl = import.meta.env.VITE_BACKEND_URL
           .replace('https://', 'wss://')
           .replace('http://', 'ws://');
         const socket = new WebSocket(`${wsUrl}/ws/room/${roomCode}`);
