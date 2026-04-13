@@ -1,10 +1,11 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import CardNav from "./components/CardNav";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, Megaphone, AlertTriangle, MessageSquare } from "lucide-react";
+import axios from "axios";
 import "./App.css";
 
 // Eagerly loaded — critical path pages
@@ -33,6 +34,46 @@ const PageLoader = () => (
   </div>
 );
 
+const API_URL = import.meta.env.VITE_BACKEND_URL;
+
+const AnnouncementBanner = () => {
+  const [announcements, setAnnouncements] = useState([]);
+  const [dismissed, setDismissed] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('dismissed-ann') || '[]'); } catch { return []; }
+  });
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/announcements`).then(r => setAnnouncements(r.data)).catch(() => {});
+  }, []);
+
+  const visible = announcements.filter(a => !dismissed.includes(a.id));
+  if (!visible.length) return null;
+
+  const dismiss = (id) => {
+    const next = [...dismissed, id];
+    setDismissed(next);
+    sessionStorage.setItem('dismissed-ann', JSON.stringify(next));
+  };
+
+  const colors = { info: '#8AB4F8', warning: '#FDCB6E', update: '#55EFC4' };
+  const icons = { info: 'ℹ️', warning: '⚠️', update: '🆕' };
+
+  return (
+    <div className="fixed top-16 left-0 right-0 z-40 px-4 space-y-2 pointer-events-none" style={{ maxWidth: '600px', margin: '0 auto' }}>
+      {visible.map(a => (
+        <div key={a.id} className="glass-strong rounded-2xl px-4 py-3 flex items-center gap-3 pointer-events-auto animate-fade-in"
+          style={{ border: `1px solid ${colors[a.type] || '#8AB4F8'}40` }}>
+          <span>{icons[a.type] || 'ℹ️'}</span>
+          <span className="flex-1 text-sm font-medium">{a.message}</span>
+          <button onClick={() => dismiss(a.id)} className="shrink-0 hover:opacity-70 transition-opacity">
+            <X className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 function App() {
   return (
     <ThemeProvider>
@@ -40,6 +81,7 @@ function App() {
         <BrowserRouter>
           <div className="App min-h-screen transition-colors duration-300" style={{ background: 'var(--background)' }}>
             <CardNav />
+            <AnnouncementBanner />
             <Toaster
               position="top-center"
               toastOptions={{

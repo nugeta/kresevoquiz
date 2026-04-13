@@ -31,10 +31,10 @@ const TournamentPage = () => {
 
     const connect = async () => {
       try {
-        const res = await fetch(`/api/auth/ws-token`, { credentials: 'include' });
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/ws-token`, { credentials: 'include' });
         if (!res.ok) { setError('Prijavi se'); return; }
         const { token } = await res.json();
-        const wsUrl = window.location.origin.replace('https://', 'wss://').replace('http://', 'ws://');
+        const wsUrl = import.meta.env.VITE_BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://');
         const socket = new WebSocket(`${wsUrl}/ws/tournament/${tournamentId}`);
         ws.current = socket;
         socket.onopen = () => socket.send(JSON.stringify({ type: 'auth', token }));
