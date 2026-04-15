@@ -57,6 +57,7 @@ const AdminPage = () => {
   const [aiDiff, setAiDiff] = useState('mix');
   const [assessResult, setAssessResult] = useState(null);
   const [assessing, setAssessing] = useState(false);
+  const [assessPrompt, setAssessPrompt] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('category');
@@ -423,7 +424,8 @@ const AdminPage = () => {
     setAssessing(true); setAssessResult(null);
     try {
       const res = await axios.post(`${API_URL}/api/questions/assess`,
-        { category_id: categoryId || null }, { withCredentials: true });
+        { category_id: categoryId || null, custom_prompt: assessPrompt },
+        { withCredentials: true });
       setAssessResult(res.data);
     } catch (err) { alert(err.response?.data?.detail || 'AI greška'); }
     finally { setAssessing(false); }
@@ -782,7 +784,18 @@ const AdminPage = () => {
               </div>
             )}
 
-            {/* AI Assessor Results */}
+            {/* AI Assessor Prompt + Results */}
+            <div className="mt-4 space-y-3">
+              <div className="flex gap-2">
+                <input type="text" value={assessPrompt} onChange={e => setAssessPrompt(e.target.value)}
+                  placeholder="Dodatne upute za AI (opcionalno, npr. 'provjeri jesu li odgovori na bosanskom')"
+                  className="glass-input text-sm flex-1 !py-2" />
+                <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null)}
+                  disabled={assessing} className="btn-secondary flex items-center gap-2 !py-2 !px-3 disabled:opacity-50 shrink-0">
+                  {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔍'} Analiziraj
+                </button>
+              </div>
+
             {assessResult && (
               <div className="mt-6 glass-card rounded-3xl p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -805,6 +818,7 @@ const AdminPage = () => {
                 )}
               </div>
             )}
+            </div>
           </TabsContent>
 
           {/* Users Tab */}

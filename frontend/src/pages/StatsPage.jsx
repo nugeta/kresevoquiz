@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Trophy, Users, BookOpen, HelpCircle, BarChart3, Clock, Star, Zap, Loader2 } from 'lucide-react';
+import { Trophy, Users, BookOpen, HelpCircle, BarChart3, Clock, Star, Zap, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 import usePageTitle from '../hooks/usePageTitle';
 
@@ -23,6 +23,9 @@ const StatsPage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [questionStats, setQuestionStats] = useState([]);
+  const [expandedCategory, setExpandedCategory] = useState(null);
+  const [categoryQStats, setCategoryQStats] = useState({});
+  const [loadingCat, setLoadingCat] = useState(null);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) navigate('/');
@@ -38,6 +41,19 @@ const StatsPage = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [isAdmin]);
+
+  const toggleCategory = async (catName, catId) => {
+    if (expandedCategory === catName) { setExpandedCategory(null); return; }
+    setExpandedCategory(catName);
+    if (!categoryQStats[catId] && catId) {
+      setLoadingCat(catId);
+      try {
+        const res = await axios.get(`${API_URL}/api/stats/category/${catId}`, { withCredentials: true });
+        setCategoryQStats(prev => ({ ...prev, [catId]: res.data }));
+      } catch {}
+      finally { setLoadingCat(null); }
+    }
+  };
 
   if (authLoading || loading) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
@@ -120,15 +136,50 @@ const StatsPage = () => {
               {stats.category_stats.map((cat) => {
                 const max = Math.max(...stats.category_stats.map(c => c.quizzes_played), 1);
                 const pct = Math.round((cat.quizzes_played / max) * 100);
+                const catId = cat.id;
+                const isExpanded = expandedCategory === cat.name;
+                const qStats = catId ? categoryQStats[catId] : null;
                 return (
                   <div key={cat.name}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">{cat.name}</span>
-                      <span style={{ color: 'var(--text-secondary)' }}>{cat.quizzes_played} odigranih · {cat.question_count} pitanja</span>
-                    </div>
-                    <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                      <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: 'var(--primary)' }} />
-                    </div>
+                    <button className="w-full text-left" onClick={() => toggleCategory(cat.name, catId)}>
+                      <div className="flex justify-between text-sm mb-1 items-center">
+                        <span className="font-medium flex items-center gap-1">
+                          {cat.name}
+                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        </span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{cat.quizzes_played} odigranih · {cat.question_count} pitanja</span>
+                      </div>
+                      <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                        <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: 'var(--primary)' }} />
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-3 ml-2 space-y-2 pb-2">
+                        {loadingCat === catId ? (
+                          <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                            <Loader2 className="w-3 h-3 animate-spin" /> Učitavanje...
+                          </div>
+                        ) : !qStats || qStats.length === 0 ? (
+                          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Nema podataka o pitanjima</p>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-3 gap-2 text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>
+                              <span>Pitanje</span><span className="text-center">Pokušaji</span><span className="text-right">Točnost</span>
+                            </div>
+                            {qStats.slice(0, 10).map((q, i) => (
+                              <div key={i} className="grid grid-cols-3 gap-2 text-xs p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                <span className="truncate" title={q.question_text}>{q.question_text}</span>
+                                <span className="text-center" style={{ color: 'var(--text-secondary)' }}>{q.total_attempts}</span>
+                                <span className="text-right font-bold" style={{ color: q.success_rate >= 70 ? '#55EFC4' : q.success_rate >= 40 ? '#FDCB6E' : '#FF7675' }}>
+                                  {q.success_rate}%
+                                </span>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
