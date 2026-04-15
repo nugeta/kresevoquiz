@@ -16,14 +16,18 @@ const CategoriesPage = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selected, setSelected] = useState(null);
-  const [questionCount, setQuestionCount] = useState(10);
+  const [expandedParent, setExpandedParent] = useState(null);
+
+  // Separate parents and children
+  const parents = categories.filter(c => !c.parent_id);
+  const getChildren = (parentId) => categories.filter(c => c.parent_id === parentId && c.question_count > 0);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/categories`)
-      .then(r => setCategories(r.data))
+      .then(r => {
+        const all = r.data.filter(c => c.question_count > 0 || !c.parent_id);
+        setCategories(all);
+      })
       .catch(() => setError('Greška pri učitavanju kategorija'))
       .finally(() => setLoading(false));
   }, []);
@@ -96,40 +100,63 @@ const CategoriesPage = () => {
                 </span>
               </div>
             </button>
-            {categories.map((category) => {
+            {parents.map((category) => {
               const themeColor = category.color || '#8AB4F8';
               const emoji = isEmoji(category.icon);
               const IconComponent = !emoji ? (iconMap[category.icon] || BookOpen) : null;
+              const children = getChildren(category.id);
+              const hasChildren = children.length > 0;
+              const isExpanded = expandedParent === category.id;
+              const totalQuestions = hasChildren ? children.reduce((sum, c) => sum + c.question_count, 0) : category.question_count;
 
               return (
-                <button
-                  key={category.id}
-                  onClick={() => { setSelected(category); setQuestionCount(Math.min(10, category.question_count)); }}
-                  disabled={category.question_count === 0}
-                  className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                  style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: `1px solid ${themeColor}30`, boxShadow: `0 4px 24px ${themeColor}15` }}
-                  data-testid={`category-card-${category.id}`}
-                >
-                  <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${themeColor}, ${themeColor}88)` }} />
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0" style={{ background: `${themeColor}20` }}>
-                        {emoji ? <span className="text-2xl">{category.icon}</span> : <IconComponent className="w-7 h-7" style={{ color: themeColor }} />}
+                <div key={category.id} className="flex flex-col gap-2">
+                  <button
+                    onClick={() => {
+                      if (hasChildren) { setExpandedParent(isExpanded ? null : category.id); }
+                      else { setSelected(category); setQuestionCount(Math.min(10, category.question_count)); }
+                    }}
+                    disabled={!hasChildren && category.question_count === 0}
+                    className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                    style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: `1px solid ${themeColor}30`, boxShadow: `0 4px 24px ${themeColor}15` }}
+                    data-testid={`category-card-${category.id}`}
+                  >
+                    <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${themeColor}, ${themeColor}88)` }} />
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0" style={{ background: `${themeColor}20` }}>
+                          {emoji ? <span className="text-2xl">{category.icon}</span> : <IconComponent className="w-7 h-7" style={{ color: themeColor }} />}
+                        </div>
+                        {hasChildren ? <span className="text-lg mt-1">{isExpanded ? '▲' : '▼'}</span> : <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-all mt-1" style={{ color: themeColor }} />}
                       </div>
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-all mt-1" style={{ color: themeColor }} />
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">{category.name}</h3>
-                    <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                      {category.description || 'Testiraj svoje znanje iz ove kategorije'}
-                    </p>
-                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold mb-2">{category.name}</h3>
+                      <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{category.description || 'Testiraj svoje znanje iz ove kategorije'}</p>
                       <span className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: `${themeColor}20`, color: themeColor }}>
-                        {category.question_count === 0 ? 'Nema pitanja' : `${category.question_count} pitanja`}
+                        {hasChildren ? `${children.length} tema · ${totalQuestions} pitanja` : category.question_count === 0 ? 'Nema pitanja' : `${category.question_count} pitanja`}
                       </span>
-                      <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: themeColor }}>Igraj →</span>
                     </div>
-                  </div>
-                </button>
+                  </button>
+
+                  {hasChildren && isExpanded && (
+                    <div className="flex flex-col gap-2 pl-4 animate-fade-in">
+                      <button onClick={() => { setSelected({ ...category, question_count: totalQuestions }); setQuestionCount(Math.min(10, totalQuestions)); }}
+                        className="rounded-2xl p-3 text-left transition-all hover:scale-[1.02] flex items-center gap-3"
+                        style={{ background: `${themeColor}15`, border: `1px solid ${themeColor}30` }}>
+                        <span className="text-lg">📚</span>
+                        <div><p className="font-semibold text-sm">Sve — {category.name}</p><p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{totalQuestions} pitanja</p></div>
+                      </button>
+                      {children.map(child => (
+                        <button key={child.id} onClick={() => { setSelected(child); setQuestionCount(Math.min(10, child.question_count)); }}
+                          className="rounded-2xl p-3 text-left transition-all hover:scale-[1.02] flex items-center gap-3"
+                          style={{ background: isDark ? 'rgba(20,20,35,0.5)' : 'rgba(255,255,255,0.4)', border: `1px solid ${themeColor}20` }}>
+                          <span className="text-lg">{isEmoji(child.icon) ? child.icon : '📖'}</span>
+                          <div><p className="font-semibold text-sm">{child.name}</p><p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{child.question_count} pitanja</p></div>
+                          <ArrowRight className="w-4 h-4 ml-auto shrink-0" style={{ color: themeColor }} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

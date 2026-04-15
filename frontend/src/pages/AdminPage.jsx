@@ -38,7 +38,7 @@ const AdminPage = () => {
 
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
-  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: 'BookOpen', color: '#8AB4F8' });
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: 'BookOpen', color: '#8AB4F8', parent_id: null });
   const [questionForm, setQuestionForm] = useState({
     category_id: '', question_text: '', question_type: 'single_choice',
     options: [{ id: crypto.randomUUID(), text: '', is_correct: false }, { id: crypto.randomUUID(), text: '', is_correct: false }],
@@ -55,6 +55,8 @@ const AdminPage = () => {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiCount, setAiCount] = useState(10);
   const [aiDiff, setAiDiff] = useState('mix');
+  const [assessResult, setAssessResult] = useState(null);
+  const [assessing, setAssessing] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('category');
@@ -65,7 +67,7 @@ const AdminPage = () => {
   const [userError, setUserError] = useState('');
   const [invites, setInvites] = useState([]);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ max_uses: 1, note: '' });
+  const [inviteForm, setInviteForm] = useState({ max_uses: 1, note: '', group: '' });
   const [inviteSaving, setInviteSaving] = useState(false);
   const [inviteRequired, setInviteRequired] = useState(true);
   const [copiedCode, setCopiedCode] = useState(null);
@@ -126,11 +128,12 @@ const AdminPage = () => {
         name: category.name,
         description: category.description,
         icon: category.icon,
-        color: category.color
+        color: category.color,
+        parent_id: category.parent_id || null
       });
     } else {
       setEditingCategory(null);
-      setCategoryForm({ name: '', description: '', icon: 'BookOpen', color: '#8AB4F8' });
+      setCategoryForm({ name: '', description: '', icon: 'BookOpen', color: '#8AB4F8', parent_id: null });
     }
     setCategoryModalOpen(true);
   };
@@ -288,7 +291,7 @@ const AdminPage = () => {
       const invRes = await axios.get(`${API_URL}/api/invites`, { withCredentials: true });
       setInvites(invRes.data);
       setInviteModalOpen(false);
-      setInviteForm({ max_uses: 1, note: '' });
+      setInviteForm({ max_uses: 1, note: '', group: '' });
     } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
     finally { setInviteSaving(false); }
   };
@@ -414,6 +417,16 @@ const AdminPage = () => {
     } catch (err) {
       alert(err.response?.data?.detail || 'Greška');
     }
+  };
+
+  const assessQuestions = async (categoryId) => {
+    setAssessing(true); setAssessResult(null);
+    try {
+      const res = await axios.post(`${API_URL}/api/questions/assess`,
+        { category_id: categoryId || null }, { withCredentials: true });
+      setAssessResult(res.data);
+    } catch (err) { alert(err.response?.data?.detail || 'AI greška'); }
+    finally { setAssessing(false); }
   };
 
   const aiGenerate = async (categoryId, difficulty) => {
@@ -672,6 +685,11 @@ const AdminPage = () => {
                 <button onClick={exportQuestions} className="btn-secondary flex items-center gap-2 !py-2 !px-3">
                   <Download className="w-4 h-4" /> Export
                 </button>
+                <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null)}
+                  disabled={assessing} className="btn-secondary flex items-center gap-2 !py-2 !px-3 disabled:opacity-50"
+                  title="AI analiza pitanja">
+                  {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔍'} AI Analiza
+                </button>
                 <button onClick={() => { setBulkModalOpen(true); setBulkError(''); setBulkResult(null); }} className="btn-secondary flex items-center gap-2 !py-2 !px-4">
                   <Plus className="w-4 h-4" /> Bulk Uvoz
                 </button>
@@ -761,6 +779,30 @@ const AdminPage = () => {
                 <button onClick={() => loadQuestionPage(questionPage + 1)} disabled={questionPage === questionPages} className="p-2 rounded-lg glass disabled:opacity-40">
                   <ChevronRight className="w-4 h-4" />
                 </button>
+              </div>
+            )}
+
+            {/* AI Assessor Results */}
+            {assessResult && (
+              <div className="mt-6 glass-card rounded-3xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold">🔍 AI Analiza — {assessResult.issues_found} problema od {assessResult.total_analyzed} pitanja</h3>
+                  <button onClick={() => setAssessResult(null)} className="text-xs hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>Zatvori</button>
+                </div>
+                {assessResult.issues.length === 0 ? (
+                  <p className="text-sm text-center py-4" style={{ color: '#55EFC4' }}>✅ Sva pitanja izgledaju dobro!</p>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {assessResult.issues.map((issue, i) => (
+                      <div key={i} className="p-3 rounded-xl" style={{ background: issue.severity === 'high' ? 'rgba(214,48,49,0.1)' : issue.severity === 'medium' ? 'rgba(253,203,110,0.1)' : 'rgba(255,255,255,0.05)', borderLeft: `3px solid ${issue.severity === 'high' ? '#d63031' : issue.severity === 'medium' ? '#FDCB6E' : '#8AB4F8'}` }}>
+                        <p className="font-medium text-sm mb-1">{issue.question_text}</p>
+                        <ul className="space-y-0.5">
+                          {issue.issues.map((iss, j) => <li key={j} className="text-xs" style={{ color: 'var(--text-secondary)' }}>• {iss}</li>)}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
@@ -880,6 +922,7 @@ const AdminPage = () => {
                       <span className="font-mono font-bold tracking-widest text-lg" style={{ color: 'var(--primary)' }}>{inv.code}</span>
                       {!inv.active && <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Neaktivan</span>}
                       {inv.note && <span className="text-xs px-2 py-0.5 rounded-full glass">{inv.note}</span>}
+                      {inv.group && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(85,239,196,0.2)', color: '#55EFC4' }}>👥 {inv.group}</span>}
                     </div>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                       {inv.uses}/{inv.max_uses} iskorišteno
@@ -972,6 +1015,11 @@ const AdminPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Maks. broj korištenja</label>
                 <input type="number" min="1" max="100" value={inviteForm.max_uses} onChange={e => setInviteForm(p => ({ ...p, max_uses: parseInt(e.target.value) }))} className="glass-input" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Školska grupa (opcionalno)</label>
+                <input type="text" value={inviteForm.group} onChange={e => setInviteForm(p => ({ ...p, group: e.target.value }))} className="glass-input" placeholder="npr. 3B, Maturanti 2026" />
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Korisnici koji se registriraju ovim kodom bit će dodani u ovu grupu.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Napomena (opcionalno)</label>
@@ -1098,6 +1146,16 @@ const AdminPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Naziv</label>
                 <input type="text" value={categoryForm.name} onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))} className="glass-input" placeholder="npr. Matematika" data-testid="category-name-input" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Nadkategorija (opcionalno)</label>
+                <select value={categoryForm.parent_id || ''} onChange={e => setCategoryForm(prev => ({ ...prev, parent_id: e.target.value || null }))} className="glass-input">
+                  <option value="">Nema (glavna kategorija)</option>
+                  {categories.filter(c => !c.parent_id && c.id !== editingCategory?.id).map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Postavi ovo za teme unutar kategorije (npr. WW1 unutar Historije)</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Opis</label>

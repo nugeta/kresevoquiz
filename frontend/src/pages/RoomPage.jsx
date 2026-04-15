@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Copy, CheckCircle2, XCircle, Users, Play, Loader2, Trophy, Clock, ArrowRight, Eye } from 'lucide-react';
+import { Copy, CheckCircle2, XCircle, Users, Play, Loader2, Trophy, Clock, ArrowRight, Eye, Bot } from 'lucide-react';
+import axios from 'axios';
 import usePageTitle from '../hooks/usePageTitle';
 
 const DIFF_COLORS = { easy: '#55EFC4', medium: '#FDCB6E', hard: '#FF7675' };
@@ -11,6 +12,7 @@ const RoomPage = () => {
   usePageTitle('Multiplayer soba');
   const { roomCode } = useParams();
   const { user } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const [phase, setPhase] = useState('lobby');
@@ -199,7 +201,11 @@ const RoomPage = () => {
     return '';
   };
 
-  const copyCode = () => {
+  const addBot = async () => {
+    try {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/${roomCode}/add-bot`, {}, { withCredentials: true });
+    } catch (e) { alert(e.response?.data?.detail || 'Greška'); }
+  };
     navigator.clipboard.writeText(roomCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -278,6 +284,11 @@ const RoomPage = () => {
             <button onClick={() => sendMsg({ type: 'start_game' })} disabled={players.length < 2}
               className="btn-primary w-full flex items-center justify-center gap-2 !py-4 disabled:opacity-40">
               <Play className="w-5 h-5" /> Pokreni igru
+            </button>
+          )}
+          {isAdmin && phase === 'lobby' && (
+            <button onClick={addBot} className="btn-secondary w-full flex items-center justify-center gap-2 mt-2 text-sm">
+              <Bot className="w-4 h-4" /> Dodaj test bota
             </button>
           )}
           {!isHost && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Čekanje da host pokrene igru...</p>}
