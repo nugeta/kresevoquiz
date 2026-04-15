@@ -25,10 +25,32 @@ export const AuthProvider = ({ children }) => {
       if (response.data.authenticated) {
         setUser(response.data);
       } else {
-        setUser(false);
+        // Try to refresh the token
+        try {
+          await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
+          const retry = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+          if (retry.data.authenticated) {
+            setUser(retry.data);
+          } else {
+            setUser(false);
+          }
+        } catch {
+          setUser(false);
+        }
       }
     } catch (error) {
-      setUser(false);
+      if (error.response?.status === 401) {
+        // Try refresh
+        try {
+          await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
+          const retry = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+          setUser(retry.data.authenticated ? retry.data : false);
+        } catch {
+          setUser(false);
+        }
+      } else {
+        setUser(false);
+      }
     } finally {
       setLoading(false);
     }
