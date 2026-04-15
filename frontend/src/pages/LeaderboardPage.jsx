@@ -22,11 +22,16 @@ const LeaderboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [timeframe, setTimeframe] = useState('all');
+  const [tab, setTab] = useState('individual');
+  const [groupLeaderboard, setGroupLeaderboard] = useState([]);
 
   useEffect(() => {
     setLoading(true);
-    axios.get(`${API_URL}/api/leaderboard?timeframe=${timeframe}`)
-      .then(r => setLeaderboard(r.data))
+    Promise.all([
+      axios.get(`${API_URL}/api/leaderboard?timeframe=${timeframe}`),
+      axios.get(`${API_URL}/api/leaderboard/groups`)
+    ])
+      .then(([r, g]) => { setLeaderboard(r.data); setGroupLeaderboard(g.data); })
       .catch(() => setError('Greška pri učitavanju rang liste'))
       .finally(() => setLoading(false));
   }, [timeframe]);
@@ -100,11 +105,25 @@ const LeaderboardPage = () => {
           <p className="text-[#636E72] max-w-xl mx-auto mb-4">
             Najbolji igrači našeg kviza. Prijavi se i osvoji svoje mjesto!
           </p>
-          <select value={timeframe} onChange={e => setTimeframe(e.target.value)} className="glass-input !w-auto !py-2 !px-4 text-sm mx-auto">
-            <option value="all">Svo vrijeme</option>
-            <option value="monthly">Ovaj mjesec</option>
-            <option value="weekly">Ovaj tjedan</option>
-          </select>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <div className="flex rounded-xl p-1 glass">
+              <button onClick={() => setTab('individual')} className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                style={{ background: tab === 'individual' ? 'var(--surface-solid)' : 'transparent', color: tab === 'individual' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                👤 Individualno
+              </button>
+              <button onClick={() => setTab('groups')} className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                style={{ background: tab === 'groups' ? 'var(--surface-solid)' : 'transparent', color: tab === 'groups' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                👥 Grupe
+              </button>
+            </div>
+            {tab === 'individual' && (
+              <select value={timeframe} onChange={e => setTimeframe(e.target.value)} className="glass-input !w-auto !py-2 !px-4 text-sm">
+                <option value="all">Svo vrijeme</option>
+                <option value="monthly">Ovaj mjesec</option>
+                <option value="weekly">Ovaj tjedan</option>
+              </select>
+            )}
+          </div>
         </div>
 
         {/* Current User Stats (if authenticated) */}
@@ -129,7 +148,29 @@ const LeaderboardPage = () => {
         )}
 
         {/* Leaderboard */}
-        {leaderboard.length === 0 ? (
+        {tab === 'groups' ? (
+          <div className="space-y-3 stagger-children">
+            {groupLeaderboard.length === 0 ? (
+              <div className="glass-card rounded-3xl p-12 text-center">
+                <p className="text-[#636E72]">Nema podataka o grupama. Dodaj grupe u admin panelu.</p>
+              </div>
+            ) : groupLeaderboard.map((g, i) => (
+              <div key={g.group} className={`leaderboard-item rounded-2xl p-4 sm:p-5 flex items-center gap-4 ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}`}>
+                <div className="w-12 h-12 rounded-xl bg-white/50 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${g.rank}`}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-['Nunito'] text-lg font-bold">👥 {g.group}</h3>
+                  <p className="text-sm text-[#636E72]">{g.members} članova · {g.avg_score} prosj. bodova</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-['Nunito'] text-2xl font-bold text-[#8AB4F8]">{g.total_score}</p>
+                  <p className="text-xs text-[#636E72]">ukupno</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : leaderboard.length === 0 ? (
           <div className="glass-card rounded-3xl p-12 text-center" data-testid="empty-leaderboard">
             <Star className="w-12 h-12 text-[#636E72] mx-auto mb-4" />
             <h3 className="font-['Nunito'] text-xl font-bold mb-2">Rang lista je prazna</h3>
@@ -187,7 +228,7 @@ const LeaderboardPage = () => {
               );
             })}
           </div>
-        )}
+        ) /* end individual tab */}
 
         {/* Login Prompt */}
         {!isAuthenticated && leaderboard.length > 0 && (
