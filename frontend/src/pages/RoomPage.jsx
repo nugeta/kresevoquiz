@@ -206,6 +206,8 @@ const RoomPage = () => {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/${roomCode}/add-bot`, {}, { withCredentials: true });
     } catch (e) { alert(e.response?.data?.detail || 'Greška'); }
   };
+
+  const copyCode = () => {
     navigator.clipboard.writeText(roomCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
