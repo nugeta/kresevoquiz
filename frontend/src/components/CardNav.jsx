@@ -64,6 +64,7 @@ const CardNav = ({ className = '' }) => {
       links: [
         { label: 'Početna stranica', href: '/', icon: Home },
         { label: 'O kvizu', href: '/#features', icon: BookOpen },
+        { label: 'Grupe', href: '/groups', icon: Users },
         { label: 'Zahvale', href: '/credits', icon: Heart },
       ]
     },
@@ -77,7 +78,6 @@ const CardNav = ({ className = '' }) => {
         { label: 'Tjedni izazov', href: '/weekly', icon: Medal },
         { label: 'Moja povijest', href: '/history', icon: BarChart3 },
         { label: 'Multiplayer', href: '/multiplayer', icon: Swords },
-        { label: 'Grupe', href: '/groups', icon: Users },
       ]
     },
     {
