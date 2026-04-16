@@ -29,6 +29,7 @@ const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
 const WeeklyChallengePage = lazy(() => import("./pages/WeeklyChallengePage"));
 const InboxPage = lazy(() => import("./pages/InboxPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const GroupsPage = lazy(() => import("./pages/GroupsPage"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -116,6 +117,8 @@ function App() {
                 <Route path="/weekly" element={<WeeklyChallengePage />} />
                 <Route path="/inbox" element={<InboxPage />} />
                 <Route path="/profile/:username" element={<ProfilePage />} />
+                <Route path="/groups" element={<GroupsPage />} />
+                <Route path="/groups/:groupName" element={<GroupsPage />} />
               </Routes>
             </Suspense>
           </div>

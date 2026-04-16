@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Copy, CheckCircle2, XCircle, Users, Play, Loader2, Trophy, Clock, ArrowRight, Eye, Bot } from 'lucide-react';
+import { Copy, CheckCircle2, XCircle, Users, Play, Loader2, Trophy, Clock, ArrowRight, Eye, Bot, UserPlus, X } from 'lucide-react';
 import axios from 'axios';
 import usePageTitle from '../hooks/usePageTitle';
 
@@ -213,6 +213,24 @@ const RoomPage = () => {
     } catch (e) { alert(e.response?.data?.detail || 'Greška'); }
   };
 
+  const [inviteUsername, setInviteUsername] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteResult, setInviteResult] = useState('');
+  const [showInvite, setShowInvite] = useState(false);
+
+  const sendInvite = async () => {
+    if (!inviteUsername.trim()) return;
+    setInviting(true); setInviteResult('');
+    try {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/${roomCode}/invite`,
+        { username: inviteUsername.trim() }, { withCredentials: true });
+      setInviteResult(`✓ Pozivnica poslana korisniku "${inviteUsername.trim()}"`);
+      setInviteUsername('');
+    } catch (e) {
+      setInviteResult(`✗ ${e.response?.data?.detail || 'Greška'}`);
+    } finally { setInviting(false); }
+  };
+
   const copyCode = () => {
     navigator.clipboard.writeText(roomCode);
     setCopied(true);
@@ -301,6 +319,40 @@ const RoomPage = () => {
             <button onClick={addBot} className="btn-secondary w-full flex items-center justify-center gap-2 mt-2 text-sm">
               <Bot className="w-4 h-4" /> Dodaj test bota
             </button>
+          )}
+          {/* Invite a user */}
+          {phase === 'lobby' && (
+            <div className="mt-2">
+              {!showInvite ? (
+                <button onClick={() => setShowInvite(true)}
+                  className="btn-secondary w-full flex items-center justify-center gap-2 text-sm">
+                  <UserPlus className="w-4 h-4" /> Pozovi igrača
+                </button>
+              ) : (
+                <div className="glass rounded-2xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Pozovi korisnika</p>
+                    <button onClick={() => { setShowInvite(false); setInviteResult(''); }} className="hover:opacity-70">
+                      <X className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input type="text" value={inviteUsername} onChange={e => setInviteUsername(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && sendInvite()}
+                      placeholder="Korisničko ime..." className="glass-input !py-2 text-sm flex-1" />
+                    <button onClick={sendInvite} disabled={inviting || !inviteUsername.trim()}
+                      className="btn-primary !py-2 !px-3 text-sm disabled:opacity-50">
+                      {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Pošalji'}
+                    </button>
+                  </div>
+                  {inviteResult && (
+                    <p className="text-xs" style={{ color: inviteResult.startsWith('✓') ? '#55EFC4' : 'var(--error)' }}>
+                      {inviteResult}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
           {!isHost && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Čekanje da host pokrene igru...</p>}
         </div>
