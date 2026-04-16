@@ -105,11 +105,11 @@ const MultiplayerPage = () => {
     <div className="min-h-screen pt-24 pb-12 px-4">
       {/* Adblocker notice */}
       {showAdblockNotice && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 animate-fade-in-up">
+        <div className="max-w-2xl mx-auto mb-4 animate-fade-in-up">
           <div className="glass-strong rounded-2xl px-4 py-3 flex items-start gap-3"
             style={{ border: '1px solid rgba(253,203,110,0.4)', background: 'rgba(253,203,110,0.08)' }}>
             <span className="text-lg shrink-0">⚠️</span>
-            <p className="text-sm flex-1" style={{ color: 'var(--text-primary)' }}>
+            <p className="text-sm flex-1 text-center" style={{ color: 'var(--text-primary)' }}>
               Multiplayer ne radi? Isključi <strong>adblocker</strong> (npr. Brave Shields) za ovu stranicu — blokira WebSocket veze.
             </p>
             <button onClick={() => { setShowAdblockNotice(false); sessionStorage.setItem('mp-adblock-dismissed', '1'); }}
