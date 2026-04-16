@@ -22,6 +22,7 @@ const TournamentPage = () => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [myMatchRoom, setMyMatchRoom] = useState(null);
+  const [isSpectator, setIsSpectator] = useState(false);
 
   const ws = useRef(null);
   const wsConnected = useRef(false);
@@ -72,6 +73,7 @@ const TournamentPage = () => {
         setSize(msg.size);
         setBracket(msg.bracket || []);
         setCurrentRound(msg.current_round || 0);
+        if (msg.is_spectator) setIsSpectator(true);
         break;
       case 'match_start': {
         setBracket(msg.bracket || []);
@@ -133,6 +135,12 @@ const TournamentPage = () => {
         <div className="text-center mb-8 animate-fade-in-up">
           <div className="text-4xl mb-2">🏆</div>
           <h1 className="font-['Nunito'] text-3xl font-black mb-1">Turnir</h1>
+          {isSpectator && (
+            <span className="inline-flex items-center gap-1 text-sm px-3 py-1 rounded-full mb-2"
+              style={{ background: 'rgba(253,203,110,0.15)', color: '#FDCB6E', border: '1px solid rgba(253,203,110,0.3)' }}>
+              <Eye className="w-3.5 h-3.5" /> Gledalac
+            </span>
+          )}
           <button onClick={copyCode} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl mt-2 transition-all hover:scale-105"
             style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
             <span className="font-mono font-bold tracking-widest" style={{ color: 'var(--primary)' }}>{tournamentId}</span>
@@ -161,10 +169,13 @@ const TournamentPage = () => {
             <h2 className="font-bold mb-4">Igrači ({playerCount}/{size})</h2>
             <div className="space-y-2">
               {players.map((p, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded-xl" style={{ background: p.eliminated ? 'rgba(214,48,49,0.1)' : 'rgba(255,255,255,0.05)' }}>
+                <div key={i} className="flex items-center gap-2 p-2 rounded-xl"
+                  style={{ background: p.eliminated ? 'rgba(214,48,49,0.1)' : 'rgba(255,255,255,0.05)' }}>
                   <span className="text-sm">{p.eliminated ? '❌' : '✅'}</span>
-                  <span className="text-sm font-medium truncate" style={{ color: p.eliminated ? 'var(--text-secondary)' : 'var(--text-primary)', textDecoration: p.eliminated ? 'line-through' : 'none' }}>
+                  <span className="text-sm font-medium truncate"
+                    style={{ color: p.eliminated ? 'var(--text-secondary)' : 'var(--text-primary)', textDecoration: p.eliminated ? 'line-through' : 'none' }}>
                     {p.username}
+                    {p.is_bot && <span className="ml-1 text-xs opacity-60">🤖</span>}
                   </span>
                   {p.username === user?.username && <span className="ml-auto text-xs" style={{ color: 'var(--primary)' }}>Ti</span>}
                 </div>
@@ -176,7 +187,7 @@ const TournamentPage = () => {
               )}
             </div>
 
-            {state === 'lobby' && isHost && (
+            {state === 'lobby' && isHost && !isSpectator && (
               <button onClick={() => sendMsg({ type: 'start_tournament' })}
                 disabled={playerCount < 2}
                 className="btn-primary w-full flex items-center justify-center gap-2 mt-4 disabled:opacity-40">
@@ -189,8 +200,11 @@ const TournamentPage = () => {
                 <Bot className="w-4 h-4" /> Popuni botovima ({size - playerCount} mjesta)
               </button>
             )}
-            {state === 'lobby' && !isHost && (
+            {state === 'lobby' && !isHost && !isSpectator && (
               <p className="text-xs text-center mt-4" style={{ color: 'var(--text-secondary)' }}>Čekanje hosta...</p>
+            )}
+            {isSpectator && state === 'lobby' && (
+              <p className="text-xs text-center mt-4" style={{ color: 'var(--text-secondary)' }}>Gledaš turnir kao gledalac</p>
             )}
           </div>
 
@@ -230,7 +244,8 @@ const TournamentPage = () => {
                             <div key={pi} className="px-3 py-2 flex items-center gap-2"
                               style={{ background: match.winner === name ? 'rgba(85,239,196,0.1)' : 'transparent', borderTop: pi === 1 ? '1px solid var(--glass-border)' : 'none' }}>
                               <span className="text-xs">{match.winner === name ? '🏆' : match.state === 'done' ? '❌' : '•'}</span>
-                              <span className="text-sm font-medium truncate" style={{ color: match.winner === name ? '#55EFC4' : name === user?.username ? 'var(--primary)' : 'var(--text-primary)' }}>
+                              <span className="text-sm font-medium truncate"
+                                style={{ color: match.winner === name ? '#55EFC4' : name === user?.username ? 'var(--primary)' : 'var(--text-primary)' }}>
                                 {name || 'TBD'}
                               </span>
                             </div>
@@ -244,7 +259,8 @@ const TournamentPage = () => {
             )}
 
             {state === 'finished' && winner && (
-              <div className="mt-6 text-center p-6 rounded-2xl" style={{ background: 'rgba(253,203,110,0.1)', border: '2px solid rgba(253,203,110,0.4)' }}>
+              <div className="mt-6 text-center p-6 rounded-2xl"
+                style={{ background: 'rgba(253,203,110,0.1)', border: '2px solid rgba(253,203,110,0.4)' }}>
                 <div className="text-4xl mb-2">🏆</div>
                 <p className="font-['Nunito'] text-2xl font-black" style={{ color: '#FDCB6E' }}>{winner}</p>
                 <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Pobjednik turnira!</p>
