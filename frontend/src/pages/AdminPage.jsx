@@ -884,10 +884,22 @@ const AdminPage = () => {
 
           {/* Users Tab */}
           <TabsContent value="users">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
               <h2 className="font-['Nunito'] text-xl font-bold">Korisnici ({users.length})</h2>
-              <button
-                onClick={() => { setUserModalOpen(true); setUserError(''); setUserForm({ username: '', password: '', role: 'user' }); }}
+              <div className="flex items-center gap-2">
+                <select id="user-group-filter" className="glass-input !py-1.5 !px-3 text-sm !w-auto"
+                  onChange={e => {
+                    const val = e.target.value;
+                    document.querySelectorAll('[data-user-group]').forEach(el => {
+                      el.style.display = (!val || el.dataset.userGroup === val) ? '' : 'none';
+                    });
+                  }}>
+                  <option value="">Sve grupe</option>
+                  <option value="__none__">Bez grupe</option>
+                  {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                </select>
+                <button
+                  onClick={() => { setUserModalOpen(true); setUserError(''); setUserForm({ username: '', password: '', role: 'user' }); }}
                 className="btn-primary flex items-center gap-2 !py-2 !px-4"
               >
                 <UserPlus className="w-4 h-4" />
@@ -896,7 +908,8 @@ const AdminPage = () => {
             </div>
             <div className="space-y-3">
               {users.map(u => (
-                <div key={u.id} className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                <div key={u.id} className="glass-card rounded-2xl p-4 flex items-center gap-4"
+                  data-user-group={u.group || '__none__'}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold truncate">{u.username}</span>
@@ -915,6 +928,11 @@ const AdminPage = () => {
                       )}
                       {u.is_banned && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-[#d63031]/20 text-[#d63031] font-bold">🔨 Baniran</span>
+                      )}
+                      {u.group && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(85,239,196,0.2)', color: '#55EFC4' }}>
+                          👥 {u.group}
+                        </span>
                       )}
                     </div>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
@@ -1075,19 +1093,41 @@ const AdminPage = () => {
               </button>
             </div>
             <div className="space-y-3">
-              {groups.map(g => (
-                <div key={g.id} className="glass-card rounded-2xl p-4 flex items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold">👥 {g.name}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                      {g.member_count} članova{g.description ? ` · ${g.description}` : ''}
-                    </p>
+              {groups.map(g => {
+                const members = users.filter(u => u.group === g.name);
+                const isOpen = expandedCategory === g.id;
+                return (
+                  <div key={g.id} className="glass-card rounded-2xl overflow-hidden">
+                    <button className="w-full flex items-center gap-4 p-4 text-left hover:opacity-90 transition-opacity"
+                      onClick={() => setExpandedCategory(isOpen ? null : g.id)}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold">👥 {g.name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                          {members.length} članova{g.description ? ` · ${g.description}` : ''}
+                        </p>
+                      </div>
+                      <span className="text-sm">{isOpen ? '▲' : '▼'}</span>
+                      <button onClick={e => { e.stopPropagation(); deleteGroup(g.id); }}
+                        className="p-2 rounded-lg hover:bg-[#d63031]/10 transition-colors">
+                        <Trash2 className="w-4 h-4 text-[#d63031]" />
+                      </button>
+                    </button>
+                    {isOpen && (
+                      <div className="border-t px-4 pb-4 pt-3 space-y-2" style={{ borderColor: 'var(--glass-border)' }}>
+                        {members.length === 0 ? (
+                          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Nema članova u ovoj grupi.</p>
+                        ) : members.map(m => (
+                          <div key={m.id} className="flex items-center gap-3 p-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                            <span className="text-sm">{m.role === 'admin' ? '🛡️' : '👤'}</span>
+                            <span className="flex-1 font-medium text-sm">{m.username}</span>
+                            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{m.total_score} bod · {m.quizzes_taken} kvizova</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <button onClick={() => deleteGroup(g.id)} className="p-2 rounded-lg hover:bg-[#d63031]/10 transition-colors">
-                    <Trash2 className="w-4 h-4 text-[#d63031]" />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
               {groups.length === 0 && <p className="text-center py-8 text-sm" style={{ color: 'var(--text-secondary)' }}>Nema grupa. Kreiraj prvu i dodaj je pozivnicama.</p>}
             </div>
           </TabsContent>
