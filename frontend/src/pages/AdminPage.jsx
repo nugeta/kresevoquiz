@@ -482,17 +482,33 @@ const AdminPage = () => {
   };
 
   const nukeQuestions = async () => {
-    const c1 = window.confirm('⚠️ UPOZORENJE: Ovo će obrisati SVA pitanja iz baze. Jesi li siguran/na?');
-    if (!c1) return;
-    const c2 = window.confirm('⚠️ DRUGA POTVRDA: Ova radnja je NEPOVRATNA. Sva pitanja bit će trajno obrisana. Nastavi?');
-    if (!c2) return;
-    const typed = window.prompt('⚠️ TREĆA POTVRDA: Upiši "OBRIŠI SVE" za potvrdu:');
-    if (typed !== 'OBRIŠI SVE') { alert('Pogrešan unos. Operacija otkazana.'); return; }
+    const targetCat = filterCategory !== 'all' ? categories.find(c => c.id === filterCategory) : null;
+    const label = targetCat ? `kategoriju "${targetCat.name}"` : 'SVA pitanja';
+
+    if (targetCat) {
+      // Single category — two confirmations
+      const c1 = window.confirm(`⚠️ Obrisati sva pitanja iz kategorije "${targetCat.name}"? Ova radnja je nepovratna.`);
+      if (!c1) return;
+      const typed = window.prompt(`Upiši naziv kategorije "${targetCat.name}" za potvrdu:`);
+      if (typed !== targetCat.name) { alert('Pogrešan unos. Operacija otkazana.'); return; }
+    } else {
+      // All questions — three confirmations
+      const c1 = window.confirm('⚠️ UPOZORENJE: Ovo će obrisati SVA pitanja iz baze. Jesi li siguran/na?');
+      if (!c1) return;
+      const c2 = window.confirm('⚠️ DRUGA POTVRDA: Ova radnja je NEPOVRATNA. Sva pitanja bit će trajno obrisana. Nastavi?');
+      if (!c2) return;
+      const typed = window.prompt('⚠️ TREĆA POTVRDA: Upiši "OBRIŠI SVE" za potvrdu:');
+      if (typed !== 'OBRIŠI SVE') { alert('Pogrešan unos. Operacija otkazana.'); return; }
+    }
+
     try {
-      const res = await axios.delete(`${API_URL}/api/questions`, { withCredentials: true });
-      alert(`💣 Obrisano ${res.data.deleted} pitanja.`);
-      setQuestions([]);
-      setQuestionTotal(0);
+      const url = targetCat
+        ? `${API_URL}/api/questions?category_id=${targetCat.id}`
+        : `${API_URL}/api/questions`;
+      const res = await axios.delete(url, { withCredentials: true });
+      alert(`💣 Obrisano ${res.data.deleted} pitanja iz ${label}.`);
+      setQuestions(prev => targetCat ? prev.filter(q => q.category_id !== targetCat.id) : []);
+      setQuestionTotal(prev => targetCat ? prev - res.data.deleted : 0);
       const catRes = await axios.get(`${API_URL}/api/categories`, { withCredentials: true });
       setCategories(catRes.data);
     } catch (err) {
@@ -874,8 +890,8 @@ const AdminPage = () => {
                 <button onClick={nukeQuestions}
                   className="flex items-center gap-2 !py-2 !px-3 rounded-full font-semibold text-sm transition-all hover:opacity-80"
                   style={{ background: 'rgba(214,48,49,0.15)', color: '#d63031', border: '1px solid rgba(214,48,49,0.3)' }}
-                  title="Obriši SVA pitanja">
-                  💣 Nuke
+                  title={filterCategory !== 'all' ? `Obriši pitanja iz odabrane kategorije` : 'Obriši SVA pitanja'}>
+                  💣 {filterCategory !== 'all' ? 'Nuke kategoriju' : 'Nuke sve'}
                 </button>
               </div>
             </div>
