@@ -481,11 +481,11 @@ const AdminPage = () => {
     finally { setSavingPrompt(false); }
   };
 
-  const assessQuestions = async (categoryId) => {
+  const assessQuestions = async (categoryId, autoFix = false) => {
     setAssessing(true); setAssessResult(null);
     try {
       const res = await axios.post(`${API_URL}/api/questions/assess`,
-        { category_id: categoryId || null, custom_prompt: assessPrompt },
+        { category_id: categoryId || null, custom_prompt: assessPrompt, auto_fix: autoFix },
         { withCredentials: true });
       setAssessResult(res.data);
     } catch (err) { alert(err.response?.data?.detail || 'AI greška'); }
@@ -752,7 +752,7 @@ const AdminPage = () => {
                 <button onClick={exportQuestions} className="btn-secondary flex items-center gap-2 !py-2 !px-3">
                   <Download className="w-4 h-4" /> Export
                 </button>
-                <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null)}
+                <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null, false)}
                   disabled={assessing} className="btn-secondary flex items-center gap-2 !py-2 !px-3 disabled:opacity-50"
                   title="AI analiza pitanja">
                   {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔍'} AI Analiza
@@ -863,32 +863,60 @@ const AdminPage = () => {
                 </div>
                 <textarea value={assessPrompt} onChange={e => setAssessPrompt(e.target.value)}
                   className="glass-input text-xs min-h-[80px] font-mono"
-                  placeholder="Upiši upute za AI (npr. 'Provjeri jesu li odgovori na bosanskom', 'Fokusiraj se na duplikate'...)" />
+                  placeholder="Upiši upute za AI (npr. 'Miješaj poziciju točnog odgovora (1-4)', 'Osiguraj da su sva pitanja na hrvatskom', 'Ispravi barem 90% pitanja'...)" />
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null)}
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null, false)}
                   disabled={assessing} className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm disabled:opacity-50">
                   {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔍'}
                   {assessing ? 'Analiziranje...' : `Analiziraj ${filterCategory !== 'all' ? 'kategoriju' : 'sve'}`}
+                </button>
+                <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null, true)}
+                  disabled={assessing} className="btn-secondary flex items-center gap-2 !py-2 !px-4 text-sm disabled:opacity-50"
+                  title="AI automatski ispravlja probleme i sprema u bazu">
+                  {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔧'}
+                  {assessing ? 'Ispravljanje...' : `Auto-ispravi ${filterCategory !== 'all' ? 'kategoriju' : 'sve'}`}
                 </button>
               </div>
 
             {assessResult && (
               <div className="mt-6 glass-card rounded-3xl p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold">🔍 AI Analiza — {assessResult.issues_found} problema od {assessResult.total_analyzed} pitanja</h3>
+                  {assessResult.fixes ? (
+                    <h3 className="font-bold">🔧 Auto-ispravak — {assessResult.fixed} ispravljeno, {assessResult.deleted} obrisano od {assessResult.total_analyzed} pitanja</h3>
+                  ) : (
+                    <h3 className="font-bold">🔍 AI Analiza — {assessResult.issues_found} problema od {assessResult.total_analyzed} pitanja</h3>
+                  )}
                   <button onClick={() => setAssessResult(null)} className="text-xs hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>Zatvori</button>
                 </div>
-                {assessResult.issues.length === 0 ? (
+                {assessResult.fixes ? (
+                  assessResult.fixes.length === 0 ? (
+                    <p className="text-sm text-center py-4" style={{ color: '#55EFC4' }}>✅ Sva pitanja su već ispravna!</p>
+                  ) : (
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
+                      {assessResult.fixes.map((fix, i) => (
+                        <div key={i} className="p-3 rounded-xl" style={{ background: fix.fix_summary?.includes('DUPLICATE') ? 'rgba(214,48,49,0.1)' : 'rgba(85,239,196,0.08)', borderLeft: `3px solid ${fix.fix_summary?.includes('DUPLICATE') ? '#d63031' : '#55EFC4'}` }}>
+                          <p className="font-medium text-sm mb-1 truncate">{fix.question}</p>
+                          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>✏️ {fix.fix_summary}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                ) : assessResult.issues?.length === 0 ? (
                   <p className="text-sm text-center py-4" style={{ color: '#55EFC4' }}>✅ Sva pitanja izgledaju dobro!</p>
                 ) : (
                   <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {assessResult.issues.map((issue, i) => (
+                    {assessResult.issues?.map((issue, i) => (
                       <div key={i} className="p-3 rounded-xl" style={{ background: issue.severity === 'high' ? 'rgba(214,48,49,0.1)' : issue.severity === 'medium' ? 'rgba(253,203,110,0.1)' : 'rgba(255,255,255,0.05)', borderLeft: `3px solid ${issue.severity === 'high' ? '#d63031' : issue.severity === 'medium' ? '#FDCB6E' : '#8AB4F8'}` }}>
                         <p className="font-medium text-sm mb-1">{issue.question_text}</p>
                         <ul className="space-y-0.5">
-                          {issue.issues.map((iss, j) => <li key={j} className="text-xs" style={{ color: 'var(--text-secondary)' }}>• {iss}</li>)}
+                          {issue.issues?.map((iss, j) => <li key={j} className="text-xs" style={{ color: 'var(--text-secondary)' }}>• {iss}</li>)}
                         </ul>
+                        {issue.suggested_fix && (
+                          <p className="text-xs mt-1.5 px-2 py-1 rounded-lg" style={{ background: 'rgba(138,180,248,0.1)', color: 'var(--primary)' }}>
+                            💡 {issue.suggested_fix}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
