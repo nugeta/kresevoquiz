@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import usePageTitle from '../hooks/usePageTitle';
@@ -19,6 +19,10 @@ const DIFF_LABELS = { easy: 'Lako', medium: 'Srednje', hard: 'Teško' };
 
 const AdminPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const validTabs = ['categories', 'questions', 'users', 'invites', 'announcements', 'groups'];
+  const hashTab = location.hash.replace('#', '');
+  const activeTab = validTabs.includes(hashTab) ? hashTab : 'categories';
   const { user, isAdmin, loading: authLoading } = useAuth();
   usePageTitle('Admin Panel');
 
@@ -664,7 +668,7 @@ const AdminPage = () => {
         )}
 
         {/* Tabs */}
-        <Tabs defaultValue="categories" className="animate-fade-in-up">
+        <Tabs value={activeTab} onValueChange={tab => navigate(`/admin#${tab}`, { replace: true })} className="animate-fade-in-up">
           <TabsList className="glass mb-6">
             <TabsTrigger value="categories" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
               <BookOpen className="w-4 h-4 mr-2" />
