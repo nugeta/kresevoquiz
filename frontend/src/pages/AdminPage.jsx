@@ -900,11 +900,12 @@ const AdminPage = () => {
                 </select>
                 <button
                   onClick={() => { setUserModalOpen(true); setUserError(''); setUserForm({ username: '', password: '', role: 'user' }); }}
-                className="btn-primary flex items-center gap-2 !py-2 !px-4"
-              >
-                <UserPlus className="w-4 h-4" />
-                Novi Korisnik
-              </button>
+                  className="btn-primary flex items-center gap-2 !py-2 !px-4"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Novi Korisnik
+                </button>
+              </div>
             </div>
             <div className="space-y-3">
               {users.map(u => (
