@@ -521,3 +521,31 @@ h1, h2, h3, h4, h5, h6 {
 .switch input:checked + .slider:before {
   transform: translateX(1.5em);
 }
+
+/* Bell ring animation */
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-12deg); }
+  30% { transform: rotate(10deg); }
+  40% { transform: rotate(-8deg); }
+  50% { transform: rotate(6deg); }
+  60% { transform: rotate(-4deg); }
+  70% { transform: rotate(2deg); }
+  80% { transform: rotate(0deg); }
+}
+
+.bell-ring {
+  animation: bell-ring 1s ease-in-out;
+  transform-origin: top center;
+}
+
+/* Notification badge pulse */
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
+}

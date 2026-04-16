@@ -925,6 +925,10 @@ const AdminPage = () => {
                         className="text-xs rounded-lg px-2 py-0.5 border-0 cursor-pointer"
                         style={{ background: u.group ? 'rgba(85,239,196,0.2)' : 'rgba(255,255,255,0.1)', color: u.group ? '#55EFC4' : 'var(--text-secondary)' }}>
                         <option value="">Bez grupe</option>
+                        {/* Always show current group even if not in groups list */}
+                        {u.group && !groups.find(g => g.name === u.group) && (
+                          <option value={u.group}>{u.group}</option>
+                        )}
                         {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                       </select>
                     </div>

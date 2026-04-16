@@ -20,7 +20,6 @@ const InboxPage = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [isAuthenticated]);
-
   if (authLoading || loading) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
       <Loader2 className="w-10 h-10 animate-spin" style={{ color: 'var(--primary)' }} />
