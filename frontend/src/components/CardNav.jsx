@@ -15,6 +15,7 @@ import {
   LogIn, 
   LogOut, 
   User,
+  Users,
   Sun,
   Moon,
   Heart,
@@ -39,16 +40,16 @@ const CardNav = ({ className = '' }) => {
   // Theme-based colors
   const menuColor = isDark ? '#F1F5F9' : '#2D3436';
 
-  // Fetch unread inbox count
+  // Fetch unread inbox count (lightweight, does not mark as read)
   useEffect(() => {
     if (!isAuthenticated) { setUnreadCount(0); return; }
-    const fetchInbox = () => {
-      axios.get(`${API_URL}/api/users/me/inbox`, { withCredentials: true })
-        .then(r => setUnreadCount((r.data.warnings?.length || 0) + (r.data.messages?.length || 0)))
+    const fetchCount = () => {
+      axios.get(`${API_URL}/api/users/me/inbox/count`, { withCredentials: true })
+        .then(r => setUnreadCount(r.data.count || 0))
         .catch(() => {});
     };
-    fetchInbox();
-    const interval = setInterval(fetchInbox, 60000); // re-check every minute
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000); // re-check every 30s
     return () => clearInterval(interval);
   }, [isAuthenticated]);
   const buttonBgColor = isDark ? '#7C3AED' : '#8AB4F8';
@@ -76,6 +77,7 @@ const CardNav = ({ className = '' }) => {
         { label: 'Tjedni izazov', href: '/weekly', icon: Medal },
         { label: 'Moja povijest', href: '/history', icon: BarChart3 },
         { label: 'Multiplayer', href: '/multiplayer', icon: Swords },
+        { label: 'Grupe', href: '/groups', icon: Users },
       ]
     },
     {

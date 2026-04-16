@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { 
+import axios from 'axios';import { 
   Trophy, 
   Medal, 
   Crown,
@@ -161,7 +160,7 @@ const LeaderboardPage = () => {
                   <span className="text-xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${g.rank}`}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-['Nunito'] text-lg font-bold">👥 {g.group}</h3>
+                  <Link to={`/groups/${encodeURIComponent(g.group)}`} className="font-['Nunito'] text-lg font-bold hover:underline block">👥 {g.group}</Link>
                   <p className="text-sm text-[#636E72]">{g.members} članova · {g.avg_score} prosj. bodova</p>
                 </div>
                 <div className="text-right">
