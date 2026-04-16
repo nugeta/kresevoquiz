@@ -682,29 +682,51 @@ const AdminPage = () => {
             </div>
 
             <div className="space-y-3">
-              {categories.map((category) => (
+              {categories.filter(c => !c.parent_id).map((category) => {
+                const children = categories.filter(c => c.parent_id === category.id);
+                const isExpanded = expandedCategory === category.id;
+                const totalQuestions = children.length > 0
+                  ? children.reduce((sum, c) => sum + c.question_count, 0)
+                  : category.question_count;
+                return (
                 <div key={category.id} className="glass-card rounded-2xl overflow-hidden">
                   <div 
                     className="p-4 flex items-center gap-4 cursor-pointer"
-                    onClick={() => setExpandedCategory(expandedCategory === category.id ? null : category.id)}
+                    onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
                   >
                     <div 
                       className="w-12 h-12 rounded-xl flex items-center justify-center"
                       style={{ backgroundColor: `${category.color}20` }}
                     >
-                      <BookOpen className="w-6 h-6" style={{ color: category.color }} />
+                      <span className="text-xl">{category.icon?.length <= 2 ? category.icon : '📚'}</span>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-['Nunito'] font-bold">{category.name}</h3>
-                      <p className="text-sm text-[#636E72]">{category.question_count} pitanja</p>
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        {totalQuestions} pitanja
+                        {children.length > 0 && ` · ${children.length} tema`}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={(e) => { e.stopPropagation(); openCategoryModal(category); }}
-                        className="p-2 rounded-lg hover:bg-white/50 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); openCategoryModal({ ...category, parent_id: null }); }}
+                        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                        title="Uredi kategoriju"
                         data-testid={`edit-category-${category.id}`}
                       >
-                        <Edit2 className="w-4 h-4 text-[#636E72]" />
+                        <Edit2 className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCategory(null);
+                          setCategoryForm({ name: '', description: '', icon: category.icon, color: category.color, parent_id: category.id });
+                          setCategoryModalOpen(true);
+                        }}
+                        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                        title="Dodaj temu (podkategoriju)"
+                      >
+                        <Plus className="w-4 h-4" style={{ color: category.color }} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); openDeleteModal('category', category); }}
@@ -713,37 +735,104 @@ const AdminPage = () => {
                       >
                         <Trash2 className="w-4 h-4 text-[#d63031]" />
                       </button>
-                      {expandedCategory === category.id ? (
-                        <ChevronUp className="w-5 h-5 text-[#636E72]" />
+                      {isExpanded ? (
+                        <ChevronUp className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-[#636E72]" />
+                        <ChevronDown className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
                       )}
                     </div>
                   </div>
                   
-                  {expandedCategory === category.id && (
-                    <div className="border-t p-4" style={{ borderColor: 'var(--glass-border)', background: 'var(--glass-bg)' }}>
-                      <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{category.description || 'Nema opisa'}</p>
-                      <div className="space-y-2">
-                        {questions.filter(q => q.category_id === category.id).slice(0, 5).map((q) => (
-                          <div key={q.id} className="flex items-center gap-2 text-sm p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)' }}>
-                            <HelpCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />
-                            <span className="truncate flex-1">{q.question_text}</span>
-                            <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(138,180,248,0.15)', color: 'var(--primary)' }}>
-                              {q.question_type === 'multiple_choice' ? 'Više' : q.question_type === 'true_false' ? 'T/N' : 'Jedan'}
-                            </span>
+                  {isExpanded && (
+                    <div className="border-t p-4 space-y-3" style={{ borderColor: 'var(--glass-border)', background: 'var(--glass-bg)' }}>
+                      {/* Description */}
+                      {category.description && (
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{category.description}</p>
+                      )}
+
+                      {/* Subcategories (themes) */}
+                      {children.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>TEME</p>
+                          <div className="space-y-1.5">
+                            {children.map(child => (
+                              <div key={child.id} className="flex items-center gap-3 p-2.5 rounded-xl"
+                                style={{ background: `${category.color}10`, border: `1px solid ${category.color}25` }}>
+                                <span className="text-base shrink-0">{child.icon?.length <= 2 ? child.icon : '📖'}</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm truncate">{child.name}</p>
+                                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{child.question_count} pitanja</p>
+                                </div>
+                                <button onClick={() => openCategoryModal(child)}
+                                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors shrink-0" title="Uredi temu">
+                                  <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--text-secondary)' }} />
+                                </button>
+                                <button onClick={() => openDeleteModal('category', child)}
+                                  className="p-1.5 rounded-lg hover:bg-[#d63031]/10 transition-colors shrink-0">
+                                  <Trash2 className="w-3.5 h-3.5 text-[#d63031]" />
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                        {questions.filter(q => q.category_id === category.id).length > 5 && (
-                          <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
-                            ... i još {questions.filter(q => q.category_id === category.id).length - 5} pitanja
-                          </p>
-                        )}
-                      </div>
+                        </div>
+                      )}
+
+                      {/* Add subcategory button */}
+                      <button
+                        onClick={() => {
+                          setEditingCategory(null);
+                          setCategoryForm({ name: '', description: '', icon: category.icon, color: category.color, parent_id: category.id });
+                          setCategoryModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl transition-all hover:opacity-80 w-full"
+                        style={{ background: `${category.color}15`, color: category.color, border: `1px dashed ${category.color}40` }}>
+                        <Plus className="w-4 h-4" /> Nova tema u "{category.name}"
+                      </button>
+
+                      {/* Sample questions (only if no children) */}
+                      {children.length === 0 && (
+                        <div className="space-y-1.5">
+                          {questions.filter(q => q.category_id === category.id).slice(0, 5).map((q) => (
+                            <div key={q.id} className="flex items-center gap-2 text-sm p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)' }}>
+                              <HelpCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />
+                              <span className="truncate flex-1">{q.question_text}</span>
+                              <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(138,180,248,0.15)', color: 'var(--primary)' }}>
+                                {q.question_type === 'multiple_choice' ? 'Više' : q.question_type === 'true_false' ? 'T/N' : 'Jedan'}
+                              </span>
+                            </div>
+                          ))}
+                          {questions.filter(q => q.category_id === category.id).length > 5 && (
+                            <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
+                              ... i još {questions.filter(q => q.category_id === category.id).length - 5} pitanja
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
+
+              {/* Orphaned subcategories (children whose parent was deleted) */}
+              {categories.filter(c => c.parent_id && !categories.find(p => p.id === c.parent_id)).length > 0 && (
+                <div className="glass-card rounded-2xl p-4" style={{ border: '1px solid rgba(253,203,110,0.3)' }}>
+                  <p className="text-sm font-semibold mb-2" style={{ color: '#FDCB6E' }}>⚠️ Teme bez nadkategorije</p>
+                  <div className="space-y-1.5">
+                    {categories.filter(c => c.parent_id && !categories.find(p => p.id === c.parent_id)).map(c => (
+                      <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <span className="flex-1 text-sm">{c.name}</span>
+                        <button onClick={() => openCategoryModal(c)} className="p-1.5 rounded-lg hover:bg-white/10">
+                          <Edit2 className="w-3.5 h-3.5" style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button onClick={() => openDeleteModal('category', c)} className="p-1.5 rounded-lg hover:bg-[#d63031]/10">
+                          <Trash2 className="w-3.5 h-3.5 text-[#d63031]" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
 
