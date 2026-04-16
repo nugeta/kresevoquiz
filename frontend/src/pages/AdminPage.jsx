@@ -921,16 +921,27 @@ const AdminPage = () => {
                       {u.quizzes_taken} kvizova · {u.total_score} bodova · {new Date(u.created_at).toLocaleDateString('hr')}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <select value={u.group || ''} onChange={e => setUserGroup(u, e.target.value)}
+                      <select
+                        defaultValue={u.group || ''}
+                        id={`group-select-${u.id}`}
                         className="text-xs rounded-lg px-2 py-0.5 border-0 cursor-pointer"
                         style={{ background: u.group ? 'rgba(85,239,196,0.2)' : 'rgba(255,255,255,0.1)', color: u.group ? '#55EFC4' : 'var(--text-secondary)' }}>
                         <option value="">Bez grupe</option>
-                        {/* Always show current group even if not in groups list */}
                         {u.group && !groups.find(g => g.name === u.group) && (
                           <option value={u.group}>{u.group}</option>
                         )}
                         {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                       </select>
+                      <button
+                        onClick={() => {
+                          const sel = document.getElementById(`group-select-${u.id}`);
+                          setUserGroup(u, sel?.value || '');
+                        }}
+                        className="text-xs px-2 py-0.5 rounded-lg transition-all hover:opacity-80"
+                        style={{ background: 'var(--primary)', color: '#fff' }}>
+                        Postavi
+                      </button>
+                      {u.group && <span className="text-xs" style={{ color: '#55EFC4' }}>✓ {u.group}</span>}
                     </div>
                   </div>
                   {!u.is_global_admin && (
