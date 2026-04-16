@@ -481,9 +481,10 @@ const RoomPage = () => {
             <button key={opt.id} onClick={() => selectOption(opt.id)} disabled={isAnswered}
               className={`quiz-option w-full text-left flex items-center gap-4 ${getOptionClass(opt.id)}`}>
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm
-                ${selectedOptions.includes(opt.id) ? 'bg-[#8AB4F8] text-white' : 'bg-white/20'}
+                ${selectedOptions.includes(opt.id) ? 'bg-[#8AB4F8] text-white' : ''}
                 ${isAnswered && answerResult?.correct_option_ids?.includes(opt.id) ? 'bg-[#00b894] text-white' : ''}
-                ${isAnswered && selectedOptions.includes(opt.id) && !answerResult?.correct_option_ids?.includes(opt.id) ? 'bg-[#d63031] text-white' : ''}`}>
+                ${isAnswered && selectedOptions.includes(opt.id) && !answerResult?.correct_option_ids?.includes(opt.id) ? 'bg-[#d63031] text-white' : ''}`}
+              style={!selectedOptions.includes(opt.id) && !(isAnswered && answerResult?.correct_option_ids?.includes(opt.id)) && !(isAnswered && selectedOptions.includes(opt.id)) ? { background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' } : {}}>
                 {isAnswered
                   ? answerResult?.correct_option_ids?.includes(opt.id) ? <CheckCircle2 className="w-4 h-4" />
                     : selectedOptions.includes(opt.id) ? <XCircle className="w-4 h-4" />

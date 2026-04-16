@@ -156,7 +156,7 @@ const LeaderboardPage = () => {
               </div>
             ) : groupLeaderboard.map((g, i) => (
               <div key={g.group} className={`leaderboard-item rounded-2xl p-4 sm:p-5 flex items-center gap-4 ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}`}>
-                <div className="w-12 h-12 rounded-xl bg-white/50 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                   <span className="text-xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${g.rank}`}</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -192,7 +192,7 @@ const LeaderboardPage = () => {
                   data-testid={`leaderboard-entry-${index}`}
                 >
                   {/* Rank */}
-                  <div className="w-12 h-12 rounded-xl bg-white/50 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                     {getRankIcon(entry.rank)}
                   </div>
 

@@ -703,20 +703,20 @@ const AdminPage = () => {
                   </div>
                   
                   {expandedCategory === category.id && (
-                    <div className="border-t border-white/30 p-4 bg-white/30">
-                      <p className="text-sm text-[#636E72] mb-3">{category.description || 'Nema opisa'}</p>
+                    <div className="border-t p-4" style={{ borderColor: 'var(--glass-border)', background: 'var(--glass-bg)' }}>
+                      <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{category.description || 'Nema opisa'}</p>
                       <div className="space-y-2">
                         {questions.filter(q => q.category_id === category.id).slice(0, 5).map((q) => (
-                          <div key={q.id} className="flex items-center gap-2 text-sm p-2 rounded-lg bg-white/40">
-                            <HelpCircle className="w-4 h-4 text-[#636E72] flex-shrink-0" />
+                          <div key={q.id} className="flex items-center gap-2 text-sm p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)' }}>
+                            <HelpCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />
                             <span className="truncate flex-1">{q.question_text}</span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-[#8AB4F8]/20 text-[#8AB4F8]">
+                            <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(138,180,248,0.15)', color: 'var(--primary)' }}>
                               {q.question_type === 'multiple_choice' ? 'Više' : q.question_type === 'true_false' ? 'T/N' : 'Jedan'}
                             </span>
                           </div>
                         ))}
                         {questions.filter(q => q.category_id === category.id).length > 5 && (
-                          <p className="text-xs text-[#636E72] text-center">
+                          <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
                             ... i još {questions.filter(q => q.category_id === category.id).length - 5} pitanja
                           </p>
                         )}
@@ -804,9 +804,10 @@ const AdminPage = () => {
                           {question.options.map((opt) => (
                             <span 
                               key={opt.id}
-                              className={`text-xs px-2 py-1 rounded-lg ${
-                                opt.is_correct ? 'bg-[#00b894]/20 text-[#00b894]' : 'bg-white/50 text-[#636E72]'
-                              }`}
+                              className="text-xs px-2 py-1 rounded-lg"
+                              style={opt.is_correct
+                                ? { background: 'rgba(0,184,148,0.15)', color: 'var(--success)' }
+                                : { background: 'var(--glass-bg)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}
                             >
                               {opt.text}
                               {opt.is_correct && <CheckCircle2 className="w-3 h-3 inline ml-1" />}
@@ -940,7 +941,7 @@ const AdminPage = () => {
                         </span>
                       )}
                       {u.role === 'user' && !u.is_banned && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/30 text-[#636E72]">Korisnik</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--glass-bg)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}>Korisnik</span>
                       )}
                       {u.is_banned && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-[#d63031]/20 text-[#d63031] font-bold">🔨 Baniran</span>
@@ -1539,8 +1540,9 @@ const AdminPage = () => {
                         className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
                           option.is_correct 
                             ? 'bg-[#00b894] text-white' 
-                            : 'bg-white/50 hover:bg-white/70'
+                            : ''
                         }`}
+                        style={!option.is_correct ? { background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)' } : {}}
                         data-testid={`toggle-correct-${index}`}
                       >
                         <CheckCircle2 className="w-4 h-4" />
