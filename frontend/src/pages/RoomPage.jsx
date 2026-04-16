@@ -32,6 +32,7 @@ const RoomPage = () => {
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [spectatorQuestion, setSpectatorQuestion] = useState(null);
 
   const ws = useRef(null);
   const timerRef = useRef(null);
@@ -104,8 +105,10 @@ const RoomPage = () => {
         setIsSpectator(true);
         setPhase('playing');
         setPlayers(msg.players || []);
+        setQTotal(msg.total_questions || 0);
         if (msg.mode) setRoomMode(msg.mode);
         if (msg.team_scores) setTeamScores(msg.team_scores);
+        if (msg.current_question) setSpectatorQuestion(msg.current_question);
         break;
 
       case 'room_update':
@@ -114,6 +117,8 @@ const RoomPage = () => {
         setPlayers(msg.players || []);
         if (msg.mode) setRoomMode(msg.mode);
         if (msg.team_scores) setTeamScores(msg.team_scores);
+        if (msg.total_questions) setQTotal(msg.total_questions);
+        if (msg.current_question) setSpectatorQuestion(msg.current_question);
         break;
 
       case 'countdown':
@@ -164,6 +169,7 @@ const RoomPage = () => {
       case 'game_over':
         setPhase('finished');
         setResults(msg);
+        setSpectatorQuestion(null);
         if (timerRef.current) clearInterval(timerRef.current);
         break;
 
@@ -247,7 +253,10 @@ const RoomPage = () => {
                   style={{ background: i === 0 ? 'rgba(138,180,248,0.3)' : 'rgba(85,239,196,0.3)', color: i === 0 ? '#8AB4F8' : '#55EFC4' }}>
                   {i === 0 ? '👑' : '🎮'}
                 </div>
-                <span className="font-medium flex-1">{p.username}</span>
+                <span className="font-medium flex-1">
+                  {p.username}
+                  {p.is_bot && <span className="ml-1 text-xs opacity-50">🤖</span>}
+                </span>
                 {roomMode === 'teams' && p.team && (
                   <span className="text-xs px-2 py-0.5 rounded-full font-bold"
                     style={{ background: p.team === 'A' ? 'rgba(138,180,248,0.3)' : 'rgba(85,239,196,0.3)', color: p.team === 'A' ? '#8AB4F8' : '#55EFC4' }}>
@@ -314,17 +323,17 @@ const RoomPage = () => {
     const isTeams = results.mode === 'teams';
     const myResult = results.results?.find(r => r.user_id === (user?.id || user?._id));
     const iWon = isTeams
-      ? results.winner_team === myResult?.team
+      ? results.winner_team !== 'draw' && results.winner_team === myResult?.team
       : results.results?.[0]?.user_id === (user?.id || user?._id);
 
     return (
       <div className="min-h-screen pt-24 pb-12 px-4">
         <div className="max-w-lg mx-auto">
           <div className="glass-strong rounded-3xl p-8 text-center animate-fade-in-up">
-            <div className="text-5xl mb-4">{iWon ? '🏆' : '💪'}</div>
+            <div className="text-5xl mb-4">{iWon ? '🏆' : isTeams && results.winner_team === 'draw' ? '🤝' : '💪'}</div>
             <h1 className="font-['Nunito'] text-3xl font-black mb-2">
               {isTeams
-                ? `Tim ${results.winner_team} pobijedio!`
+                ? results.winner_team === 'draw' ? 'Izjednačeno!' : `Tim ${results.winner_team} pobijedio!`
                 : iWon ? 'Pobijedio/la si!' : 'Dobra igra!'}
             </h1>
 
@@ -366,49 +375,113 @@ const RoomPage = () => {
   }
 
   // SPECTATOR VIEW
-  if (isSpectator) return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
-      <div className="max-w-lg mx-auto">
-        <div className="glass-strong rounded-3xl p-8 animate-fade-in-up">
-          <div className="flex items-center justify-center gap-2 mb-6">
+  if (isSpectator) {
+    const sq = spectatorQuestion;
+    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+    return (
+      <div className="min-h-screen pt-20 pb-12 px-4">
+        <div className="max-w-2xl mx-auto space-y-4">
+
+          {/* Header */}
+          <div className="flex items-center justify-center gap-2 animate-fade-in-up">
             <Eye className="w-5 h-5" style={{ color: '#FDCB6E' }} />
             <h1 className="font-['Nunito'] text-2xl font-black">Gledaš meč</h1>
+            {sq && (
+              <span className="text-xs px-2 py-0.5 rounded-full ml-2" style={{ background: 'rgba(253,203,110,0.15)', color: '#FDCB6E' }}>
+                Pitanje {sq.index + 1}/{sq.total}
+              </span>
+            )}
           </div>
-          {roomMode === 'teams' ? (
-            <div className="flex gap-4 mb-6">
+
+          {/* Team scores (teams mode) */}
+          {roomMode === 'teams' && (
+            <div className="flex gap-3 animate-fade-in-up">
               {['A', 'B'].map(team => (
-                <div key={team} className="flex-1 rounded-2xl p-4 text-center"
-                  style={{ background: `rgba(${team === 'A' ? '138,180,248' : '85,239,196'},0.1)`, border: `1px solid rgba(${team === 'A' ? '138,180,248' : '85,239,196'},0.3)` }}>
+                <div key={team} className="flex-1 glass-card rounded-2xl p-4 text-center"
+                  style={{ border: `1px solid rgba(${team === 'A' ? '138,180,248' : '85,239,196'},0.4)` }}>
                   <p className="font-bold text-sm mb-1" style={{ color: team === 'A' ? '#8AB4F8' : '#55EFC4' }}>Tim {team}</p>
                   <p className="font-['Nunito'] text-3xl font-black" style={{ color: team === 'A' ? '#8AB4F8' : '#55EFC4' }}>{teamScores[team]}</p>
                 </div>
               ))}
             </div>
-          ) : null}
-          <div className="space-y-3">
-            {[...players].sort((a, b) => b.score - a.score).map((p, i) => (
-              <div key={p.user_id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
-                <span className="text-lg">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`}</span>
-                <span className="flex-1 font-medium">{p.username}</span>
-                {roomMode === 'teams' && p.team && (
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: p.team === 'A' ? 'rgba(138,180,248,0.2)' : 'rgba(85,239,196,0.2)', color: p.team === 'A' ? '#8AB4F8' : '#55EFC4' }}>
-                    Tim {p.team}
+          )}
+
+          {/* Current question */}
+          {sq && phase !== 'finished' && (
+            <div className="glass-strong rounded-3xl p-5 animate-fade-in-up">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(138,180,248,0.15)', color: 'var(--primary)' }}>
+                  {sq.question_type === 'multiple_choice' ? 'Višestruki' : sq.question_type === 'true_false' ? 'Točno/Netočno' : 'Jedan odgovor'}
+                </span>
+                {sq.difficulty && (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: `${DIFF_COLORS[sq.difficulty]}20`, color: DIFF_COLORS[sq.difficulty] }}>
+                    {DIFF_LABELS[sq.difficulty]}
                   </span>
                 )}
-                <div className="text-right">
-                  <p className="font-['Nunito'] text-xl font-black" style={{ color: 'var(--primary)' }}>{p.score}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.current_index}/{phase === 'playing' ? '?' : p.current_index} pit.</p>
-                </div>
+                <span className="text-xs ml-auto" style={{ color: 'var(--text-secondary)' }}>{sq.points} bod.</span>
               </div>
-            ))}
+              <p className="font-['Nunito'] text-lg font-bold mb-4">{sq.question_text}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {sq.options.map((opt, i) => (
+                  <div key={opt.id} className="flex items-center gap-3 p-3 rounded-xl"
+                    style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ background: 'rgba(138,180,248,0.15)', color: 'var(--primary)' }}>
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    <span className="text-sm">{opt.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Player leaderboard */}
+          <div className="glass-card rounded-3xl p-5 animate-fade-in-up">
+            <h2 className="font-bold mb-3 text-sm" style={{ color: 'var(--text-secondary)' }}>IGRAČI</h2>
+            <div className="space-y-2">
+              {sortedPlayers.map((p, i) => {
+                const progress = sq ? (p.current_index / sq.total) * 100 : qTotal ? (p.current_index / qTotal) * 100 : 0;
+                return (
+                  <div key={p.user_id} className="p-3 rounded-xl" style={{ background: i === 0 ? 'rgba(253,203,110,0.08)' : 'var(--glass-bg)', border: `1px solid ${i === 0 ? 'rgba(253,203,110,0.3)' : 'var(--glass-border)'}` }}>
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <span className="text-base shrink-0">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`}</span>
+                      <span className="font-semibold flex-1 truncate">
+                        {p.username}
+                        {p.is_bot && <span className="ml-1 text-xs opacity-50">🤖</span>}
+                      </span>
+                      {roomMode === 'teams' && p.team && (
+                        <span className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                          style={{ background: p.team === 'A' ? 'rgba(138,180,248,0.2)' : 'rgba(85,239,196,0.2)', color: p.team === 'A' ? '#8AB4F8' : '#55EFC4' }}>
+                          Tim {p.team}
+                        </span>
+                      )}
+                      {p.finished && (
+                        <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: 'rgba(0,184,148,0.15)', color: '#00b894' }}>✓ Gotov</span>
+                      )}
+                      <span className="font-['Nunito'] text-lg font-black shrink-0" style={{ color: 'var(--primary)' }}>{p.score}</span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${progress}%`, background: p.finished ? '#00b894' : i === 0 ? '#FDCB6E' : 'var(--primary)' }} />
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      {p.current_index}/{sq?.total || qTotal || '?'} pitanja
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+
           {phase === 'finished' && (
-            <button onClick={() => window.close()} className="btn-secondary w-full mt-6">Zatvori</button>
+            <button onClick={() => window.close()} className="btn-secondary w-full">Zatvori</button>
           )}
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   // PLAYING
   if (phase === 'playing' && question) return (
