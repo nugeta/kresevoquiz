@@ -278,13 +278,22 @@ const AdminPage = () => {
 
   const loadQuestionPage = async (page) => {
     try {
-      const res = await axios.get(`${API_URL}/api/questions?page=${page}&limit=500`, { withCredentials: true });
+      const catParam = filterCategory !== 'all' ? `&category_id=${filterCategory}` : '';
+      const diffParam = filterDifficulty !== 'all' ? `&difficulty=${filterDifficulty}` : '';
+      const res = await axios.get(`${API_URL}/api/questions?page=${page}&limit=500${catParam}${diffParam}`, { withCredentials: true });
       setQuestions(res.data.questions);
       setQuestionTotal(res.data.total);
       setQuestionPages(res.data.pages);
       setQuestionPage(page);
     } catch (err) {}
   };
+
+  // Re-fetch when category or difficulty filter changes
+  useEffect(() => {
+    if (!isAdmin) return;
+    loadQuestionPage(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCategory, filterDifficulty]);
 
   const exportQuestions = async () => {
     try {
@@ -898,7 +907,6 @@ const AdminPage = () => {
 
             <div className="space-y-3">
               {[...questions]
-                .filter(q => filterCategory === 'all' || q.category_id === filterCategory)
                 .filter(q => filterDifficulty === 'all' || (q.difficulty || 'medium') === filterDifficulty)
                 .sort((a, b) => {
                   if (sortBy === 'category') { const catA = categories.find(c => c.id === a.category_id)?.name || ''; const catB = categories.find(c => c.id === b.category_id)?.name || ''; return catA.localeCompare(catB); }
