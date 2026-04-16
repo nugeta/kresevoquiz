@@ -33,6 +33,9 @@ const RoomPage = () => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [spectatorQuestion, setSpectatorQuestion] = useState(null);
+  const [showAdblockNotice, setShowAdblockNotice] = useState(() =>
+    sessionStorage.getItem('mp-adblock-dismissed') !== '1'
+  );
 
   const ws = useRef(null);
   const timerRef = useRef(null);
@@ -249,10 +252,24 @@ const RoomPage = () => {
       </div>
     </div>
   );
-
-  // LOBBY
   if (phase === 'lobby') return (
     <div className="min-h-screen pt-24 pb-12 px-4">
+      {/* Adblocker notice */}
+      {showAdblockNotice && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 animate-fade-in-up">
+          <div className="glass-strong rounded-2xl px-4 py-3 flex items-start gap-3"
+            style={{ border: '1px solid rgba(253,203,110,0.4)', background: 'rgba(253,203,110,0.08)' }}>
+            <span className="text-lg shrink-0">⚠️</span>
+            <p className="text-sm flex-1" style={{ color: 'var(--text-primary)' }}>
+              Multiplayer ne radi? Isključi <strong>adblocker</strong> (npr. Brave Shields) za ovu stranicu — blokira WebSocket veze.
+            </p>
+            <button onClick={() => { setShowAdblockNotice(false); sessionStorage.setItem('mp-adblock-dismissed', '1'); }}
+              className="shrink-0 hover:opacity-70 transition-opacity p-1">
+              <X className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+            </button>
+          </div>
+        </div>
+      )}
       <div className="max-w-lg mx-auto">
         <div className="glass-strong rounded-3xl p-8 text-center animate-fade-in-up">
           <h1 className="font-['Nunito'] text-3xl font-black mb-2">Čekaonica</h1>
