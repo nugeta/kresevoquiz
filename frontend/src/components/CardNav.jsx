@@ -42,9 +42,14 @@ const CardNav = ({ className = '' }) => {
   // Fetch unread inbox count
   useEffect(() => {
     if (!isAuthenticated) { setUnreadCount(0); return; }
-    axios.get(`${API_URL}/api/users/me/inbox`, { withCredentials: true })
-      .then(r => setUnreadCount((r.data.warnings?.length || 0) + (r.data.messages?.length || 0)))
-      .catch(() => {});
+    const fetchInbox = () => {
+      axios.get(`${API_URL}/api/users/me/inbox`, { withCredentials: true })
+        .then(r => setUnreadCount((r.data.warnings?.length || 0) + (r.data.messages?.length || 0)))
+        .catch(() => {});
+    };
+    fetchInbox();
+    const interval = setInterval(fetchInbox, 60000); // re-check every minute
+    return () => clearInterval(interval);
   }, [isAuthenticated]);
   const buttonBgColor = isDark ? '#7C3AED' : '#8AB4F8';
   const buttonTextColor = isDark ? '#ffffff' : '#2D3436';
@@ -329,9 +334,9 @@ const CardNav = ({ className = '' }) => {
             {isAuthenticated && (
               <Link to="/inbox" className="relative w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
                 style={{ backgroundColor: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(138, 180, 248, 0.2)' }}>
-                <Bell className="w-5 h-5" style={{ color: isDark ? '#7C3AED' : '#8AB4F8' }} />
+                <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'bell-ring' : ''}`} style={{ color: isDark ? '#7C3AED' : '#8AB4F8' }} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-xs flex items-center justify-center font-bold"
+                  <span className="badge-pulse absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center font-bold"
                     style={{ background: '#d63031', fontSize: '10px' }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
                 )}
               </Link>
