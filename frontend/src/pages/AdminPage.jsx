@@ -82,6 +82,7 @@ const AdminPage = () => {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [groupForm, setGroupForm] = useState({ name: '', description: '' });
   const [groupSaving, setGroupSaving] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
   const [userActionModal, setUserActionModal] = useState(null); // {user, action: 'warn'|'message'|'rename'}
   const [userActionText, setUserActionText] = useState('');
   const [userActionSaving, setUserActionSaving] = useState(false);
@@ -379,6 +380,13 @@ const AdminPage = () => {
     } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
   };
 
+  const updateGroup = async (id, data) => {
+    try {
+      await axios.put(`${API_URL}/api/groups/${id}`, data, { withCredentials: true });
+      setGroups(prev => prev.map(g => g.id === id ? { ...g, ...data } : g));
+    } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
+  };
+
   const resetUserScore = async (u) => {
     if (!window.confirm(`Resetirati rezultate za "${u.username}"?`)) return;
     try {
@@ -412,11 +420,18 @@ const AdminPage = () => {
     if (!groupForm.name.trim()) return;
     setGroupSaving(true);
     try {
-      await axios.post(`${API_URL}/api/groups`, groupForm, { withCredentials: true });
-      const res = await axios.get(`${API_URL}/api/groups`, { withCredentials: true });
-      setGroups(res.data);
-      setGroupModalOpen(false);
-      setGroupForm({ name: '', description: '' });
+      if (editingGroup) {
+        await updateGroup(editingGroup.id, { name: groupForm.name, description: groupForm.description });
+        setGroupModalOpen(false);
+        setEditingGroup(null);
+        setGroupForm({ name: '', description: '' });
+      } else {
+        await axios.post(`${API_URL}/api/groups`, groupForm, { withCredentials: true });
+        const res = await axios.get(`${API_URL}/api/groups`, { withCredentials: true });
+        setGroups(res.data);
+        setGroupModalOpen(false);
+        setGroupForm({ name: '', description: '' });
+      }
     } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
     finally { setGroupSaving(false); }
   };
@@ -942,7 +957,11 @@ const AdminPage = () => {
                     <div className="flex items-center gap-2 mt-1">
                       <select
                         value={u.group || ''}
-                        onChange={e => setUsers(prev => prev.map(x => x.id === u.id ? { ...x, group: e.target.value } : x))}
+                        onChange={e => {
+                          const newGroup = e.target.value;
+                          setUsers(prev => prev.map(x => x.id === u.id ? { ...x, group: newGroup } : x));
+                          setUserGroup({ ...u, group: newGroup }, newGroup);
+                        }}
                         className="text-xs rounded-lg px-2 py-0.5 border-0 cursor-pointer"
                         style={{ background: u.group ? 'rgba(85,239,196,0.2)' : 'rgba(255,255,255,0.1)', color: u.group ? '#55EFC4' : 'var(--text-secondary)' }}>
                         <option value="">Bez grupe</option>
@@ -951,12 +970,6 @@ const AdminPage = () => {
                         )}
                         {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                       </select>
-                      <button
-                        onClick={() => setUserGroup(u, u.group || '')}
-                        className="text-xs px-2 py-0.5 rounded-lg transition-all hover:opacity-80"
-                        style={{ background: 'var(--primary)', color: '#fff' }}>
-                        Postavi
-                      </button>
                     </div>
                   </div>
                   {!u.is_global_admin && (
@@ -1089,7 +1102,7 @@ const AdminPage = () => {
           <TabsContent value="groups">
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-['Nunito'] text-xl font-bold">Grupe ({groups.length})</h2>
-              <button onClick={() => setGroupModalOpen(true)} className="btn-primary flex items-center gap-2 !py-2 !px-4">
+              <button onClick={() => { setEditingGroup(null); setGroupForm({ name: '', description: '' }); setGroupModalOpen(true); }} className="btn-primary flex items-center gap-2 !py-2 !px-4">
                 <Plus className="w-4 h-4" /> Nova grupa
               </button>
             </div>
@@ -1108,6 +1121,10 @@ const AdminPage = () => {
                         </p>
                       </div>
                       <span className="text-sm">{isOpen ? '▲' : '▼'}</span>
+                      <button onClick={e => { e.stopPropagation(); setEditingGroup(g); setGroupForm({ name: g.name, description: g.description || '' }); setGroupModalOpen(true); }}
+                        className="p-2 rounded-lg hover:bg-white/10 transition-colors" title="Uredi grupu">
+                        <Edit2 className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
+                      </button>
                       <button onClick={e => { e.stopPropagation(); deleteGroup(g.id); }}
                         className="p-2 rounded-lg hover:bg-[#d63031]/10 transition-colors">
                         <Trash2 className="w-4 h-4 text-[#d63031]" />
@@ -1122,6 +1139,13 @@ const AdminPage = () => {
                             <span className="text-sm">{m.role === 'admin' ? '🛡️' : '👤'}</span>
                             <span className="flex-1 font-medium text-sm">{m.username}</span>
                             <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{m.total_score} bod · {m.quizzes_taken} kvizova</span>
+                            <button
+                              onClick={() => setUserGroup(m, '')}
+                              className="text-xs px-2 py-0.5 rounded-lg hover:opacity-80 transition-opacity"
+                              style={{ background: 'rgba(214,48,49,0.15)', color: '#d63031' }}
+                              title="Ukloni iz grupe">
+                              ✕
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -1197,11 +1221,11 @@ const AdminPage = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Create Group Modal */}
-        <Dialog open={groupModalOpen} onOpenChange={setGroupModalOpen}>
+        {/* Create/Edit Group Modal */}
+        <Dialog open={groupModalOpen} onOpenChange={open => { setGroupModalOpen(open); if (!open) { setEditingGroup(null); setGroupForm({ name: '', description: '' }); } }}>
           <DialogContent className="glass-strong">
             <DialogHeader>
-              <DialogTitle className="font-['Nunito']">Nova grupa</DialogTitle>
+              <DialogTitle className="font-['Nunito']">{editingGroup ? 'Uredi grupu' : 'Nova grupa'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
@@ -1216,10 +1240,10 @@ const AdminPage = () => {
               </div>
             </div>
             <DialogFooter>
-              <button onClick={() => setGroupModalOpen(false)} className="btn-secondary">Odustani</button>
+              <button onClick={() => { setGroupModalOpen(false); setEditingGroup(null); setGroupForm({ name: '', description: '' }); }} className="btn-secondary">Odustani</button>
               <button onClick={createGroup} disabled={groupSaving || !groupForm.name.trim()} className="btn-primary flex items-center gap-2">
-                {groupSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Kreiraj
+                {groupSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingGroup ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                {editingGroup ? 'Spremi' : 'Kreiraj'}
               </button>
             </DialogFooter>
           </DialogContent>
