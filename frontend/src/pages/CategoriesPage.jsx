@@ -21,6 +21,7 @@ const CategoriesPage = () => {
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
   const [questionCount, setQuestionCount] = useState(10);
+  const [difficulty, setDifficulty] = useState('mix');
 
   // Separate parents and children
   const parents = categories.filter(c => !c.parent_id);
@@ -194,7 +195,20 @@ const CategoriesPage = () => {
                   {[5, 10, 15, 20].filter(n => n <= selected.question_count).map(n => <span key={n}>{n}</span>)}
                 </div>
               </div>
-              <button onClick={() => { navigate(`/quiz/${selected.id}?count=${questionCount}`); setSelected(null); }}
+              {/* Difficulty filter */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">Težina</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[['mix','🎲','Mix'],['easy','🟢','Lako'],['medium','🟡','Srednje'],['hard','🔴','Teško']].map(([val, emoji, label]) => (
+                    <button key={val} onClick={() => setDifficulty(val)}
+                      className="py-2 rounded-xl text-xs font-semibold transition-all"
+                      style={{ background: difficulty === val ? `${selected.color}25` : 'var(--glass-bg)', border: `2px solid ${difficulty === val ? selected.color : 'transparent'}`, color: difficulty === val ? selected.color : 'var(--text-secondary)' }}>
+                      {emoji}<br />{label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={() => { navigate(`/quiz/${selected.id}?count=${questionCount}&difficulty=${difficulty}`); setSelected(null); }}
                 className="btn-primary w-full flex items-center justify-center gap-2 !py-4"
                 style={{ background: `linear-gradient(135deg, ${selected.color}, ${selected.color}cc)` }}>
                 <Play className="w-5 h-5" /> Započni Kviz
