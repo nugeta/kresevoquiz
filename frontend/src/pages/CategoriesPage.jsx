@@ -17,6 +17,10 @@ const CategoriesPage = () => {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [expandedParent, setExpandedParent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [questionCount, setQuestionCount] = useState(10);
 
   // Separate parents and children
   const parents = categories.filter(c => !c.parent_id);
