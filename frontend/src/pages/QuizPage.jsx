@@ -259,7 +259,7 @@ const QuizPage = () => {
         </div>
 
         {/* Progress Bar */}
-        <div className="h-2 rounded-full bg-white/50 mb-8 overflow-hidden">
+        <div className="h-2 rounded-full mb-8 overflow-hidden" style={{ background: 'var(--glass-border)' }}>
           <div 
             className="h-full rounded-full bg-gradient-to-r from-[#8AB4F8] to-[#55EFC4] transition-all duration-500"
             style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
@@ -328,9 +328,10 @@ const QuizPage = () => {
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                 selectedOptions.includes(option.id) 
                   ? 'bg-[#8AB4F8] text-white' 
-                  : 'bg-white/50'
+                  : ''
               } ${isAnswered && answerResult?.correct_option_ids?.includes(option.id) ? 'bg-[#00b894] text-white' : ''}
                 ${isAnswered && selectedOptions.includes(option.id) && !answerResult?.correct_option_ids?.includes(option.id) ? 'bg-[#d63031] text-white' : ''}`}
+              style={!selectedOptions.includes(option.id) && !(isAnswered && answerResult?.correct_option_ids?.includes(option.id)) && !(isAnswered && selectedOptions.includes(option.id)) ? { background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' } : {}}
               >
                 {isAnswered ? (
                   answerResult?.correct_option_ids?.includes(option.id) ? (
