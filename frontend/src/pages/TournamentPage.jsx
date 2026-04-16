@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Copy, CheckCircle2, Play, Loader2, Trophy, Swords, Eye } from 'lucide-react';
+import { Copy, CheckCircle2, Play, Loader2, Trophy, Swords, Eye, Bot } from 'lucide-react';
+import axios from 'axios';
 import usePageTitle from '../hooks/usePageTitle';
 
 const TournamentPage = () => {
   usePageTitle('Turnir');
   const { tournamentId } = useParams();
   const { user } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const [state, setState] = useState('lobby');
@@ -24,6 +26,19 @@ const TournamentPage = () => {
   const ws = useRef(null);
   const wsConnected = useRef(false);
   const isHost = players.length > 0 && players[0]?.username === user?.username;
+
+  const fillWithBots = async () => {
+    const needed = size - playerCount;
+    if (needed <= 0) return;
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/tournaments/${tournamentId}/add-bots`,
+        { count: needed },
+        { withCredentials: true }
+      );
+      alert(`Dodano ${res.data.added} botova`);
+    } catch (e) { alert(e.response?.data?.detail || 'Greška'); }
+  };
 
   useEffect(() => {
     if (wsConnected.current) return;
@@ -166,6 +181,12 @@ const TournamentPage = () => {
                 disabled={playerCount < 2}
                 className="btn-primary w-full flex items-center justify-center gap-2 mt-4 disabled:opacity-40">
                 <Play className="w-4 h-4" /> Pokreni turnir
+              </button>
+            )}
+            {state === 'lobby' && isAdmin && playerCount < size && (
+              <button onClick={fillWithBots}
+                className="btn-secondary w-full flex items-center justify-center gap-2 mt-2 text-sm">
+                <Bot className="w-4 h-4" /> Popuni botovima ({size - playerCount} mjesta)
               </button>
             )}
             {state === 'lobby' && !isHost && (
