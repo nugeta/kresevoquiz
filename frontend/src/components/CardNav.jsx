@@ -3,6 +3,9 @@ import { gsap } from 'gsap';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 import { 
   ArrowUpRight, 
   BookOpen, 
@@ -17,7 +20,8 @@ import {
   Heart,
   BarChart3,
   Swords,
-  Medal
+  Medal,
+  Bell
 } from 'lucide-react';
 
 const CardNav = ({ className = '' }) => {
@@ -27,12 +31,21 @@ const CardNav = ({ className = '' }) => {
   
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navRef = useRef(null);
   const cardsRef = useRef([]);
   const tlRef = useRef(null);
 
   // Theme-based colors
   const menuColor = isDark ? '#F1F5F9' : '#2D3436';
+
+  // Fetch unread inbox count
+  useEffect(() => {
+    if (!isAuthenticated) { setUnreadCount(0); return; }
+    axios.get(`${API_URL}/api/users/me/inbox`, { withCredentials: true })
+      .then(r => setUnreadCount((r.data.warnings?.length || 0) + (r.data.messages?.length || 0)))
+      .catch(() => {});
+  }, [isAuthenticated]);
   const buttonBgColor = isDark ? '#7C3AED' : '#8AB4F8';
   const buttonTextColor = isDark ? '#ffffff' : '#2D3436';
 
@@ -311,6 +324,18 @@ const CardNav = ({ className = '' }) => {
                 <Sun className="w-5 h-5" style={{ color: '#FDCB6E' }} />
               )}
             </button>
+
+            {/* Inbox bell */}
+            {isAuthenticated && (
+              <Link to="/inbox" className="relative w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+                style={{ backgroundColor: isDark ? 'rgba(124, 58, 237, 0.2)' : 'rgba(138, 180, 248, 0.2)' }}>
+                <Bell className="w-5 h-5" style={{ color: isDark ? '#7C3AED' : '#8AB4F8' }} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-xs flex items-center justify-center font-bold"
+                    style={{ background: '#d63031', fontSize: '10px' }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+                )}
+              </Link>
+            )}
 
             {/* CTA Button - Desktop */}
             <Link

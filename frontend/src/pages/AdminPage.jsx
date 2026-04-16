@@ -58,6 +58,8 @@ const AdminPage = () => {
   const [assessResult, setAssessResult] = useState(null);
   const [assessing, setAssessing] = useState(false);
   const [assessPrompt, setAssessPrompt] = useState('');
+  const [savedAssessPrompt, setSavedAssessPrompt] = useState('');
+  const [savingPrompt, setSavingPrompt] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [sortBy, setSortBy] = useState('category');
@@ -76,6 +78,10 @@ const AdminPage = () => {
   const [annModalOpen, setAnnModalOpen] = useState(false);
   const [annForm, setAnnForm] = useState({ message: '', type: 'info' });
   const [annSaving, setAnnSaving] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [groupForm, setGroupForm] = useState({ name: '', description: '' });
+  const [groupSaving, setGroupSaving] = useState(false);
   const [userActionModal, setUserActionModal] = useState(null); // {user, action: 'warn'|'message'|'rename'}
   const [userActionText, setUserActionText] = useState('');
   const [userActionSaving, setUserActionSaving] = useState(false);
@@ -93,7 +99,7 @@ const AdminPage = () => {
 
     const fetchData = async () => {
       try {
-        const [catRes, questRes, statsRes, usersRes, invitesRes, regRes, annRes] = await Promise.all([
+        const [catRes, questRes, statsRes, usersRes, invitesRes, regRes, annRes, groupsRes, promptRes] = await Promise.all([
           axios.get(`${API_URL}/api/categories`, { withCredentials: true }),
           axios.get(`${API_URL}/api/questions?page=1&limit=500`, { withCredentials: true }),
           axios.get(`${API_URL}/api/stats`, { withCredentials: true }),
@@ -101,6 +107,8 @@ const AdminPage = () => {
           axios.get(`${API_URL}/api/invites`, { withCredentials: true }),
           axios.get(`${API_URL}/api/settings/registration`, { withCredentials: true }),
           axios.get(`${API_URL}/api/announcements`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/groups`, { withCredentials: true }),
+          axios.get(`${API_URL}/api/settings/assessor-prompt`, { withCredentials: true }),
         ]);
         setCategories(catRes.data);
         setQuestions(questRes.data.questions);
@@ -111,6 +119,9 @@ const AdminPage = () => {
         setInvites(invitesRes.data);
         setInviteRequired(regRes.data.invite_required);
         setAnnouncements(annRes.data);
+        setGroups(groupsRes.data);
+        setSavedAssessPrompt(promptRes.data.prompt || '');
+        setAssessPrompt(promptRes.data.prompt || '');
       } catch (err) {
         setError('Greška pri učitavanju podataka');
       } finally {
@@ -390,6 +401,25 @@ const AdminPage = () => {
     finally { setUserActionSaving(false); }
   };
 
+  const createGroup = async () => {
+    if (!groupForm.name.trim()) return;
+    setGroupSaving(true);
+    try {
+      await axios.post(`${API_URL}/api/groups`, groupForm, { withCredentials: true });
+      const res = await axios.get(`${API_URL}/api/groups`, { withCredentials: true });
+      setGroups(res.data);
+      setGroupModalOpen(false);
+      setGroupForm({ name: '', description: '' });
+    } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
+    finally { setGroupSaving(false); }
+  };
+
+  const deleteGroup = async (id) => {
+    if (!window.confirm('Obrisati grupu?')) return;
+    await axios.delete(`${API_URL}/api/groups/${id}`, { withCredentials: true });
+    setGroups(prev => prev.filter(g => g.id !== id));
+  };
+
   const createAnnouncement = async () => {
     if (!annForm.message.trim()) return;
     setAnnSaving(true);
@@ -418,6 +448,15 @@ const AdminPage = () => {
     } catch (err) {
       alert(err.response?.data?.detail || 'Greška');
     }
+  };
+
+  const saveAssessPrompt = async () => {
+    setSavingPrompt(true);
+    try {
+      await axios.put(`${API_URL}/api/settings/assessor-prompt`, { prompt: assessPrompt }, { withCredentials: true });
+      setSavedAssessPrompt(assessPrompt);
+    } catch (err) { alert('Greška pri spremanju'); }
+    finally { setSavingPrompt(false); }
   };
 
   const assessQuestions = async (categoryId) => {
@@ -580,6 +619,10 @@ const AdminPage = () => {
             <TabsTrigger value="announcements" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
               <Megaphone className="w-4 h-4 mr-2" />
               Objave
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
+              <Users className="w-4 h-4 mr-2" />
+              Grupe
             </TabsTrigger>
           </TabsList>
 
@@ -786,13 +829,24 @@ const AdminPage = () => {
 
             {/* AI Assessor Prompt + Results */}
             <div className="mt-4 space-y-3">
+              <div className="glass rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Baza prompta (sprema se trajno)</p>
+                  <button onClick={saveAssessPrompt} disabled={savingPrompt || assessPrompt === savedAssessPrompt}
+                    className="text-xs px-3 py-1 rounded-lg transition-all disabled:opacity-40"
+                    style={{ background: 'var(--primary)', color: '#fff' }}>
+                    {savingPrompt ? 'Sprema...' : assessPrompt === savedAssessPrompt ? '✓ Spremljeno' : 'Spremi'}
+                  </button>
+                </div>
+                <textarea value={assessPrompt} onChange={e => setAssessPrompt(e.target.value)}
+                  className="glass-input text-xs min-h-[80px] font-mono"
+                  placeholder="Upiši upute za AI (npr. 'Provjeri jesu li odgovori na bosanskom', 'Fokusiraj se na duplikate'...)" />
+              </div>
               <div className="flex gap-2">
-                <input type="text" value={assessPrompt} onChange={e => setAssessPrompt(e.target.value)}
-                  placeholder="Dodatne upute za AI (opcionalno, npr. 'provjeri jesu li odgovori na bosanskom')"
-                  className="glass-input text-sm flex-1 !py-2" />
                 <button onClick={() => assessQuestions(filterCategory !== 'all' ? filterCategory : null)}
-                  disabled={assessing} className="btn-secondary flex items-center gap-2 !py-2 !px-3 disabled:opacity-50 shrink-0">
-                  {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔍'} Analiziraj
+                  disabled={assessing} className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm disabled:opacity-50">
+                  {assessing ? <Loader2 className="w-4 h-4 animate-spin" /> : '🔍'}
+                  {assessing ? 'Analiziranje...' : `Analiziraj ${filterCategory !== 'all' ? 'kategoriju' : 'sve'}`}
                 </button>
               </div>
 
@@ -985,6 +1039,32 @@ const AdminPage = () => {
               {announcements.length === 0 && <p className="text-center py-8 text-sm" style={{ color: 'var(--text-secondary)' }}>Nema aktivnih objava.</p>}
             </div>
           </TabsContent>
+
+          {/* Groups Tab */}
+          <TabsContent value="groups">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-['Nunito'] text-xl font-bold">Grupe ({groups.length})</h2>
+              <button onClick={() => setGroupModalOpen(true)} className="btn-primary flex items-center gap-2 !py-2 !px-4">
+                <Plus className="w-4 h-4" /> Nova grupa
+              </button>
+            </div>
+            <div className="space-y-3">
+              {groups.map(g => (
+                <div key={g.id} className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold">👥 {g.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                      {g.member_count} članova{g.description ? ` · ${g.description}` : ''}
+                    </p>
+                  </div>
+                  <button onClick={() => deleteGroup(g.id)} className="p-2 rounded-lg hover:bg-[#d63031]/10 transition-colors">
+                    <Trash2 className="w-4 h-4 text-[#d63031]" />
+                  </button>
+                </div>
+              ))}
+              {groups.length === 0 && <p className="text-center py-8 text-sm" style={{ color: 'var(--text-secondary)' }}>Nema grupa. Kreiraj prvu i dodaj je pozivnicama.</p>}
+            </div>
+          </TabsContent>
         </Tabs>
 
         {/* Announcements Tab Content — added before Tabs closes */}
@@ -1044,6 +1124,34 @@ const AdminPage = () => {
               <button onClick={() => setInviteModalOpen(false)} className="btn-secondary">Odustani</button>
               <button onClick={createInvite} disabled={inviteSaving} className="btn-primary flex items-center gap-2">
                 {inviteSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Kreiraj
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Group Modal */}
+        <Dialog open={groupModalOpen} onOpenChange={setGroupModalOpen}>
+          <DialogContent className="glass-strong">
+            <DialogHeader>
+              <DialogTitle className="font-['Nunito']">Nova grupa</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Naziv grupe</label>
+                <input type="text" value={groupForm.name} onChange={e => setGroupForm(p => ({ ...p, name: e.target.value }))}
+                  className="glass-input" placeholder="npr. 3B, Maturanti 2026" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Opis (opcionalno)</label>
+                <input type="text" value={groupForm.description} onChange={e => setGroupForm(p => ({ ...p, description: e.target.value }))}
+                  className="glass-input" placeholder="Kratki opis grupe" />
+              </div>
+            </div>
+            <DialogFooter>
+              <button onClick={() => setGroupModalOpen(false)} className="btn-secondary">Odustani</button>
+              <button onClick={createGroup} disabled={groupSaving || !groupForm.name.trim()} className="btn-primary flex items-center gap-2">
+                {groupSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Kreiraj
               </button>
             </DialogFooter>
