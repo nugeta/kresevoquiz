@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Users, Plus, LogIn, Loader2, Swords, Trophy, Shield, AlertTriangle } from 'lucide-react';
+import { Users, Plus, LogIn, Loader2, Swords, Trophy, Shield, AlertTriangle, X } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -27,7 +27,10 @@ const MultiplayerPage = () => {
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState('create'); // create | join
+  const [tab, setTab] = useState('create');
+  const [difficulty, setDifficulty] = useState('mix');
+  const [customMode, setCustomMode] = useState(false); // multi-category custom mix
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/categories`)
@@ -36,20 +39,26 @@ const MultiplayerPage = () => {
   }, []);
 
   const createRoom = async () => {
-    if (!selectedCategory) { setError('Odaberi kategoriju'); return; }
+    if (!customMode && !selectedCategory) { setError('Odaberi kategoriju'); return; }
+    if (customMode && selectedCategoryIds.length < 2) { setError('Odaberi barem 2 kategorije za prilagođeni mix'); return; }
     setCreating(true); setError('');
     try {
+      const payload = {
+        category_id: customMode ? 'custom' : selectedCategory,
+        category_ids: customMode ? selectedCategoryIds : undefined,
+        question_count: questionCount,
+        difficulty,
+        mode,
+        max_players: maxPlayers
+      };
       if (mode === 'tournament') {
         const res = await axios.post(`${API_URL}/api/tournaments/create`,
-          { category_id: selectedCategory, question_count: questionCount, size: tournamentSize },
+          { ...payload, size: tournamentSize },
           { withCredentials: true }
         );
         navigate(`/multiplayer/tournament/${res.data.tournament_id}`);
       } else {
-        const res = await axios.post(`${API_URL}/api/rooms/create`,
-          { category_id: selectedCategory, question_count: questionCount, mode, max_players: maxPlayers },
-          { withCredentials: true }
-        );
+        const res = await axios.post(`${API_URL}/api/rooms/create`, payload, { withCredentials: true });
         navigate(`/multiplayer/room/${res.data.room_code}`);
       }
     } catch (e) {
@@ -134,11 +143,58 @@ const MultiplayerPage = () => {
 
             {/* Category */}
             <div>
-              <label className="block text-sm font-medium mb-2">Kategorija</label>
-              <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="glass-input">
-                <option value="">Odaberi kategoriju...</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.icon && c.icon.length <= 2 ? c.icon + ' ' : ''}{c.name} ({c.question_count})</option>)}
-              </select>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Kategorija</label>
+                <button onClick={() => { setCustomMode(!customMode); setSelectedCategoryIds([]); setSelectedCategory(''); }}
+                  className="text-xs px-2 py-1 rounded-lg transition-all"
+                  style={{ background: customMode ? 'rgba(162,155,254,0.2)' : 'var(--glass-bg)', color: customMode ? '#A29BFE' : 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}>
+                  {customMode ? '✓ Prilagođeni mix' : '🎲 Prilagođeni mix'}
+                </button>
+              </div>
+              {customMode ? (
+                <div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedCategoryIds.map(id => {
+                      const cat = categories.find(c => c.id === id);
+                      return cat ? (
+                        <span key={id} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg"
+                          style={{ background: `${cat.color || '#8AB4F8'}20`, color: cat.color || '#8AB4F8', border: `1px solid ${cat.color || '#8AB4F8'}40` }}>
+                          {cat.name}
+                          <button onClick={() => setSelectedCategoryIds(prev => prev.filter(x => x !== id))}>
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                  <select onChange={e => { if (e.target.value && !selectedCategoryIds.includes(e.target.value)) setSelectedCategoryIds(prev => [...prev, e.target.value]); e.target.value = ''; }} className="glass-input">
+                    <option value="">Dodaj kategoriju...</option>
+                    {categories.filter(c => !selectedCategoryIds.includes(c.id)).map(c => (
+                      <option key={c.id} value={c.id}>{c.icon && c.icon.length <= 2 ? c.icon + ' ' : ''}{c.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Odaberi 2+ kategorija za mix</p>
+                </div>
+              ) : (
+                <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="glass-input">
+                  <option value="">Odaberi kategoriju...</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.icon && c.icon.length <= 2 ? c.icon + ' ' : ''}{c.name} ({c.question_count})</option>)}
+                </select>
+              )}
+            </div>
+
+            {/* Difficulty */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Težina pitanja</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[['mix','🎲','Mix'],['easy','🟢','Lako'],['medium','🟡','Srednje'],['hard','🔴','Teško']].map(([val, emoji, label]) => (
+                  <button key={val} onClick={() => setDifficulty(val)}
+                    className="py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: difficulty === val ? 'rgba(138,180,248,0.2)' : 'var(--glass-bg)', border: `2px solid ${difficulty === val ? 'var(--primary)' : 'transparent'}`, color: difficulty === val ? 'var(--primary)' : 'var(--text-secondary)' }}>
+                    {emoji}<br />{label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Question count */}

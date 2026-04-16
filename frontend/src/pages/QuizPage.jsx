@@ -50,7 +50,11 @@ const QuizPage = () => {
       try {
         const response = await axios.post(
           `${API_URL}/api/quiz/start`,
-          { category_id: categoryId, question_count: parseInt(searchParams.get('count') || '10') },
+          {
+            category_id: categoryId,
+            question_count: parseInt(searchParams.get('count') || '10'),
+            difficulty: searchParams.get('difficulty') || 'mix'
+          },
           { withCredentials: true }
         );
         

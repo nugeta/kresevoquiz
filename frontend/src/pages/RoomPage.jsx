@@ -366,7 +366,8 @@ const RoomPage = () => {
             </div>
             <div className="flex gap-3">
               <button onClick={() => navigate('/multiplayer')} className="btn-secondary flex-1">Nova igra</button>
-              <button onClick={() => navigate('/categories')} className="btn-primary flex-1">Solo kviz</button>
+              <button onClick={() => navigate('/multiplayer')} className="btn-primary flex-1">Revanž? ⚔️</button>
+              <button onClick={() => navigate('/categories')} className="btn-secondary flex-1">Solo kviz</button>
             </div>
           </div>
         </div>

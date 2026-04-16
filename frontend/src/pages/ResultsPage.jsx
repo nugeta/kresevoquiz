@@ -127,7 +127,7 @@ const ResultsPage = () => {
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to={`/quiz/${results.category_id || ''}`} className="btn-primary flex items-center justify-center gap-2">
-              <RotateCcw className="w-5 h-5" /> Igraj Opet
+              <RotateCcw className="w-5 h-5" /> Probaj opet?
             </Link>
             <Link to="/categories" className="btn-secondary flex items-center justify-center gap-2">
               <RotateCcw className="w-5 h-5" /> Druge Kategorije

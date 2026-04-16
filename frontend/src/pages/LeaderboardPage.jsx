@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Trophy, 
@@ -130,11 +131,11 @@ const LeaderboardPage = () => {
         {isAuthenticated && user && (
           <div className="glass-strong rounded-3xl p-6 mb-8 animate-fade-in-up">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#8AB4F8]/20 flex items-center justify-center">
-                <User className="w-7 h-7 text-[#8AB4F8]" />
+              <div className="w-14 h-14 rounded-2xl bg-[#8AB4F8]/20 flex items-center justify-center text-2xl font-black" style={{ color: 'var(--primary)' }}>
+                {user.username?.[0]?.toUpperCase()}
               </div>
               <div className="flex-1">
-                <h3 className="font-['Nunito'] text-lg font-bold">{user.username}</h3>
+                <Link to={`/profile/${user.username}`} className="font-['Nunito'] text-lg font-bold hover:underline">{user.username}</Link>
                 <p className="text-sm text-[#636E72]">Tvoj profil</p>
               </div>
               <div className="text-right">
@@ -199,9 +200,11 @@ const LeaderboardPage = () => {
                   {/* User Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-['Nunito'] text-lg font-bold truncate">
+                      <Link to={`/profile/${entry.username}`}
+                        className="font-['Nunito'] text-lg font-bold truncate hover:underline"
+                        style={{ color: 'var(--text-primary)' }}>
                         {entry.username}
-                      </h3>
+                      </Link>
                       {isCurrentUser && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-[#8AB4F8]/20 text-[#8AB4F8]">
                           Ti
