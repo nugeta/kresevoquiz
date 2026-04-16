@@ -372,6 +372,13 @@ const AdminPage = () => {
     }
   };
 
+  const setUserGroup = async (u, group) => {
+    try {
+      await axios.put(`${API_URL}/api/users/${u.id}/group`, { group: group || null }, { withCredentials: true });
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, group: group || null } : x));
+    } catch (err) { alert(err.response?.data?.detail || 'Greška'); }
+  };
+
   const resetUserScore = async (u) => {
     if (!window.confirm(`Resetirati rezultate za "${u.username}"?`)) return;
     try {
@@ -913,6 +920,14 @@ const AdminPage = () => {
                     <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                       {u.quizzes_taken} kvizova · {u.total_score} bodova · {new Date(u.created_at).toLocaleDateString('hr')}
                     </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <select value={u.group || ''} onChange={e => setUserGroup(u, e.target.value)}
+                        className="text-xs rounded-lg px-2 py-0.5 border-0 cursor-pointer"
+                        style={{ background: u.group ? 'rgba(85,239,196,0.2)' : 'rgba(255,255,255,0.1)', color: u.group ? '#55EFC4' : 'var(--text-secondary)' }}>
+                        <option value="">Bez grupe</option>
+                        {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                      </select>
+                    </div>
                   </div>
                   {!u.is_global_admin && (
                     <div className="flex items-center gap-2 shrink-0">
