@@ -32,6 +32,12 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
+  // Skip non-http(s) requests (chrome-extension, etc.)
+  if (!url.protocol.startsWith('http')) return;
+
+  // Skip POST/PUT/DELETE — can't cache these
+  if (e.request.method !== 'GET') return;
+
   // Always go to network for API and WebSocket calls
   if (url.pathname.startsWith('/api/') || url.protocol === 'wss:') {
     return;
