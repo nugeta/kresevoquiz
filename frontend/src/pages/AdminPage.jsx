@@ -922,8 +922,8 @@ const AdminPage = () => {
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <select
-                        defaultValue={u.group || ''}
-                        id={`group-select-${u.id}`}
+                        value={u.group || ''}
+                        onChange={e => setUsers(prev => prev.map(x => x.id === u.id ? { ...x, group: e.target.value } : x))}
                         className="text-xs rounded-lg px-2 py-0.5 border-0 cursor-pointer"
                         style={{ background: u.group ? 'rgba(85,239,196,0.2)' : 'rgba(255,255,255,0.1)', color: u.group ? '#55EFC4' : 'var(--text-secondary)' }}>
                         <option value="">Bez grupe</option>
@@ -933,15 +933,11 @@ const AdminPage = () => {
                         {groups.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                       </select>
                       <button
-                        onClick={() => {
-                          const sel = document.getElementById(`group-select-${u.id}`);
-                          setUserGroup(u, sel?.value || '');
-                        }}
+                        onClick={() => setUserGroup(u, u.group || '')}
                         className="text-xs px-2 py-0.5 rounded-lg transition-all hover:opacity-80"
                         style={{ background: 'var(--primary)', color: '#fff' }}>
                         Postavi
                       </button>
-                      {u.group && <span className="text-xs" style={{ color: '#55EFC4' }}>✓ {u.group}</span>}
                     </div>
                   </div>
                   {!u.is_global_admin && (
