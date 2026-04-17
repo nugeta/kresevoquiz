@@ -137,7 +137,7 @@ const CategoriesPage = () => {
                       <h3 className="text-xl font-bold mb-2">{category.name}</h3>
                       <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{category.description || 'Testiraj svoje znanje iz ove kategorije'}</p>
                       <span className="text-xs px-3 py-1 rounded-full font-medium" style={{ backgroundColor: `${themeColor}20`, color: themeColor }}>
-                        {hasChildren ? `${children.length} tema · ${totalQuestions} pitanja` : category.question_count === 0 ? 'Nema pitanja' : `${category.question_count} pitanja`}
+                        {hasChildren ? `${children.length} ${children.length === 1 ? 'tema' : children.length < 5 ? 'teme' : 'tema'} · ${totalQuestions} pitanja` : category.question_count === 0 ? 'Nema pitanja' : `${category.question_count} pitanja`}
                       </span>
                     </div>
                   </button>

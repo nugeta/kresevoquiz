@@ -733,7 +733,7 @@ const AdminPage = () => {
                       <h3 className="font-['Nunito'] font-bold">{category.name}</h3>
                       <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                         {totalQuestions} pitanja
-                        {children.length > 0 && ` · ${children.length} tema`}
+                        {children.length > 0 && ` · ${children.length} ${children.length === 1 ? 'tema' : children.length < 5 ? 'teme' : 'tema'}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
