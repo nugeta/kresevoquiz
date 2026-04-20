@@ -46,7 +46,7 @@ const AdminPage = () => {
   const [questionForm, setQuestionForm] = useState({
     category_id: '', question_text: '', question_type: 'single_choice',
     options: [{ id: crypto.randomUUID(), text: '', is_correct: false }, { id: crypto.randomUUID(), text: '', is_correct: false }],
-    points: 10, time_limit: 30, difficulty: 'medium', image_url: null
+    points: 10, time_limit: 30, difficulty: 'medium', image_url: null, correct_answer: ''
   });
 
   const [expandedCategory, setExpandedCategory] = useState(null);
@@ -182,11 +182,12 @@ const AdminPage = () => {
         category_id: question.category_id,
         question_text: question.question_text,
         question_type: question.question_type,
-        options: question.options.map(o => ({ ...o })),
+        options: question.options?.map(o => ({ ...o })) || [],
         points: question.points,
         time_limit: question.time_limit,
         difficulty: question.difficulty || 'medium',
-        image_url: question.image_url || null
+        image_url: question.image_url || null,
+        correct_answer: question.correct_answer || ''
       });
     } else {
       setEditingQuestion(null);
@@ -201,7 +202,8 @@ const AdminPage = () => {
         points: 10,
         time_limit: 30,
         difficulty: 'medium',
-        image_url: null
+        image_url: null,
+        correct_answer: ''
       });
     }
     setQuestionModalOpen(true);
@@ -213,20 +215,28 @@ const AdminPage = () => {
       alert('Popunite sva obavezna polja');
       return;
     }
-    if (questionForm.options.filter(o => o.text.trim()).length < 2) {
-      alert('Dodajte barem 2 opcije');
-      return;
-    }
-    if (!questionForm.options.some(o => o.is_correct)) {
-      alert('Označite barem jedan točan odgovor');
-      return;
+    if (questionForm.question_type === 'upis') {
+      if (!questionForm.correct_answer?.trim()) {
+        alert('Unesite točan odgovor za Upis pitanje');
+        return;
+      }
+    } else {
+      if (questionForm.options.filter(o => o.text.trim()).length < 2) {
+        alert('Dodajte barem 2 opcije');
+        return;
+      }
+      if (!questionForm.options.some(o => o.is_correct)) {
+        alert('Označite barem jedan točan odgovor');
+        return;
+      }
     }
 
     setSaving(true);
     try {
       const payload = {
         ...questionForm,
-        options: questionForm.options.filter(o => o.text.trim())
+        options: questionForm.question_type === 'upis' ? [] : questionForm.options.filter(o => o.text.trim()),
+        correct_answer: questionForm.question_type === 'upis' ? questionForm.correct_answer : undefined
       };
 
       if (editingQuestion) {
@@ -1624,6 +1634,7 @@ const AdminPage = () => {
                       <SelectItem value="single_choice">Jedan odgovor</SelectItem>
                       <SelectItem value="multiple_choice">Višestruki izbor</SelectItem>
                       <SelectItem value="true_false">Točno / Netočno</SelectItem>
+                      <SelectItem value="upis">Upis (upiši odgovor)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1689,6 +1700,21 @@ const AdminPage = () => {
                 </div>
               </div>
 
+              {questionForm.question_type === 'upis' ? (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Točan odgovor</label>
+                  <input
+                    type="text"
+                    value={questionForm.correct_answer || ''}
+                    onChange={e => setQuestionForm(prev => ({ ...prev, correct_answer: e.target.value }))}
+                    className="glass-input"
+                    placeholder="Upiši točan odgovor (npr. Pariz, Jupiter, 1918...)"
+                  />
+                  <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+                    Djelomični odgovori dobivaju djelomične bodove. Npr. ako je odgovor "Austro-Ugarska Monarhija", "Austro-Ugarska" će dobiti ~70% bodova.
+                  </p>
+                </div>
+              ) : (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium">Opcije odgovora</label>
@@ -1740,6 +1766,7 @@ const AdminPage = () => {
                   Kliknite ✓ za označavanje točnog odgovora
                 </p>
               </div>
+              )}
             </div>
             <DialogFooter>
               <button 

@@ -26,6 +26,7 @@ const RoomPage = () => {
   const [qTotal, setQTotal] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [textAnswer, setTextAnswer] = useState('');
   const [answerResult, setAnswerResult] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [myScore, setMyScore] = useState(0);
@@ -141,6 +142,7 @@ const RoomPage = () => {
         setQTotal(msg.total);
         setTimeLeft(msg.question.time_limit);
         setSelectedOptions([]);
+        setTextAnswer('');
         setAnswerResult(null);
         setIsAnswered(false);
         startTimeRef.current = Date.now();
@@ -184,12 +186,14 @@ const RoomPage = () => {
   const submitAnswer = useCallback((isTimeout = false) => {
     if (isAnswered) return;
     const timeTaken = Math.round((Date.now() - (startTimeRef.current || Date.now())) / 1000);
+    const isUpis = question?.question_type === 'upis';
     sendMsg({
       type: 'answer',
-      selected_option_ids: isTimeout ? [] : selectedOptions,
+      selected_option_ids: isTimeout || isUpis ? [] : selectedOptions,
+      text_answer: isUpis && !isTimeout ? textAnswer : null,
       time_taken: timeTaken
     });
-  }, [isAnswered, selectedOptions, sendMsg]);
+  }, [isAnswered, selectedOptions, textAnswer, question, sendMsg]);
 
   const selectOption = (id) => {
     if (isAnswered) return;
@@ -601,9 +605,30 @@ const RoomPage = () => {
           <h3 className="font-['Nunito'] text-xl font-bold">{question.question_text}</h3>
         </div>
 
-        {/* Options */}
+        {/* Options or Upis */}
+        {question.question_type === 'upis' ? (
+          <div className="mb-6">
+            <textarea
+              value={textAnswer}
+              onChange={e => setTextAnswer(e.target.value)}
+              disabled={isAnswered}
+              placeholder="Upiši odgovor..."
+              className="glass-input min-h-[80px] text-base resize-none"
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && textAnswer.trim()) { e.preventDefault(); submitAnswer(false); } }}
+            />
+            {isAnswered && answerResult?.correct_answer && (
+              <div className="mt-2 p-2 rounded-xl text-sm" style={{ background: 'rgba(85,239,196,0.1)', border: '1px solid rgba(85,239,196,0.3)' }}>
+                <span className="font-semibold" style={{ color: '#55EFC4' }}>Točan odgovor: </span>
+                <span>{answerResult.correct_answer}</span>
+                {answerResult.upis_ratio != null && answerResult.upis_ratio < 1 && answerResult.upis_ratio > 0 && (
+                  <span className="ml-2 text-xs" style={{ color: '#FDCB6E' }}>({Math.round(answerResult.upis_ratio * 100)}%)</span>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="space-y-3 mb-6">
-          {question.options.map((opt, i) => (
+          {(question.options || []).map((opt, i) => (
             <button key={opt.id} onClick={() => selectOption(opt.id)} disabled={isAnswered}
               className={`quiz-option w-full text-left flex items-center gap-4 ${getOptionClass(opt.id)}`}>
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-sm
@@ -621,10 +646,12 @@ const RoomPage = () => {
             </button>
           ))}
         </div>
+        )}
 
         {/* Submit */}
         {!isAnswered ? (
-          <button onClick={() => submitAnswer(false)} disabled={selectedOptions.length === 0}
+          <button onClick={() => submitAnswer(false)}
+            disabled={question.question_type === 'upis' ? !textAnswer.trim() : selectedOptions.length === 0}
             className="btn-primary w-full flex items-center justify-center gap-2 !py-4 disabled:opacity-50">
             <CheckCircle2 className="w-5 h-5" /> Potvrdi
           </button>
