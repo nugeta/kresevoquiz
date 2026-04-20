@@ -33,6 +33,7 @@ const QuizPage = () => {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [textAnswer, setTextAnswer] = useState('');
   const [timeLeft, setTimeLeft] = useState(30);
   const [isAnswered, setIsAnswered] = useState(false);
   const [answerResult, setAnswerResult] = useState(null);
@@ -124,13 +125,15 @@ const QuizPage = () => {
     if (timerRef.current) clearInterval(timerRef.current);
 
     const timeTaken = Math.round((Date.now() - startTimeRef.current) / 1000);
+    const isUpis = currentQuestion?.question_type === 'upis';
 
     try {
       const response = await axios.post(
         `${API_URL}/api/quiz/${sessionId}/answer`,
         {
           question_id: currentQuestion.id,
-          selected_option_ids: isTimeout ? [] : selectedOptions,
+          selected_option_ids: isTimeout || isUpis ? [] : selectedOptions,
+          text_answer: isUpis && !isTimeout ? textAnswer : null,
           time_taken: timeTaken
         },
         { withCredentials: true }
@@ -162,6 +165,7 @@ const QuizPage = () => {
     setTotalQuestions(answerResult.total_questions);
     setTimeLeft(answerResult.next_question.time_limit);
     setSelectedOptions([]);
+    setTextAnswer('');
     setIsAnswered(false);
     setAnswerResult(null);
     startTimeRef.current = Date.now();
@@ -292,6 +296,7 @@ const QuizPage = () => {
               {currentQuestion.question_type === 'multiple_choice' && 'Višestruki izbor'}
               {currentQuestion.question_type === 'single_choice' && 'Odaberi jedan'}
               {currentQuestion.question_type === 'true_false' && 'Točno / Netočno'}
+              {currentQuestion.question_type === 'upis' && 'Upiši odgovor'}
             </span>
             {currentQuestion.difficulty && (
               <span className="text-xs px-3 py-1 rounded-full font-medium" style={{
@@ -319,9 +324,31 @@ const QuizPage = () => {
           </p>
         </div>
 
-        {/* Options */}
+        {/* Options or Upis input */}
+        {currentQuestion.question_type === 'upis' ? (
+          <div className="mb-8">
+            <textarea
+              value={textAnswer}
+              onChange={e => setTextAnswer(e.target.value)}
+              disabled={isAnswered}
+              placeholder="Upiši odgovor ovdje..."
+              className="glass-input min-h-[100px] text-base resize-none"
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && textAnswer.trim()) { e.preventDefault(); handleSubmitAnswer(false); } }}
+              autoFocus
+            />
+            {isAnswered && answerResult?.correct_answer && (
+              <div className="mt-3 p-3 rounded-xl text-sm" style={{ background: 'rgba(85,239,196,0.1)', border: '1px solid rgba(85,239,196,0.3)' }}>
+                <span className="font-semibold" style={{ color: '#55EFC4' }}>Točan odgovor: </span>
+                <span>{answerResult.correct_answer}</span>
+                {answerResult.upis_ratio != null && answerResult.upis_ratio < 1 && answerResult.upis_ratio > 0 && (
+                  <span className="ml-2 text-xs" style={{ color: '#FDCB6E' }}>({Math.round(answerResult.upis_ratio * 100)}% točnosti)</span>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="space-y-4 stagger-children mb-8">
-          {currentQuestion.options.map((option, index) => (
+          {(currentQuestion.options || []).map((option, index) => (
             <button
               key={option.id}
               onClick={() => handleOptionSelect(option.id)}
@@ -353,6 +380,7 @@ const QuizPage = () => {
             </button>
           ))}
         </div>
+        )}
 
         {/* Result Feedback */}
         {isAnswered && answerResult && (
@@ -385,7 +413,7 @@ const QuizPage = () => {
           {!isAnswered ? (
             <button
               onClick={() => handleSubmitAnswer(false)}
-              disabled={selectedOptions.length === 0 || submitting}
+              disabled={(currentQuestion.question_type === 'upis' ? !textAnswer.trim() : selectedOptions.length === 0) || submitting}
               className="btn-primary flex items-center gap-2 !py-4 !px-8 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="submit-answer-button"
             >
