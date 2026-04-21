@@ -382,17 +382,27 @@ const QuizPage = () => {
         </div>
         )}
 
-        {/* Result Feedback */}
         {isAnswered && answerResult && (
           <div className={`glass-card rounded-2xl p-6 mb-8 animate-fade-in ${
-            answerResult.is_correct ? 'border-2 border-[#00b894]' : 'border-2 border-[#d63031]'
+            answerResult.is_correct
+              ? answerResult.upis_ratio != null && answerResult.upis_ratio < 0.9
+                ? 'border-2 border-[#FDCB6E]'
+                : 'border-2 border-[#00b894]'
+              : 'border-2 border-[#d63031]'
           }`} data-testid="answer-feedback">
             <div className="flex items-center gap-3 mb-2">
               {answerResult.is_correct ? (
-                <>
-                  <CheckCircle2 className="w-6 h-6 text-[#00b894]" />
-                  <span className="font-['Nunito'] text-lg font-bold text-[#00b894]">Točno!</span>
-                </>
+                answerResult.upis_ratio != null && answerResult.upis_ratio < 0.9 ? (
+                  <>
+                    <CheckCircle2 className="w-6 h-6 text-[#FDCB6E]" />
+                    <span className="font-['Nunito'] text-lg font-bold text-[#FDCB6E]">Djelomično točno!</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-6 h-6 text-[#00b894]" />
+                    <span className="font-['Nunito'] text-lg font-bold text-[#00b894]">Točno!</span>
+                  </>
+                )
               ) : (
                 <>
                   <XCircle className="w-6 h-6 text-[#d63031]" />
@@ -401,8 +411,8 @@ const QuizPage = () => {
               )}
             </div>
             <p className="text-sm text-[#636E72]">
-              {answerResult.is_correct 
-                ? `Odlično! Osvojili ste ${answerResult.points_earned} bodova.`
+              {answerResult.is_correct
+                ? `${answerResult.upis_ratio != null && answerResult.upis_ratio < 0.9 ? 'Djelomičan odgovor! ' : 'Odlično! '}Osvojili ste ${answerResult.points_earned} bodova.`
                 : 'Nažalost, odgovor nije točan.'}
             </p>
           </div>
