@@ -147,20 +147,28 @@ const ResultsPage = () => {
           <div className="space-y-3">
             {results.answers.map((answer, index) => {
               const isOpen = expandedAnswer === index;
+              const isPartial = answer.is_correct && answer.upis_ratio != null && answer.upis_ratio < 0.9;
+              const borderColor = isPartial ? 'border-[#FDCB6E]/30' : answer.is_correct ? 'border-[#00b894]/30' : 'border-[#d63031]/30';
+              const bgColor = isPartial ? 'rgba(253,203,110,0.07)' : answer.is_correct ? 'rgba(0,184,148,0.07)' : 'rgba(214,48,49,0.07)';
+              const iconBg = isPartial ? 'bg-[#FDCB6E] text-white' : answer.is_correct ? 'bg-[#00b894] text-white' : 'bg-[#d63031] text-white';
               return (
-                <div key={index} className={`rounded-2xl overflow-hidden border transition-all ${answer.is_correct ? 'border-[#00b894]/30' : 'border-[#d63031]/30'}`}
-                  style={{ background: answer.is_correct ? 'rgba(0,184,148,0.07)' : 'rgba(214,48,49,0.07)' }}>
+                <div key={index} className={`rounded-2xl overflow-hidden border transition-all ${borderColor}`}
+                  style={{ background: bgColor }}>
                   
                   {/* Header row — always visible */}
                   <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => setExpandedAnswer(isOpen ? null : index)}>
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${answer.is_correct ? 'bg-[#00b894] text-white' : 'bg-[#d63031] text-white'}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
                       {answer.is_correct ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">Pitanje {index + 1}</p>
+                      <p className="font-medium text-sm">
+                        Pitanje {index + 1}
+                        {isPartial && <span className="ml-2 text-xs text-[#FDCB6E]">· Djelomično</span>}
+                      </p>
                       <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                         {answer.is_correct ? `+${answer.points_earned} bodova` : '0 bodova'} · {answer.time_taken}s
                         {answer.difficulty && <span className="ml-2" style={{ color: diffColors[answer.difficulty] }}>· {diffLabels[answer.difficulty]}</span>}
+                        {isPartial && <span className="ml-2 text-[#FDCB6E]">({Math.round(answer.upis_ratio * 100)}% točnosti)</span>}
                       </p>
                     </div>
                     {isOpen ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} /> : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />}
@@ -168,31 +176,45 @@ const ResultsPage = () => {
 
                   {/* Expanded detail */}
                   {isOpen && (
-                    <div className="px-4 pb-4 space-y-2 border-t" style={{ borderColor: answer.is_correct ? 'rgba(0,184,148,0.2)' : 'rgba(214,48,49,0.2)' }}>
+                    <div className="px-4 pb-4 space-y-2 border-t" style={{ borderColor: isPartial ? 'rgba(253,203,110,0.2)' : answer.is_correct ? 'rgba(0,184,148,0.2)' : 'rgba(214,48,49,0.2)' }}>
                       <p className="font-semibold text-sm pt-3">{answer.question_text || `Pitanje ${index + 1}`}</p>
-                      <div className="space-y-1.5 mt-2">
-                        {answer.all_options?.map((opt) => {
-                          const wasSelected = answer.selected_option_ids?.includes(opt.id);
-                          const isCorrect = answer.correct_option_ids?.includes(opt.id);
-                          return (
-                            <div key={opt.id} className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg"
-                              style={{
-                                background: isCorrect ? 'rgba(0,184,148,0.15)' : wasSelected ? 'rgba(214,48,49,0.15)' : 'rgba(255,255,255,0.05)',
-                                border: isCorrect ? '1px solid rgba(0,184,148,0.4)' : wasSelected ? '1px solid rgba(214,48,49,0.4)' : '1px solid transparent'
-                              }}>
-                              {isCorrect ? <CheckCircle2 className="w-4 h-4 text-[#00b894] shrink-0" /> : wasSelected ? <XCircle className="w-4 h-4 text-[#d63031] shrink-0" /> : <span className="w-4 h-4 shrink-0" />}
-                              <span>{opt.text}</span>
-                              {isCorrect && <span className="ml-auto text-xs text-[#00b894] font-medium">Točan</span>}
-                              {wasSelected && !isCorrect && <span className="ml-auto text-xs text-[#d63031] font-medium">Tvoj odgovor</span>}
-                            </div>
-                          );
-                        })}
-                        {!answer.all_options && (
-                          <p className="text-xs italic" style={{ color: 'var(--text-secondary)' }}>
-                            Točni odgovori: {answer.correct_option_ids?.join(', ')}
-                          </p>
-                        )}
-                      </div>
+                      {answer.question_type === 'upis' ? (
+                        <div className="space-y-1.5 mt-2">
+                          <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Tvoj odgovor:</span>
+                            <span className="font-medium">{answer.text_answer || '—'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg" style={{ background: 'rgba(0,184,148,0.1)', border: '1px solid rgba(0,184,148,0.3)' }}>
+                            <CheckCircle2 className="w-4 h-4 text-[#00b894] shrink-0" />
+                            <span style={{ color: 'var(--text-secondary)' }}>Točan odgovor:</span>
+                            <span className="font-medium text-[#00b894]">{answer.correct_answer || '—'}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 mt-2">
+                          {answer.all_options?.map((opt) => {
+                            const wasSelected = answer.selected_option_ids?.includes(opt.id);
+                            const isCorrect = answer.correct_option_ids?.includes(opt.id);
+                            return (
+                              <div key={opt.id} className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg"
+                                style={{
+                                  background: isCorrect ? 'rgba(0,184,148,0.15)' : wasSelected ? 'rgba(214,48,49,0.15)' : 'rgba(255,255,255,0.05)',
+                                  border: isCorrect ? '1px solid rgba(0,184,148,0.4)' : wasSelected ? '1px solid rgba(214,48,49,0.4)' : '1px solid transparent'
+                                }}>
+                                {isCorrect ? <CheckCircle2 className="w-4 h-4 text-[#00b894] shrink-0" /> : wasSelected ? <XCircle className="w-4 h-4 text-[#d63031] shrink-0" /> : <span className="w-4 h-4 shrink-0" />}
+                                <span>{opt.text}</span>
+                                {isCorrect && <span className="ml-auto text-xs text-[#00b894] font-medium">Točan</span>}
+                                {wasSelected && !isCorrect && <span className="ml-auto text-xs text-[#d63031] font-medium">Tvoj odgovor</span>}
+                              </div>
+                            );
+                          })}
+                          {!answer.all_options && (
+                            <p className="text-xs italic" style={{ color: 'var(--text-secondary)' }}>
+                              Točni odgovori: {answer.correct_option_ids?.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
