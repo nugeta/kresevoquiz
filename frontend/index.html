@@ -32,7 +32,16 @@
         var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 
         Tawk_API.onLoad = function() {
-            // Minimize by default on mobile
+            // On mobile: hide the widget entirely so it doesn't obscure the screen
+            if (window.innerWidth < 768) {
+                Tawk_API.hideWidget();
+            } else {
+                Tawk_API.minimize();
+            }
+        };
+
+        // Also hide on mobile if widget somehow opens after load
+        Tawk_API.onChatMaximized = function() {
             if (window.innerWidth < 768) {
                 Tawk_API.minimize();
             }
