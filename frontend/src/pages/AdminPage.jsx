@@ -1828,27 +1828,38 @@ const AdminPage = () => {
             <DialogHeader>
               <DialogTitle className="font-['Nunito']">Bulk Uvoz Pitanja</DialogTitle>
               <DialogDescription>
-                Zalijepi JSON array pitanja. Svako pitanje mora imati: category_id, question_text, question_type, options.
+                Uvezi JSON datoteku ili zalijepi JSON array pitanja.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                <p className="font-semibold mb-1">Format primjer:</p>
-                <pre className="overflow-x-auto whitespace-pre-wrap">{`[
-  {
-    "category_id": "ID_KATEGORIJE",
-    "question_text": "Koliko je 2+2?",
-    "question_type": "single_choice",
-    "options": [
-      { "text": "3", "is_correct": false },
-      { "text": "4", "is_correct": true }
-    ],
-    "points": 10,
-    "time_limit": 30,
-    "difficulty": "easy"
-  }
-]`}</pre>
+
+              {/* File upload — primary on mobile */}
+              <div className="glass rounded-xl p-4">
+                <label className="block text-sm font-semibold mb-3">📁 Uvezi JSON datoteku</label>
+                <input
+                  type="file"
+                  accept=".json"
+                  className="glass-input text-sm"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      setBulkJson(ev.target.result);
+                      setBulkError('');
+                      setBulkResult(null);
+                    };
+                    reader.readAsText(file);
+                    e.target.value = '';
+                  }}
+                />
+                {bulkJson && !bulkError && (
+                  <p className="text-xs mt-2" style={{ color: '#55EFC4' }}>
+                    ✓ Datoteka učitana — klikni Uvezi
+                  </p>
+                )}
               </div>
+
               {/* AI Generator */}
               <div className="glass rounded-xl p-3 space-y-2">
                 <p className="text-sm font-semibold flex items-center gap-2">✨ AI Generiranje <span className="text-xs font-normal" style={{ color: 'var(--text-secondary)' }}>(Gemini)</span></p>
@@ -1880,42 +1891,51 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                <p className="font-semibold mb-1">ID-evi kategorija:</p>
-                {categories.map(c => (
-                  <p key={c.id}><span className="font-mono">{c.id}</span> — {c.name}</p>
-                ))}
-              </div>
-
-              {/* File upload */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Uvezi JSON datoteku</label>
-                <input
-                  type="file"
-                  accept=".json"
-                  className="glass-input text-sm"
-                  onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                      setBulkJson(ev.target.result);
-                      setBulkError('');
-                      setBulkResult(null);
-                    };
-                    reader.readAsText(file);
-                    e.target.value = '';
-                  }}
+              {/* Paste JSON — hidden on mobile, shown on desktop */}
+              <details className="hidden sm:block">
+                <summary className="text-sm font-medium cursor-pointer select-none mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  📋 Zalijepi JSON ručno
+                </summary>
+                <textarea
+                  value={bulkJson}
+                  onChange={e => { setBulkJson(e.target.value); setBulkError(''); setBulkResult(null); }}
+                  className="glass-input font-mono text-xs min-h-[150px] mt-2"
+                  placeholder='[{"category_id": "...", ...}]'
                 />
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>ili zalijepi JSON ispod</p>
-              </div>
+              </details>
 
-              <textarea
-                value={bulkJson}
-                onChange={e => { setBulkJson(e.target.value); setBulkError(''); setBulkResult(null); }}
-                className="glass-input font-mono text-xs min-h-[150px]"
-                placeholder='[{"category_id": "...", ...}]'
-              />
+              {/* Format reference — collapsed by default */}
+              <details>
+                <summary className="text-xs cursor-pointer select-none" style={{ color: 'var(--text-secondary)' }}>
+                  ℹ️ Format i ID-evi kategorija
+                </summary>
+                <div className="mt-2 space-y-2">
+                  <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="font-semibold mb-1">Format primjer:</p>
+                    <pre className="overflow-x-auto whitespace-pre-wrap">{`[
+  {
+    "category_id": "ID_KATEGORIJE",
+    "question_text": "Koliko je 2+2?",
+    "question_type": "single_choice",
+    "options": [
+      { "text": "3", "is_correct": false },
+      { "text": "4", "is_correct": true }
+    ],
+    "points": 10,
+    "time_limit": 30,
+    "difficulty": "easy"
+  }
+]`}</pre>
+                  </div>
+                  <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="font-semibold mb-1">ID-evi kategorija:</p>
+                    {categories.map(c => (
+                      <p key={c.id}><span className="font-mono">{c.id}</span> — {c.name}</p>
+                    ))}
+                  </div>
+                </div>
+              </details>
+
               {bulkError && (
                 <div className="flex items-center gap-2 text-sm text-[#d63031]">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -1930,7 +1950,7 @@ const AdminPage = () => {
               )}
             </div>
             <DialogFooter>
-              <button onClick={() => setBulkModalOpen(false)} className="btn-secondary">Zatvori</button>
+              <button onClick={() => { setBulkModalOpen(false); setBulkJson(''); }} className="btn-secondary">Zatvori</button>
               <button
                 onClick={bulkImport}
                 disabled={saving || !bulkJson.trim()}
