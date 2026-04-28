@@ -132,7 +132,14 @@ const CategoriesPage = () => {
                         <div className="w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shrink-0" style={{ background: `${themeColor}20` }}>
                           {emoji ? <span className="text-2xl">{category.icon}</span> : <IconComponent className="w-7 h-7" style={{ color: themeColor }} />}
                         </div>
-                        {hasChildren ? <span className="text-lg mt-1">{isExpanded ? '▲' : '▼'}</span> : <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-all mt-1" style={{ color: themeColor }} />}
+                        {hasChildren ? (
+                          <div className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: `${themeColor}20`, color: themeColor }}>
+                            {children.length} {children.length === 1 ? 'tema' : 'teme'}
+                            <span className="text-base ml-1">{isExpanded ? '▲' : '▼'}</span>
+                          </div>
+                        ) : (
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-all mt-1" style={{ color: themeColor }} />
+                        )}
                       </div>
                       <h3 className="text-xl font-bold mb-2">{category.name}</h3>
                       <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{category.description || 'Testiraj svoje znanje iz ove kategorije'}</p>
