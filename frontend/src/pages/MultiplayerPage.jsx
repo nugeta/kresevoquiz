@@ -40,6 +40,34 @@ const MultiplayerPage = () => {
       .catch(() => {});
   }, []);
 
+  // Helper: render categories hierarchically in select options
+  const renderCategoryOptions = (excludeIds = []) => {
+    const parents = categories.filter(c => !c.parent_id);
+    const getChildren = (parentId) => categories.filter(c => c.parent_id === parentId && !excludeIds.includes(c.id));
+    return parents.filter(p => !excludeIds.includes(p.id)).map(p => {
+      const children = getChildren(p.id);
+      if (children.length > 0) {
+        return (
+          <optgroup key={p.id} label={`${p.icon?.length <= 2 ? p.icon + ' ' : ''}${p.name}`}>
+            {!excludeIds.includes(p.id) && (
+              <option value={p.id}>📚 Sve — {p.name}</option>
+            )}
+            {children.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.icon?.length <= 2 ? c.icon + ' ' : ''}{c.name} ({c.question_count})
+              </option>
+            ))}
+          </optgroup>
+        );
+      }
+      return (
+        <option key={p.id} value={p.id}>
+          {p.icon?.length <= 2 ? p.icon + ' ' : ''}{p.name} ({p.question_count})
+        </option>
+      );
+    });
+  };
+
   const createRoom = async () => {
     if (!customMode && !selectedCategory) { setError('Odaberi kategoriju'); return; }
     if (customMode && selectedCategoryIds.length < 2) { setError('Odaberi barem 2 kategorije za prilagođeni mix'); return; }
@@ -187,16 +215,13 @@ const MultiplayerPage = () => {
                   </div>
                   <select onChange={e => { if (e.target.value && !selectedCategoryIds.includes(e.target.value)) setSelectedCategoryIds(prev => [...prev, e.target.value]); e.target.value = ''; }} className="glass-input">
                     <option value="">Dodaj kategoriju...</option>
-                    {categories.filter(c => !selectedCategoryIds.includes(c.id)).map(c => (
-                      <option key={c.id} value={c.id}>{c.icon && c.icon.length <= 2 ? c.icon + ' ' : ''}{c.name}</option>
-                    ))}
-                  </select>
+                    {renderCategoryOptions(selectedCategoryIds)}                  </select>
                   <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Odaberi 2+ kategorija za mix</p>
                 </div>
               ) : (
                 <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="glass-input">
                   <option value="">Odaberi kategoriju...</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.icon && c.icon.length <= 2 ? c.icon + ' ' : ''}{c.name} ({c.question_count})</option>)}
+                  {renderCategoryOptions()}
                 </select>
               )}
             </div>

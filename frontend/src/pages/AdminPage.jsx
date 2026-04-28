@@ -541,6 +541,37 @@ const AdminPage = () => {
     }
   };
 
+  // Helper: render categories as hierarchical options (parents → children indented)
+  const renderCategoryOptions = (includeAll = false, includeAllLabel = 'Sve kategorije') => {
+    const parents = categories.filter(c => !c.parent_id);
+    const getChildren = (parentId) => categories.filter(c => c.parent_id === parentId);
+    return (
+      <>
+        {includeAll && <option value="all">{includeAllLabel}</option>}
+        {parents.map(p => {
+          const children = getChildren(p.id);
+          if (children.length > 0) {
+            return (
+              <optgroup key={p.id} label={`${p.icon?.length <= 2 ? p.icon + ' ' : ''}${p.name}`}>
+                <option value={p.id}>📚 Sve — {p.name} ({children.reduce((s, c) => s + c.question_count, 0)} pit.)</option>
+                {children.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.icon?.length <= 2 ? c.icon + ' ' : ''}{c.name} ({c.question_count} pit.)
+                  </option>
+                ))}
+              </optgroup>
+            );
+          }
+          return (
+            <option key={p.id} value={p.id}>
+              {p.icon?.length <= 2 ? p.icon + ' ' : ''}{p.name} ({p.question_count} pit.)
+            </option>
+          );
+        })}
+      </>
+    );
+  };
+
   const assessQuestions = async (categoryId, autoFix = false) => {
     setAssessing(true); setAssessResult(null);
     try {
@@ -883,8 +914,7 @@ const AdminPage = () => {
               <h2 className="font-['Nunito'] text-xl font-bold">Pitanja ({questionTotal})</h2>
               <div className="flex flex-wrap items-center gap-2">
                 <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="glass-input !py-1.5 !px-3 text-sm w-auto">
-                  <option value="all">Sve kategorije</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {renderCategoryOptions(true)}
                 </select>
                 <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)} className="glass-input !py-1.5 !px-3 text-sm w-auto">
                   <option value="all">Sve težine</option>
@@ -1609,19 +1639,15 @@ const AdminPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Kategorija</label>
-                  <Select 
-                    value={questionForm.category_id} 
-                    onValueChange={(v) => setQuestionForm(prev => ({ ...prev, category_id: v }))}
+                  <select
+                    value={questionForm.category_id}
+                    onChange={e => setQuestionForm(prev => ({ ...prev, category_id: e.target.value }))}
+                    className="glass-input"
+                    data-testid="question-category-select"
                   >
-                    <SelectTrigger className="glass-input" data-testid="question-category-select">
-                      <SelectValue placeholder="Odaberi kategoriju" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <option value="">Odaberi kategoriju</option>
+                    {renderCategoryOptions()}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Tip pitanja</label>
@@ -1869,7 +1895,7 @@ const AdminPage = () => {
                   <input type="text" value={aiTopic} onChange={e => setAiTopic(e.target.value)}
                     placeholder="Tema (npr. Drugi svjetski rat)" className="glass-input text-sm flex-1 !py-2" style={{ minWidth: '140px' }} />
                   <select id="ai-cat" className="glass-input text-sm !py-2 !w-auto">
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {renderCategoryOptions()}
                   </select>
                   <select value={aiDiff} onChange={e => setAiDiff(e.target.value)} className="glass-input text-sm !py-2 !w-auto">
                     <option value="mix">Mix težina</option>
