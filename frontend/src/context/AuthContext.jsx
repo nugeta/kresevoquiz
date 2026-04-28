@@ -58,7 +58,21 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+    
+    // Refresh token every 25 days to keep session alive
+    const refreshInterval = setInterval(async () => {
+      if (user && user.authenticated) {
+        try {
+          await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
+          console.log('Token refreshed automatically');
+        } catch (error) {
+          console.error('Auto-refresh failed:', error);
+        }
+      }
+    }, 25 * 24 * 60 * 60 * 1000); // 25 days
+    
+    return () => clearInterval(refreshInterval);
+  }, [checkAuth, user]);
 
   const formatApiErrorDetail = (detail) => {
     if (detail == null) return "Nešto je pošlo po zlu. Pokušajte ponovno.";
