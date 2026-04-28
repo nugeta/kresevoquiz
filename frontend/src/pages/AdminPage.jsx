@@ -50,6 +50,8 @@ const AdminPage = () => {
   });
 
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [catInfoOpen, setCatInfoOpen] = useState(false);
+  const [expandedCatInfo, setExpandedCatInfo] = useState(null);
   const [saving, setSaving] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkJson, setBulkJson] = useState('');
@@ -1904,15 +1906,36 @@ const AdminPage = () => {
                 />
               </details>
 
-              {/* Format reference — collapsed by default */}
-              <details>
-                <summary className="text-xs cursor-pointer select-none" style={{ color: 'var(--text-secondary)' }}>
-                  ℹ️ Format i ID-evi kategorija
-                </summary>
-                <div className="mt-2 space-y-2">
-                  <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    <p className="font-semibold mb-1">Format primjer:</p>
-                    <pre className="overflow-x-auto whitespace-pre-wrap">{`[
+              {/* Format reference — animated dropdown */}
+              <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--glass-border)' }}>
+                {/* Header toggle */}
+                <button
+                  type="button"
+                  onClick={() => setCatInfoOpen(o => !o)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs transition-colors hover:opacity-80"
+                  style={{ color: 'var(--text-secondary)', background: 'var(--glass-bg)' }}
+                >
+                  <span>ℹ️ Format i ID-evi kategorija</span>
+                  <span style={{
+                    display: 'inline-block',
+                    transform: catInfoOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.25s ease'
+                  }}>▾</span>
+                </button>
+
+                {/* Animated body */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateRows: catInfoOpen ? '1fr' : '0fr',
+                  transition: 'grid-template-rows 0.3s ease',
+                }}>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div className="p-3 space-y-3">
+
+                      {/* Format example */}
+                      <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <p className="font-semibold mb-1">Format primjer:</p>
+                        <pre className="overflow-x-auto whitespace-pre-wrap">{`[
   {
     "category_id": "ID_KATEGORIJE",
     "question_text": "Koliko je 2+2?",
@@ -1926,30 +1949,85 @@ const AdminPage = () => {
     "difficulty": "easy"
   }
 ]`}</pre>
-                  </div>
-                  <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    <p className="font-semibold mb-2">ID-evi kategorija:</p>
-                    {categories.filter(c => !c.parent_id).map(parent => {
-                      const children = categories.filter(c => c.parent_id === parent.id);
-                      return (
-                        <div key={parent.id} className="mb-2">
-                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            📁 {parent.name}
-                          </p>
-                          <p className="font-mono pl-2" style={{ color: 'var(--text-secondary)' }}>
-                            {parent.id} — <span className="italic">({parent.name})</span>
-                          </p>
-                          {children.map(child => (
-                            <p key={child.id} className="font-mono pl-4">
-                              ↳ {child.id} — {child.name}
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    })}
+                      </div>
+
+                      {/* Category IDs — each parent is its own expandable row */}
+                      <div className="glass rounded-xl overflow-hidden text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <p className="font-semibold px-3 pt-3 pb-2">ID-evi kategorija:</p>
+                        {categories.filter(c => !c.parent_id).map((parent, i) => {
+                          const children = categories.filter(c => c.parent_id === parent.id);
+                          const isOpen = expandedCatInfo === parent.id;
+                          return (
+                            <div key={parent.id} style={{ borderTop: i > 0 ? '1px solid var(--glass-border)' : 'none' }}>
+                              {/* Parent row */}
+                              <button
+                                type="button"
+                                onClick={() => setExpandedCatInfo(isOpen ? null : parent.id)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors hover:opacity-80"
+                                style={{ background: isOpen ? 'rgba(138,180,248,0.08)' : 'transparent' }}
+                              >
+                                <span style={{
+                                  display: 'inline-block',
+                                  transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s ease',
+                                  fontSize: '10px'
+                                }}>▶</span>
+                                <span style={{ color: parent.color || 'var(--primary)' }}>
+                                  {parent.icon && <span className="mr-1">{parent.icon}</span>}
+                                  {parent.name}
+                                </span>
+                                <span className="font-mono ml-auto opacity-50 truncate max-w-[160px]">{parent.id}</span>
+                              </button>
+
+                              {/* Children — animated */}
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateRows: isOpen ? '1fr' : '0fr',
+                                transition: 'grid-template-rows 0.25s ease',
+                              }}>
+                                <div style={{ overflow: 'hidden' }}>
+                                  {/* Parent's own ID row */}
+                                  <div className="flex items-center gap-2 px-3 py-1.5 font-mono"
+                                    style={{ background: 'rgba(138,180,248,0.04)', borderTop: '1px solid var(--glass-border)' }}>
+                                    <span className="opacity-40 text-xs">└</span>
+                                    <span className="opacity-60 text-xs italic">{parent.name} (sve)</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => { navigator.clipboard.writeText(parent.id); }}
+                                      className="ml-auto opacity-50 hover:opacity-100 transition-opacity text-xs px-1.5 py-0.5 rounded"
+                                      style={{ background: 'var(--glass-border)' }}
+                                      title="Kopiraj ID"
+                                    >
+                                      {parent.id.slice(-8)}… 📋
+                                    </button>
+                                  </div>
+                                  {children.map(child => (
+                                    <div key={child.id} className="flex items-center gap-2 px-3 py-1.5 font-mono"
+                                      style={{ borderTop: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.02)' }}>
+                                      <span className="opacity-40 text-xs pl-2">↳</span>
+                                      <span className="text-xs">{child.name}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => { navigator.clipboard.writeText(child.id); }}
+                                        className="ml-auto opacity-50 hover:opacity-100 transition-opacity text-xs px-1.5 py-0.5 rounded"
+                                        style={{ background: 'var(--glass-border)' }}
+                                        title="Kopiraj ID"
+                                      >
+                                        {child.id.slice(-8)}… 📋
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                    </div>
                   </div>
                 </div>
-              </details>
+              </div>
 
               {bulkError && (
                 <div className="flex items-center gap-2 text-sm text-[#d63031]">
