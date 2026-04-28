@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "ssh-oracle": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ssh-mcp",
+        "--",
+        "--host=193.123.184.166",
+        "--port=22",
+        "--user=ubuntu",
+        "--key=E:/Projects/quizz/kresevoquiz/ssh-key-2026-03-25 (1).key",
+        "--timeout=60000",
+        "--maxChars=none"
+      ],
+      "disabled": false,
+      "autoApprove": ["exec", "sudo-exec"]
+    }
+  }
+}

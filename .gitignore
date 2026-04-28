@@ -3,6 +3,7 @@
 # IDE and editors
 .idea/
 .vscode/
+# Don't ignore .kiro - it contains project config
 
 # Dependencies
 node_modules/
@@ -50,6 +51,18 @@ dump.rdb
 .DS_Store
 *.pem
 *.ppk
+*.key
+*.pub
+
+# SSH keys and credentials
+.ssh-keys/
+ssh-key-*
+
+# Scripts and misc
+.scripts/
+.misc/
+test_ssh.py
+public/
 
 # Python
 __pycache__/

@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Build & Push on Agent Stop",
+  "description": "After the agent finishes, runs yarn build, git pushes frontend, and auto-deploys server.py to Oracle via SSH if it was changed.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The agent session just ended. Do the following:\n1. Run `yarn --cwd frontend build` to verify the build passes.\n2. If the build passes, stage all frontend changes and any other modified tracked files (excluding backend/server.py since that's deployed separately), commit with a short descriptive message, and push to the current branch using `git push`.\n3. Check if backend/server.py was modified during this session. If it was:\n   a. Use the ssh-oracle MCP to upload the file: run `cat backend/server.py` to get the content, then use ssh_upload_file or scp via exec to copy it to ~/kresevoquiz/backend/server.py on the Oracle server (193.123.184.166, user ubuntu, key at E:/Projects/quizz/kresevoquiz/ssh-key-2026-03-25 (1).key)\n   b. Then run via SSH: `sudo supervisorctl restart kresevoquiz`\n   c. Confirm the service is running with: `sudo supervisorctl status kresevoquiz`\n   If the SSH MCP is not available, fall back to: print a reminder to manually upload server.py and restart.\nDo not push if the build fails."
+  },
+  "workspaceFolderName": "kresevoquiz",
+  "shortName": "build-and-push"
+}
