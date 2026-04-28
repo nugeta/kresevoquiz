@@ -1928,10 +1928,25 @@ const AdminPage = () => {
 ]`}</pre>
                   </div>
                   <div className="glass rounded-xl p-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    <p className="font-semibold mb-1">ID-evi kategorija:</p>
-                    {categories.map(c => (
-                      <p key={c.id}><span className="font-mono">{c.id}</span> — {c.name}</p>
-                    ))}
+                    <p className="font-semibold mb-2">ID-evi kategorija:</p>
+                    {categories.filter(c => !c.parent_id).map(parent => {
+                      const children = categories.filter(c => c.parent_id === parent.id);
+                      return (
+                        <div key={parent.id} className="mb-2">
+                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            📁 {parent.name}
+                          </p>
+                          <p className="font-mono pl-2" style={{ color: 'var(--text-secondary)' }}>
+                            {parent.id} — <span className="italic">({parent.name})</span>
+                          </p>
+                          {children.map(child => (
+                            <p key={child.id} className="font-mono pl-4">
+                              ↳ {child.id} — {child.name}
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </details>
