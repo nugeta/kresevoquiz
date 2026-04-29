@@ -84,9 +84,16 @@ const CategoriesPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
             {/* Mix card — always first */}
             <button
+              onMouseMove={e => {
+                const r = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - r.left) / r.width - 0.5) * 18;
+                const y = ((e.clientY - r.top) / r.height - 0.5) * -18;
+                e.currentTarget.style.transform = `perspective(600px) rotateX(${y}deg) rotateY(${x}deg) translateY(-4px)`;
+              }}
+              onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
               onClick={() => { setSelected({ id: 'mix', name: '🎲 Mix', icon: '🎲', color: '#A29BFE', question_count: 999, description: 'Nasumična pitanja iz svih kategorija' }); setQuestionCount(10); }}
-              className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
-              style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(162,155,254,0.3)', boxShadow: '0 4px 24px rgba(162,155,254,0.15)' }}
+              className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 text-left"
+              style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(162,155,254,0.3)', boxShadow: '0 4px 24px rgba(162,155,254,0.15)', transition: 'transform 0.15s ease, box-shadow 0.15s ease' }}
             >
               <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #A29BFE, #6C5CE7)' }} />
               <div className="p-6">
@@ -117,13 +124,20 @@ const CategoriesPage = () => {
               return (
                 <div key={category.id} className="flex flex-col gap-2">
                   <button
+                    onMouseMove={e => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      const x = ((e.clientX - r.left) / r.width - 0.5) * 18;
+                      const y = ((e.clientY - r.top) / r.height - 0.5) * -18;
+                      e.currentTarget.style.transform = `perspective(600px) rotateX(${y}deg) rotateY(${x}deg) translateY(-4px)`;
+                    }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
                     onClick={() => {
                       if (hasChildren) { setExpandedParent(isExpanded ? null : category.id); }
                       else { setSelected(category); setQuestionCount(Math.min(10, category.question_count)); }
                     }}
                     disabled={!hasChildren && category.question_count === 0}
-                    className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                    style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: `1px solid ${themeColor}30`, boxShadow: `0 4px 24px ${themeColor}15` }}
+                    className="group cursor-pointer rounded-3xl overflow-hidden text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: isDark ? 'rgba(20,20,35,0.7)' : 'rgba(255,255,255,0.55)', backdropFilter: 'blur(16px)', border: `1px solid ${themeColor}30`, boxShadow: `0 4px 24px ${themeColor}15`, transition: 'transform 0.15s ease, box-shadow 0.15s ease' }}
                     data-testid={`category-card-${category.id}`}
                   >
                     <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${themeColor}, ${themeColor}88)` }} />
