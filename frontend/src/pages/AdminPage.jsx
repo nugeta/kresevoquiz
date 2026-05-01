@@ -976,7 +976,8 @@ const AdminPage = () => {
                           </span>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-[#8AB4F8]/20 text-[#8AB4F8]">
                             {question.question_type === 'multiple_choice' ? 'Višestruki' : 
-                             question.question_type === 'true_false' ? 'Točno/Netočno' : 'Jedan odgovor'}
+                             question.question_type === 'true_false' ? 'Točno/Netočno' :
+                             question.question_type === 'upis' ? 'Upis' : 'Jedan odgovor'}
                           </span>
                           <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${DIFF_COLORS[question.difficulty || 'medium']}20`, color: DIFF_COLORS[question.difficulty || 'medium'] }}>
                             {DIFF_LABELS[question.difficulty || 'medium']}
@@ -985,18 +986,24 @@ const AdminPage = () => {
                         </div>
                         <p className="font-medium mb-2">{question.question_text}</p>
                         <div className="flex flex-wrap gap-2">
-                          {question.options.map((opt) => (
-                            <span 
-                              key={opt.id}
-                              className="text-xs px-2 py-1 rounded-lg"
-                              style={opt.is_correct
-                                ? { background: 'rgba(0,184,148,0.15)', color: 'var(--success)' }
-                                : { background: 'var(--glass-bg)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}
-                            >
-                              {opt.text}
-                              {opt.is_correct && <CheckCircle2 className="w-3 h-3 inline ml-1" />}
+                          {question.question_type === 'upis' ? (
+                            <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(0,184,148,0.15)', color: 'var(--success)' }}>
+                              ✏️ {question.correct_answer || <em style={{ opacity: 0.5 }}>nema odgovora</em>}
                             </span>
-                          ))}
+                          ) : (
+                            question.options.map((opt) => (
+                              <span 
+                                key={opt.id}
+                                className="text-xs px-2 py-1 rounded-lg"
+                                style={opt.is_correct
+                                  ? { background: 'rgba(0,184,148,0.15)', color: 'var(--success)' }
+                                  : { background: 'var(--glass-bg)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)' }}
+                              >
+                                {opt.text}
+                                {opt.is_correct && <CheckCircle2 className="w-3 h-3 inline ml-1" />}
+                              </span>
+                            ))
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
