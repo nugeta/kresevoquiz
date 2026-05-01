@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -14,8 +15,10 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // null = checking, false = not auth, object = auth
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Track whether user was authenticated so we can show toast on unexpected logout
+  const wasAuthenticatedRef = useRef(false);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -24,6 +27,7 @@ export const AuthProvider = ({ children }) => {
       });
       if (response.data.authenticated) {
         setUser(response.data);
+        wasAuthenticatedRef.current = true;
       } else {
         // Try to refresh the token
         try {
@@ -31,6 +35,7 @@ export const AuthProvider = ({ children }) => {
           const retry = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
           if (retry.data.authenticated) {
             setUser(retry.data);
+            wasAuthenticatedRef.current = true;
           } else {
             setUser(false);
           }
@@ -45,7 +50,10 @@ export const AuthProvider = ({ children }) => {
           await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
           const retry = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
           setUser(retry.data.authenticated ? retry.data : false);
+          if (retry.data.authenticated) wasAuthenticatedRef.current = true;
         } catch {
+          // Only show toast if user was previously logged in (not on initial page load)
+          if (wasAuthenticatedRef.current) toast.error('Sesija je istekla. Molimo prijavi se ponovo.');
           setUser(false);
         }
       } else {
@@ -80,6 +88,7 @@ export const AuthProvider = ({ children }) => {
         authenticated: true,
         ...response.data
       });
+      wasAuthenticatedRef.current = true;
       return { success: true };
     } catch (error) {
       // Special case: banned user
@@ -104,6 +113,7 @@ export const AuthProvider = ({ children }) => {
         authenticated: true,
         ...response.data
       });
+      wasAuthenticatedRef.current = true;
       return { success: true };
     } catch (error) {
       return {
@@ -119,6 +129,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+    wasAuthenticatedRef.current = false;
     setUser(false);
   };
 

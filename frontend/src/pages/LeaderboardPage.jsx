@@ -27,12 +27,15 @@ const LeaderboardPage = () => {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
+    Promise.allSettled([
       axios.get(`${API_URL}/api/leaderboard?timeframe=${timeframe}`),
       axios.get(`${API_URL}/api/leaderboard/groups`)
     ])
-      .then(([r, g]) => { setLeaderboard(r.data); setGroupLeaderboard(g.data); })
-      .catch(() => setError('Greška pri učitavanju rang liste'))
+      .then(([individual, groups]) => {
+        if (individual.status === 'fulfilled') setLeaderboard(individual.value.data);
+        else setError('Greška pri učitavanju rang liste');
+        if (groups.status === 'fulfilled') setGroupLeaderboard(groups.value.data);
+      })
       .finally(() => setLoading(false));
   }, [timeframe]);
 
