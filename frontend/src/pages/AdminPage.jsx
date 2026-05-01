@@ -605,7 +605,10 @@ const AdminPage = () => {
     let parsed;
     try {
       parsed = JSON.parse(bulkJson);
-      if (!Array.isArray(parsed)) throw new Error('JSON mora biti array ([...])');
+      // Accept: plain array [...], wrapper {category_id, questions:[...]}, or array of wrappers
+      const isValid = Array.isArray(parsed) ||
+        (parsed && typeof parsed === 'object' && Array.isArray(parsed.questions));
+      if (!isValid) throw new Error('JSON mora biti array ([...]) ili wrapper objekt ({category_id, questions:[...]})');
     } catch (e) {
       setBulkError('Nevažeći JSON: ' + e.message);
       return;
