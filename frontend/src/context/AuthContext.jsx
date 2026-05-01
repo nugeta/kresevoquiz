@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -16,6 +16,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // null = checking, false = not auth, object = auth
   const [loading, setLoading] = useState(true);
+  const userRef = useRef(user);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -56,12 +57,17 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Keep ref in sync so the interval can read current user without being a dependency
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   useEffect(() => {
     checkAuth();
     
     // Refresh token every 25 days to keep session alive
     const refreshInterval = setInterval(async () => {
-      if (user && user.authenticated) {
+      if (userRef.current && userRef.current.authenticated) {
         try {
           await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
           console.log('Token refreshed automatically');
@@ -72,7 +78,7 @@ export const AuthProvider = ({ children }) => {
     }, 25 * 24 * 60 * 60 * 1000); // 25 days
     
     return () => clearInterval(refreshInterval);
-  }, [checkAuth, user]);
+  }, [checkAuth]); // removed `user` from deps — was causing infinite re-render loop
 
   const formatApiErrorDetail = (detail) => {
     if (detail == null) return "Nešto je pošlo po zlu. Pokušajte ponovno.";
