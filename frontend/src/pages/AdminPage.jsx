@@ -592,7 +592,7 @@ const AdminPage = () => {
         { topic: aiTopic, category_id: categoryId, count: aiCount, difficulty: difficulty || 'medium' },
         { withCredentials: true }
       );
-      setBulkJson(JSON.stringify(res.data.questions, null, 2));
+      setBulkJson(JSON.stringify({ category_id: res.data.category_id, questions: res.data.questions }, null, 2));
       setBulkResult(`AI generirao ${res.data.count} pitanja — provjeri i klikni Uvezi`);
     } catch (err) {
       setBulkError(err.response?.data?.detail || 'AI greška');
@@ -616,7 +616,13 @@ const AdminPage = () => {
     setSaving(true);
     try {
       const res = await axios.post(`${API_URL}/api/questions/bulk`, parsed, { withCredentials: true });
-      setBulkResult(res.data.message);
+      const { imported, skipped_duplicates, overwritten, errors, total_processed } = res.data;
+      const parts = [`✅ Uvezeno ${imported} pitanja`];
+      if (skipped_duplicates > 0) parts.push(`${skipped_duplicates} preskočeno (duplikat)`);
+      if (overwritten > 0) parts.push(`${overwritten} prepisano`);
+      if (errors?.length > 0) parts.push(`${errors.length} grešaka`);
+      setBulkResult(parts.join(' · '));
+      if (errors?.length > 0) setBulkError('Greške:\n' + errors.join('\n'));
       setBulkJson('');
       // Refresh questions and categories
       const [questRes, catRes] = await Promise.all([
