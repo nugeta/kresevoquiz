@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useTheme } from '../context/ThemeContext';
 import { BookOpen, ArrowRight, Loader2, Play, X } from 'lucide-react';
 import usePageTitle from '../hooks/usePageTitle';
+import useScrollReveal from '../hooks/useScrollReveal';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -13,6 +14,7 @@ const isEmoji = (str) => str && !str.match(/^[A-Za-z]/);
 
 const CategoriesPage = () => {
   usePageTitle('Kategorije');
+  useScrollReveal([]);
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
@@ -122,7 +124,7 @@ const CategoriesPage = () => {
               const totalQuestions = hasChildren ? children.reduce((sum, c) => sum + c.question_count, 0) : category.question_count;
 
               return (
-                <div key={category.id} className="flex flex-col gap-2">
+                <div key={category.id} className="flex flex-col gap-2 reveal" style={{ transitionDelay: `${Math.min(parents.indexOf(category) * 0.06, 0.4)}s` }}>
                   <button
                     onMouseMove={e => {
                       const r = e.currentTarget.getBoundingClientRect();

@@ -1,10 +1,10 @@
 import React, { Suspense, lazy, useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import CardNav from "./components/CardNav";
-import { Loader2, X, Megaphone, AlertTriangle, MessageSquare } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import axios from "axios";
 import "./App.css";
 
@@ -36,6 +36,13 @@ const PageLoader = () => (
     <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
   </div>
 );
+
+// Wraps each page with a fade-in animation and resets scroll to top on navigation
+const PageWrapper = ({ children }) => {
+  const location = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
+  return <div className="page-wrapper">{children}</div>;
+};
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -98,28 +105,30 @@ function App() {
               }}
             />
             <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/banned" element={<BannedPage />} />
-                <Route path="/categories" element={<CategoriesPage />} />
-                <Route path="/quiz/:categoryId" element={<QuizPage />} />
-                <Route path="/results/:sessionId" element={<ResultsPage />} />
-                <Route path="/leaderboard" element={<LeaderboardPage />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/credits" element={<CreditsPage />} />
-                <Route path="/stats" element={<StatsPage />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/multiplayer" element={<MultiplayerPage />} />
-                <Route path="/multiplayer/room/:roomCode" element={<RoomPage />} />
-                <Route path="/multiplayer/tournament/:tournamentId" element={<TournamentPage />} />
-                <Route path="/achievements" element={<AchievementsPage />} />
-                <Route path="/weekly" element={<WeeklyChallengePage />} />
-                <Route path="/inbox" element={<InboxPage />} />
-                <Route path="/profile/:username" element={<ProfilePage />} />
-                <Route path="/groups" element={<GroupsPage />} />
-                <Route path="/groups/:groupName" element={<GroupsPage />} />
-              </Routes>
+              <PageWrapper>
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/banned" element={<BannedPage />} />
+                  <Route path="/categories" element={<CategoriesPage />} />
+                  <Route path="/quiz/:categoryId" element={<QuizPage />} />
+                  <Route path="/results/:sessionId" element={<ResultsPage />} />
+                  <Route path="/leaderboard" element={<LeaderboardPage />} />
+                  <Route path="/admin" element={<AdminPage />} />
+                  <Route path="/credits" element={<CreditsPage />} />
+                  <Route path="/stats" element={<StatsPage />} />
+                  <Route path="/history" element={<HistoryPage />} />
+                  <Route path="/multiplayer" element={<MultiplayerPage />} />
+                  <Route path="/multiplayer/room/:roomCode" element={<RoomPage />} />
+                  <Route path="/multiplayer/tournament/:tournamentId" element={<TournamentPage />} />
+                  <Route path="/achievements" element={<AchievementsPage />} />
+                  <Route path="/weekly" element={<WeeklyChallengePage />} />
+                  <Route path="/inbox" element={<InboxPage />} />
+                  <Route path="/profile/:username" element={<ProfilePage />} />
+                  <Route path="/groups" element={<GroupsPage />} />
+                  <Route path="/groups/:groupName" element={<GroupsPage />} />
+                </Routes>
+              </PageWrapper>
             </Suspense>
           </div>
         </BrowserRouter>

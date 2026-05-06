@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';import { 
+import axios from 'axios';
+import { 
   Trophy, 
   Medal, 
   Crown,
   Star,
-  User,
-  Loader2,
   AlertCircle,
   TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import usePageTitle from '../hooks/usePageTitle';
+import useScrollReveal from '../hooks/useScrollReveal';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -24,6 +24,8 @@ const LeaderboardPage = () => {
   const [timeframe, setTimeframe] = useState('all');
   const [tab, setTab] = useState('individual');
   const [groupLeaderboard, setGroupLeaderboard] = useState([]);
+
+  useScrollReveal([leaderboard, groupLeaderboard, loading]);
 
   useEffect(() => {
     setLoading(true);
@@ -67,10 +69,25 @@ const LeaderboardPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-24 flex items-center justify-center" data-testid="leaderboard-loading">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-[#8AB4F8] mx-auto mb-4" />
-          <p className="text-[#636E72]">Učitavanje rang liste...</p>
+      <div className="min-h-screen pt-24 pb-12 px-4" data-testid="leaderboard-loading">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="skeleton w-16 h-16 rounded-2xl mx-auto mb-4" />
+            <div className="skeleton skeleton-title mx-auto" />
+            <div className="skeleton skeleton-text medium mx-auto" />
+          </div>
+          <div className="space-y-3">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="glass-card rounded-2xl p-4 flex items-center gap-4">
+                <div className="skeleton skeleton-avatar" />
+                <div className="flex-1">
+                  <div className="skeleton skeleton-text wide" />
+                  <div className="skeleton skeleton-text short" />
+                </div>
+                <div className="skeleton w-16 h-8 rounded-lg" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -158,7 +175,7 @@ const LeaderboardPage = () => {
                 <p className="text-[#636E72]">Nema podataka o grupama. Dodaj grupe u admin panelu.</p>
               </div>
             ) : groupLeaderboard.map((g, i) => (
-              <div key={g.group} className={`leaderboard-item rounded-2xl p-4 sm:p-5 flex items-center gap-4 ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}`}>
+              <div key={g.group} className={`leaderboard-item rounded-2xl p-4 sm:p-5 flex items-center gap-4 reveal ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}`} style={{ transitionDelay: `${i * 0.05}s` }}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                   <span className="text-xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${g.rank}`}</span>
                 </div>
@@ -189,9 +206,10 @@ const LeaderboardPage = () => {
               return (
                 <div
                   key={index}
-                  className={`leaderboard-item rounded-2xl p-4 sm:p-5 flex items-center gap-4 ${getRankClass(entry.rank)} ${
+                  className={`leaderboard-item rounded-2xl p-4 sm:p-5 flex items-center gap-4 reveal ${getRankClass(entry.rank)} ${
                     isCurrentUser ? 'ring-2 ring-[#8AB4F8]' : ''
                   }`}
+                  style={{ transitionDelay: `${index * 0.04}s` }}
                   data-testid={`leaderboard-entry-${index}`}
                 >
                   {/* Rank */}
