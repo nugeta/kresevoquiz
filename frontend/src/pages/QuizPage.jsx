@@ -65,53 +65,37 @@ function FireParticles({ streak }) {
   );
 }
 
-// ── Race track progress ─────────────────────────────────────────────────────
+// ── Progress bar ─────────────────────────────────────────────────────────────
 function RaceTrack({ current, total }) {
   const pct = total > 0 ? (current / total) * 100 : 0;
+  // Colour shifts from blue → teal → green as you progress
+  const hue = Math.round(210 + (pct / 100) * 60); // 210 (blue) → 270 would go purple, let's go 210→150 (teal/green)
+  const gradStart = `hsl(${210 - (pct / 100) * 60}, 90%, 70%)`;
+  const gradEnd   = `hsl(${170 - (pct / 100) * 20}, 80%, 65%)`;
+  const glowColor = `hsla(${210 - (pct / 100) * 60}, 90%, 70%, 0.7)`;
+
   return (
-    <div className="relative h-10 mb-8 flex items-center">
-      {/* Track */}
-      <div className="absolute inset-y-0 left-0 right-0 flex items-center">
-        <div className="w-full h-3 rounded-full overflow-hidden" style={{ background: 'var(--glass-border)' }}>
-          <div
-            className="h-full rounded-full transition-all duration-700 ease-out"
-            style={{
-              width: `${pct}%`,
-              background: 'linear-gradient(90deg, #8AB4F8, #55EFC4)',
-              boxShadow: '0 0 8px rgba(138,180,248,0.6)',
-            }}
-          />
-        </div>
-        {/* Finish flag */}
-        <span className="absolute right-0 text-lg -top-1">🏁</span>
+    <div className="relative mb-8">
+      {/* Labels */}
+      <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+        <span>{current} / {total}</span>
+        <span>{Math.round(pct)}%</span>
       </div>
 
-      {/* Runner — SVG stick figure */}
-      <div
-        className="absolute transition-all duration-700 ease-out"
-        style={{ left: `calc(${pct}% - 16px)`, top: '-2px' }}
-      >
-        <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-          {/* Head */}
-          <circle cx="16" cy="7" r="5" fill="#8AB4F8" />
-          {/* Body */}
-          <line x1="16" y1="12" x2="16" y2="26" stroke="#8AB4F8" strokeWidth="2.5" strokeLinecap="round"/>
-          {/* Arms — animated swing */}
-          <line x1="16" y1="16" x2="8" y2="22" stroke="#55EFC4" strokeWidth="2" strokeLinecap="round">
-            <animateTransform attributeName="transform" type="rotate" values="0 16 16;15 16 16;0 16 16;-15 16 16;0 16 16" dur="0.5s" repeatCount="indefinite"/>
-          </line>
-          <line x1="16" y1="16" x2="24" y2="22" stroke="#55EFC4" strokeWidth="2" strokeLinecap="round">
-            <animateTransform attributeName="transform" type="rotate" values="0 16 16;-15 16 16;0 16 16;15 16 16;0 16 16" dur="0.5s" repeatCount="indefinite"/>
-          </line>
-          {/* Legs */}
-          <line x1="16" y1="26" x2="10" y2="36" stroke="#8AB4F8" strokeWidth="2" strokeLinecap="round">
-            <animateTransform attributeName="transform" type="rotate" values="0 16 26;20 16 26;0 16 26;-20 16 26;0 16 26" dur="0.5s" repeatCount="indefinite"/>
-          </line>
-          <line x1="16" y1="26" x2="22" y2="36" stroke="#8AB4F8" strokeWidth="2" strokeLinecap="round">
-            <animateTransform attributeName="transform" type="rotate" values="0 16 26;-20 16 26;0 16 26;20 16 26;0 16 26" dur="0.5s" repeatCount="indefinite"/>
-          </line>
-        </svg>
+      {/* Track */}
+      <div className="w-full h-3 rounded-full overflow-hidden" style={{ background: 'var(--glass-border)' }}>
+        <div
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{
+            width: `${pct}%`,
+            background: `linear-gradient(90deg, ${gradStart}, ${gradEnd})`,
+            boxShadow: pct > 0 ? `0 0 ${8 + pct * 0.18}px ${glowColor}, 0 0 ${16 + pct * 0.3}px ${glowColor}40` : 'none',
+          }}
+        />
       </div>
+
+      {/* Finish flag */}
+      <span className="absolute right-0 -top-0.5 text-sm">🏁</span>
     </div>
   );
 }
