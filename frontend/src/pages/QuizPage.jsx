@@ -353,21 +353,21 @@ const QuizPage = () => {
     >
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 animate-fade-in">
-          <div>
-            <p className="text-sm text-[#636E72] mb-1">{categoryName}</p>
-            <h2 className="font-['Nunito'] text-xl font-bold">
+        <div className="flex items-center justify-between mb-6 animate-fade-in gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-[#636E72] mb-1 truncate">{categoryName}</p>
+            <h2 className="font-['Nunito'] text-lg sm:text-xl font-bold">
               Pitanje {questionNumber} / {totalQuestions}
             </h2>
           </div>
-          <div className="timer-circle" data-testid="quiz-timer">
-            <svg width="80" height="80">
+          <div className="timer-circle shrink-0" data-testid="quiz-timer" style={{ width: 64, height: 64 }}>
+            <svg width="64" height="64" viewBox="0 0 80 80">
               <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="6" />
               <circle cx="40" cy="40" r="35" fill="none" stroke={getTimerColor()} strokeWidth="6"
                 strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className="progress" />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-['Nunito'] text-xl font-bold" style={{ color: getTimerColor() }}>{timeLeft}</span>
+              <span className="font-['Nunito'] text-lg font-bold" style={{ color: getTimerColor() }}>{timeLeft}</span>
             </div>
           </div>
         </div>
@@ -376,7 +376,7 @@ const QuizPage = () => {
         <RaceTrack current={questionNumber} total={totalQuestions} />
 
         {/* Score + streak */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-3 mb-8 flex-wrap">
           <div className="relative glass-card rounded-2xl px-6 py-3 inline-flex items-center gap-2 overflow-visible">
             <FireParticles streak={streak} />
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Bodovi:</span>
@@ -397,7 +397,7 @@ const QuizPage = () => {
         </div>
 
         {/* Question Card */}
-        <div className="glass-strong rounded-3xl p-8 mb-8 animate-fade-in-up">
+        <div className="glass-strong rounded-3xl p-5 sm:p-8 mb-8 animate-fade-in-up">
           <div className="mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-xs px-3 py-1 rounded-full bg-[#8AB4F8]/20 text-[#8AB4F8] font-medium">
               {currentQuestion.question_type === 'multiple_choice' && 'Višestruki izbor'}

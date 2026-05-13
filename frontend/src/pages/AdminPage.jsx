@@ -721,32 +721,39 @@ const AdminPage = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={tab => navigate(`/admin#${tab}`, { replace: true })} className="animate-fade-in-up">
-          <TabsList className="glass mb-6">
-            <TabsTrigger value="categories" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Kategorije
-            </TabsTrigger>
-            <TabsTrigger value="questions" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Pitanja
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
-              <Users className="w-4 h-4 mr-2" />
-              Korisnici
-            </TabsTrigger>
-            <TabsTrigger value="invites" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
-              <Key className="w-4 h-4 mr-2" />
-              Pozivnice
-            </TabsTrigger>
-            <TabsTrigger value="announcements" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
-              <Megaphone className="w-4 h-4 mr-2" />
-              Objave
-            </TabsTrigger>
-            <TabsTrigger value="groups" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm">
-              <Users className="w-4 h-4 mr-2" />
-              Grupe
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 mb-6">
+            <TabsList className="glass w-max min-w-full">
+              <TabsTrigger value="categories" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm whitespace-nowrap">
+                <BookOpen className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Kategorije</span>
+                <span className="sm:hidden">Kat.</span>
+              </TabsTrigger>
+              <TabsTrigger value="questions" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm whitespace-nowrap">
+                <HelpCircle className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Pitanja</span>
+                <span className="sm:hidden">Pit.</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm whitespace-nowrap">
+                <Users className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Korisnici</span>
+                <span className="sm:hidden">Kor.</span>
+              </TabsTrigger>
+              <TabsTrigger value="invites" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm whitespace-nowrap">
+                <Key className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Pozivnice</span>
+                <span className="sm:hidden">Poz.</span>
+              </TabsTrigger>
+              <TabsTrigger value="announcements" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm whitespace-nowrap">
+                <Megaphone className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Objave</span>
+                <span className="sm:hidden">Obj.</span>
+              </TabsTrigger>
+              <TabsTrigger value="groups" className="data-[state=active]:bg-[var(--surface-solid)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-sm whitespace-nowrap">
+                <Users className="w-4 h-4 mr-1 sm:mr-2" />
+                Grupe
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Categories Tab */}
           <TabsContent value="categories">
@@ -1202,7 +1209,7 @@ const AdminPage = () => {
                     </div>
                   </div>
                   {!u.is_global_admin && (
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-1 shrink-0 mt-2 sm:mt-0">
                       <button
                         onClick={() => toggleUserRole(u)}
                         className="p-2 rounded-lg hover:bg-white/50 transition-colors"

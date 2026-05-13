@@ -347,13 +347,13 @@ const CardNav = ({ className = '' }) => {
             {/* CTA Button - Desktop */}
             <Link
               to={isAuthenticated ? "/categories" : "/auth"}
-              className="hidden md:inline-flex border-0 rounded-lg px-4 items-center h-[40px] font-semibold cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg text-sm"
+              className="inline-flex border-0 rounded-lg px-3 md:px-4 items-center h-[40px] font-semibold cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg text-sm"
               style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
               data-testid="nav-cta-button"
             >
-              {isAuthenticated ? "Igraj Kviz" : "Započni"}
-            </Link>
-          </div>
+              <span className="hidden md:inline">{isAuthenticated ? "Igraj Kviz" : "Započni"}</span>
+              <span className="md:hidden">{isAuthenticated ? "▶" : "Prijava"}</span>
+            </Link>          </div>
         </div>
 
         {/* Expanded Content */}
