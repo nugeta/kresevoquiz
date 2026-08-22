@@ -8,8 +8,7 @@ import {
   ArrowRight,
   Loader2,
   AlertCircle,
-  Flag,
-  RotateCcw
+  Flag
 } from 'lucide-react';
 
 import usePageTitle from '../hooks/usePageTitle';
@@ -201,10 +200,15 @@ const QuizPage = () => {
         setTotalQuestions(response.data.total_questions);
         setQuestionNumber(response.data.current_question);
         setCurrentQuestion(response.data.question);
-        setTimeLeft(response.data.question.time_limit);
+        setTimeLeft(response.data.question.time_limit || 30);
         startTimeRef.current = Date.now();
       } catch (err) {
-        setError(err.response?.data?.detail || 'Greška pri pokretanju kviza');
+        console.error("Quiz start error:", err);
+        const detail = err.response?.data?.detail;
+        const msg = Array.isArray(detail)
+          ? detail.map(d => d.msg || JSON.stringify(d)).join(', ')
+          : (typeof detail === 'string' ? detail : 'Greška pri pokretanju kviza');
+        setError(msg);
       } finally {
         setLoading(false);
       }
@@ -247,24 +251,27 @@ const QuizPage = () => {
   };
 
   const handleSubmitAnswer = async (isTimeout = false) => {
-    if (isAnswered || submitting) return;
+    if (isAnswered || submitting || !currentQuestion) return;
     setSubmitting(true);
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const timeSpent = Math.min(
-      currentQuestion.time_limit,
-      Math.round((Date.now() - startTimeRef.current) / 1000)
+    const timeSpent = Math.max(
+      1,
+      Math.min(
+        currentQuestion.time_limit || 30,
+        Math.round((Date.now() - (startTimeRef.current || Date.now())) / 1000)
+      )
     );
 
-    let answerPayload = {
-      time_spent: isTimeout ? currentQuestion.time_limit : timeSpent
-    };
+    const qType = currentQuestion.question_type;
+    const isText = qType === 'text_input' || qType === 'upis';
 
-    if (currentQuestion.question_type === 'text_input') {
-      answerPayload.text_answer = isTimeout ? '' : textAnswer.trim();
-    } else {
-      answerPayload.selected_options = isTimeout ? [] : selectedOptions;
-    }
+    const answerPayload = {
+      question_id: currentQuestion.id || currentQuestion._id,
+      selected_option_ids: isText ? [] : (isTimeout ? [] : selectedOptions),
+      text_answer: isText ? (isTimeout ? '' : textAnswer.trim()) : null,
+      time_taken: isTimeout ? (currentQuestion.time_limit || 30) : timeSpent
+    };
 
     try {
       const response = await axios.post(
@@ -287,7 +294,12 @@ const QuizPage = () => {
       setTimeout(() => setBgFlash(null), 700);
 
     } catch (err) {
-      setError(err.response?.data?.detail || 'Greška pri slanju odgovora');
+      console.error("Submit answer error:", err);
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail)
+        ? detail.map(d => d.msg || JSON.stringify(d)).join(', ')
+        : (typeof detail === 'string' ? detail : 'Greška pri slanju odgovora');
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -316,11 +328,16 @@ const QuizPage = () => {
       } else {
         setQuestionNumber(response.data.current_question);
         setCurrentQuestion(response.data.question);
-        setTimeLeft(response.data.question.time_limit);
+        setTimeLeft(response.data.question.time_limit || 30);
         startTimeRef.current = Date.now();
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Greška pri dohvaćanju pitanja');
+      console.error("Next question error:", err);
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail)
+        ? detail.map(d => d.msg || JSON.stringify(d)).join(', ')
+        : (typeof detail === 'string' ? detail : 'Greška pri dohvaćanju pitanja');
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -343,7 +360,7 @@ const QuizPage = () => {
         <div className="glass-card rounded-3xl p-8 max-w-md w-full text-center">
           <AlertCircle className="w-16 h-16 mx-auto mb-4 text-[#d63031]" />
           <h2 className="text-2xl font-bold mb-2">Greška</h2>
-          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>{error}</p>
+          <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>{String(error)}</p>
           <button onClick={() => navigate('/categories')} className="btn-primary w-full">
             Natrag na kategorije
           </button>
@@ -388,7 +405,7 @@ const QuizPage = () => {
             <FireParticles streak={streak} />
             <div className="flex items-center justify-between gap-2 mb-4">
               <span className="text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider" style={{ background: 'var(--primary-glow)', color: 'var(--primary)' }}>
-                {currentQuestion.question_type === 'multiple_choice' ? 'Višestruki izbor' : currentQuestion.question_type === 'true_false' ? 'Točno / Netočno' : currentQuestion.question_type === 'text_input' ? 'Upiši odgovor' : 'Odaberi jedan'}
+                {currentQuestion.question_type === 'multiple_choice' ? 'Višestruki izbor' : currentQuestion.question_type === 'true_false' ? 'Točno / Netočno' : currentQuestion.question_type === 'text_input' || currentQuestion.question_type === 'upis' ? 'Upiši odgovor' : 'Odaberi jedan'}
               </span>
               <span className="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400">
                 {currentQuestion.points} bodova
@@ -400,7 +417,7 @@ const QuizPage = () => {
             </h2>
 
             {/* Options */}
-            {currentQuestion.question_type === 'text_input' ? (
+            {currentQuestion.question_type === 'text_input' || currentQuestion.question_type === 'upis' ? (
               <div className="space-y-4">
                 <input
                   type="text"
@@ -448,7 +465,7 @@ const QuizPage = () => {
               {!isAnswered ? (
                 <button
                   onClick={() => handleSubmitAnswer(false)}
-                  disabled={submitting || (currentQuestion.question_type === 'text_input' ? !textAnswer.trim() : selectedOptions.length === 0)}
+                  disabled={submitting || ((currentQuestion.question_type === 'text_input' || currentQuestion.question_type === 'upis') ? !textAnswer.trim() : selectedOptions.length === 0)}
                   className="btn-primary w-full flex items-center justify-center gap-2 !py-4 text-lg font-bold disabled:opacity-50"
                 >
                   {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Potvrdi odgovor'}
