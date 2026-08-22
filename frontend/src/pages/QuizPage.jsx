@@ -141,7 +141,7 @@ const QuizPage = () => {
   const [sessionId, setSessionId] = useState(null);
   const [categoryName, setCategoryName] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [questionNumber, setQuestionNumber] = useState(0);
+  const [questionNumber, setQuestionNumber] = useState(1);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -198,7 +198,7 @@ const QuizPage = () => {
         setSessionId(response.data.session_id);
         setCategoryName(response.data.category_name);
         setTotalQuestions(response.data.total_questions);
-        setQuestionNumber(response.data.current_question);
+        setQuestionNumber(response.data.current_question || 1);
         setCurrentQuestion(response.data.question);
         setTimeLeft(response.data.question.time_limit || 30);
         startTimeRef.current = Date.now();
@@ -305,42 +305,21 @@ const QuizPage = () => {
     }
   };
 
-  const handleNextQuestion = async () => {
-    if (answerResult?.is_completed) {
+  const handleNextQuestion = () => {
+    if (answerResult?.is_last_question || !answerResult?.next_question) {
       navigate(`/results/${sessionId}`);
       return;
     }
 
-    setLoading(true);
+    const nq = answerResult.next_question;
+    setCurrentQuestion(nq);
+    setQuestionNumber(answerResult.current_question || (questionNumber + 1));
+    setTimeLeft(nq.time_limit || 30);
     setIsAnswered(false);
     setAnswerResult(null);
     setSelectedOptions([]);
     setTextAnswer('');
-
-    try {
-      const response = await axios.get(
-        `${API_URL}/api/quiz/${sessionId}/question`,
-        { withCredentials: true }
-      );
-
-      if (response.data.is_completed) {
-        navigate(`/results/${sessionId}`);
-      } else {
-        setQuestionNumber(response.data.current_question);
-        setCurrentQuestion(response.data.question);
-        setTimeLeft(response.data.question.time_limit || 30);
-        startTimeRef.current = Date.now();
-      }
-    } catch (err) {
-      console.error("Next question error:", err);
-      const detail = err.response?.data?.detail;
-      const msg = Array.isArray(detail)
-        ? detail.map(d => d.msg || JSON.stringify(d)).join(', ')
-        : (typeof detail === 'string' ? detail : 'Greška pri dohvaćanju pitanja');
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+    startTimeRef.current = Date.now();
   };
 
   if (loading && !currentQuestion) {
@@ -475,7 +454,7 @@ const QuizPage = () => {
                   onClick={handleNextQuestion}
                   className="btn-primary w-full flex items-center justify-center gap-2 !py-4 text-lg font-bold"
                 >
-                  <span>{answerResult?.is_completed ? 'Pogledaj rezultate' : 'Sljedeće pitanje'}</span>
+                  <span>{answerResult?.is_last_question ? 'Pogledaj rezultate' : 'Sljedeće pitanje'}</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
               )}
