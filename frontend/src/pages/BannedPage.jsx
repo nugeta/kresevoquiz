@@ -23,7 +23,7 @@ const BannedPage = () => {
           <p>🚫 Rang lista: <span style={{ color: 'var(--error)' }}>Onemogućen</span></p>
         </div>
         <p className="text-xs mt-6" style={{ color: 'var(--text-secondary)' }}>
-          Kreševo Kviz · Ghost Productions
+          Kreševo Kviz © {new Date().getFullYear()} Ghost Productions
         </p>
       </div>
     </div>

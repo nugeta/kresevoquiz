@@ -207,7 +207,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="py-8 px-4 border-t relative" style={{ borderColor: 'var(--glass-border)', zIndex: 2 }}>
         <div className="max-w-6xl mx-auto text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-          <p>&copy; 2026 Ghost Productions. Sva prava pridržana. · <Link to="/credits" style={{ color: 'var(--text-secondary)' }} className="hover:opacity-70 transition-opacity">Zahvale</Link></p>
+          <p>&copy; {new Date().getFullYear()} Ghost Productions. Sva prava pridržana. · <Link to="/credits" style={{ color: 'var(--text-secondary)' }} className="hover:opacity-70 transition-opacity">Zahvale</Link></p>
         </div>
       </footer>
     </div>

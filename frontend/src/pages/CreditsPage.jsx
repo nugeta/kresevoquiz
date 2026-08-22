@@ -104,7 +104,7 @@ const CreditsPage = () => {
         </div>
 
         <div className="text-center mt-10 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          <p>© 2026 Ghost Productions · <Link to="/" className="hover:opacity-70 transition-opacity">Natrag na početnu</Link></p>
+          <p>&copy; {new Date().getFullYear()} Ghost Productions · <Link to="/" className="hover:opacity-70 transition-opacity">Natrag na početnu</Link></p>
         </div>
       </div>
     </div>
