@@ -7,14 +7,16 @@ import {
   XCircle, 
   ArrowRight,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Flag,
+  RotateCcw
 } from 'lucide-react';
 
 import usePageTitle from '../hooks/usePageTitle';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-// ── Animated score counter ──────────────────────────────────────────────────
+// Animated score counter
 function AnimatedScore({ value }) {
   const [display, setDisplay] = useState(value);
   const prev = useRef(value);
@@ -39,7 +41,7 @@ function AnimatedScore({ value }) {
   return <span>{display}</span>;
 }
 
-// ── Streak fire particles ───────────────────────────────────────────────────
+// Streak fire particles
 function FireParticles({ streak }) {
   if (streak < 2) return null;
   const count = Math.min(streak, 6);
@@ -65,74 +67,58 @@ function FireParticles({ streak }) {
   );
 }
 
-// ── Progress bar ─────────────────────────────────────────────────────────────
-function RaceTrack({ current, total }) {
-  const pct = total > 0 ? (current / total) * 100 : 0;
-  // Colour shifts from blue → teal → green as you progress
-  const hue = Math.round(210 + (pct / 100) * 60); // 210 (blue) → 270 would go purple, let's go 210→150 (teal/green)
-  const gradStart = `hsl(${210 - (pct / 100) * 60}, 90%, 70%)`;
-  const gradEnd   = `hsl(${170 - (pct / 100) * 20}, 80%, 65%)`;
-  const glowColor = `hsla(${210 - (pct / 100) * 60}, 90%, 70%, 0.7)`;
+// Progress bar — Fixed overlap & supports Endless mode
+function RaceTrack({ current, total, onFinish, isEndless }) {
+  const pct = total > 0 ? Math.min((current / total) * 100, 100) : 0;
+  const gradStart = `hsl(${Math.max(150, 210 - (pct / 100) * 60)}, 90%, 70%)`;
+  const gradEnd   = `hsl(${Math.max(130, 170 - (pct / 100) * 20)}, 80%, 65%)`;
+  const glowColor = `hsla(180, 90%, 70%, 0.7)`;
 
   return (
-    <div className="relative mb-8">
-      {/* Labels */}
-      <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-        <span>{current} / {total}</span>
-        <span>{Math.round(pct)}%</span>
+    <div className="mb-8">
+      {/* Header Info */}
+      <div className="flex items-center justify-between text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
+        <div className="flex items-center gap-2">
+          <span>{isEndless ? `Pitanje #${current}` : `${current} / ${total}`}</span>
+          {isEndless && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-400 font-bold uppercase tracking-wider">
+              Beskonačni mod
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {!isEndless && <span>{Math.round(pct)}%</span>}
+          <button
+            onClick={onFinish}
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg transition-all hover:bg-red-500/20 text-red-400 hover:text-red-300"
+            title="Završi kviz i spremi rezultat"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            <span>Završi</span>
+          </button>
+        </div>
       </div>
 
-      {/* Track */}
-      <div className="w-full h-3 rounded-full overflow-hidden" style={{ background: 'var(--glass-border)' }}>
-        <div
-          className="h-full rounded-full transition-all duration-700 ease-out"
-          style={{
-            width: `${pct}%`,
-            background: `linear-gradient(90deg, ${gradStart}, ${gradEnd})`,
-            boxShadow: pct > 0 ? `0 0 ${8 + pct * 0.18}px ${glowColor}, 0 0 ${16 + pct * 0.3}px ${glowColor}40` : 'none',
-          }}
-        />
-      </div>
-
-      {/* Finish flag */}
-      <span className="absolute right-0 -top-0.5 text-sm">🏁</span>
-    </div>
-  );
-}
-
-// ── Typing indicator ────────────────────────────────────────────────────────
-function TypingIndicator({ value, correctAnswer }) {
-  if (!value) return null;
-  const len = value.trim().length;
-  const targetLen = correctAnswer ? correctAnswer.trim().length : 0;
-
-  // Rough proximity: how close is the length
-  const ratio = targetLen > 0 ? Math.min(len / targetLen, 1) : 0;
-  const color = ratio > 0.8 ? '#55EFC4' : ratio > 0.4 ? '#FDCB6E' : '#8AB4F8';
-
-  return (
-    <div className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-      <div className="flex gap-0.5">
-        {[0, 1, 2].map(i => (
-          <span
-            key={i}
+      {/* Track bar */}
+      {!isEndless ? (
+        <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--glass-border)' }}>
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
-              width: 6, height: 6,
-              borderRadius: '50%',
-              background: color,
-              display: 'inline-block',
-              animation: `typingBounce 1s ease-in-out infinite`,
-              animationDelay: `${i * 0.15}s`,
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, ${gradStart}, ${gradEnd})`,
+              boxShadow: pct > 0 ? `0 0 ${8 + pct * 0.18}px ${glowColor}` : 'none',
             }}
           />
-        ))}
-      </div>
-      <span>{len} znakova</span>
-      {targetLen > 0 && (
-        <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--glass-border)' }}>
+        </div>
+      ) : (
+        <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--glass-border)' }}>
           <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{ width: `${ratio * 100}%`, background: color }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${((current % 20) / 20) * 100}%`,
+              background: 'linear-gradient(90deg, #A29BFE, #7C3AED)',
+            }}
           />
         </div>
       )}
@@ -145,6 +131,8 @@ const QuizPage = () => {
   const { categoryId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const isEndless = searchParams.get('mode') === 'endless' || !searchParams.get('count');
 
   useEffect(() => {
     if (window.Tawk_API?.hideWidget) window.Tawk_API.hideWidget();
@@ -166,13 +154,11 @@ const QuizPage = () => {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [streak, setStreak] = useState(0);
-  // flash state for ambient bg
-  const [bgFlash, setBgFlash] = useState(null); // 'correct' | 'wrong' | 'partial'
+  const [bgFlash, setBgFlash] = useState(null);
   
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
 
-  // Inject keyframe animations once
   useEffect(() => {
     const id = 'quiz-keyframes';
     if (document.getElementById(id)) return;
@@ -205,7 +191,7 @@ const QuizPage = () => {
           `${API_URL}/api/quiz/start`,
           {
             category_id: categoryId,
-            question_count: parseInt(searchParams.get('count') || '10'),
+            question_count: isEndless ? 50 : parseInt(searchParams.get('count') || '10'),
             difficulty: searchParams.get('difficulty') || 'mix'
           },
           { withCredentials: true }
@@ -241,295 +227,244 @@ const QuizPage = () => {
 
   const handleOptionSelect = (optionId) => {
     if (isAnswered) return;
-    if (currentQuestion.question_type === 'multiple_choice') {
-      setSelectedOptions(prev => prev.includes(optionId) ? prev.filter(id => id !== optionId) : [...prev, optionId]);
-    } else {
+    if (currentQuestion.question_type === 'single_choice' || currentQuestion.question_type === 'true_false') {
       setSelectedOptions([optionId]);
+    } else if (currentQuestion.question_type === 'multiple_choice') {
+      setSelectedOptions(prev => 
+        prev.includes(optionId) 
+          ? prev.filter(id => id !== optionId)
+          : [...prev, optionId]
+      );
     }
   };
 
-  const handleSubmitAnswer = useCallback(async (isTimeout = false) => {
-    if (submitting || isAnswered) return;
+  const handleFinishEarly = () => {
+    if (sessionId) {
+      navigate(`/results/${sessionId}`);
+    } else {
+      navigate('/categories');
+    }
+  };
+
+  const handleSubmitAnswer = async (isTimeout = false) => {
+    if (isAnswered || submitting) return;
     setSubmitting(true);
     if (timerRef.current) clearInterval(timerRef.current);
-    const timeTaken = Math.round((Date.now() - startTimeRef.current) / 1000);
-    const isUpis = currentQuestion?.question_type === 'upis';
+
+    const timeSpent = Math.min(
+      currentQuestion.time_limit,
+      Math.round((Date.now() - startTimeRef.current) / 1000)
+    );
+
+    let answerPayload = {
+      time_spent: isTimeout ? currentQuestion.time_limit : timeSpent
+    };
+
+    if (currentQuestion.question_type === 'text_input') {
+      answerPayload.text_answer = isTimeout ? '' : textAnswer.trim();
+    } else {
+      answerPayload.selected_options = isTimeout ? [] : selectedOptions;
+    }
+
     try {
       const response = await axios.post(
         `${API_URL}/api/quiz/${sessionId}/answer`,
-        {
-          question_id: currentQuestion.id,
-          selected_option_ids: isTimeout || isUpis ? [] : selectedOptions,
-          text_answer: isUpis && !isTimeout ? textAnswer : null,
-          time_taken: timeTaken
-        },
+        answerPayload,
         { withCredentials: true }
       );
+
       setIsAnswered(true);
       setAnswerResult(response.data);
       setScore(response.data.total_score);
-      setStreak(prev => response.data.is_correct ? prev + 1 : 0);
 
-      // Ambient flash
-      const isPartial = response.data.upis_ratio != null && response.data.upis_ratio < 0.9;
-      setBgFlash(response.data.is_correct ? (isPartial ? 'partial' : 'correct') : 'wrong');
+      if (response.data.is_correct) {
+        setStreak(prev => prev + 1);
+        setBgFlash('correct');
+      } else {
+        setStreak(0);
+        setBgFlash('wrong');
+      }
       setTimeout(() => setBgFlash(null), 700);
 
-      if (response.data.is_last_question) {
-        setTimeout(() => navigate(`/results/${sessionId}`), 2000);
-      }
     } catch (err) {
-      setError('Greška pri slanju odgovora');
+      setError(err.response?.data?.detail || 'Greška pri slanju odgovora');
     } finally {
       setSubmitting(false);
     }
-  }, [sessionId, currentQuestion, selectedOptions, submitting, isAnswered, navigate, textAnswer]);
+  };
 
-  const handleNextQuestion = () => {
-    if (!answerResult?.next_question) return;
-    setCurrentQuestion(answerResult.next_question);
-    setQuestionNumber(answerResult.current_question);
-    setTotalQuestions(answerResult.total_questions);
-    setTimeLeft(answerResult.next_question.time_limit);
-    setSelectedOptions([]);
-    setTextAnswer('');
+  const handleNextQuestion = async () => {
+    if (answerResult?.is_completed) {
+      navigate(`/results/${sessionId}`);
+      return;
+    }
+
+    setLoading(true);
     setIsAnswered(false);
     setAnswerResult(null);
-    startTimeRef.current = Date.now();
+    setSelectedOptions([]);
+    setTextAnswer('');
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/quiz/${sessionId}/question`,
+        { withCredentials: true }
+      );
+
+      if (response.data.is_completed) {
+        navigate(`/results/${sessionId}`);
+      } else {
+        setQuestionNumber(response.data.current_question);
+        setCurrentQuestion(response.data.question);
+        setTimeLeft(response.data.question.time_limit);
+        startTimeRef.current = Date.now();
+      }
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Greška pri dohvaćanju pitanja');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getOptionClass = (optionId) => {
-    if (!isAnswered) return selectedOptions.includes(optionId) ? 'selected' : '';
-    const isCorrect = answerResult?.correct_option_ids?.includes(optionId);
-    const wasSelected = selectedOptions.includes(optionId);
-    if (isCorrect) return 'correct';
-    if (wasSelected && !isCorrect) return 'incorrect';
-    return '';
-  };
-
-  const getTimerColor = () => {
-    if (timeLeft > 20) return '#55EFC4';
-    if (timeLeft > 10) return '#FDCB6E';
-    return '#d63031';
-  };
-
-  const circumference = 2 * Math.PI * 35;
-  const strokeDashoffset = circumference - (timeLeft / (currentQuestion?.time_limit || 30)) * circumference;
-
-  if (loading) return (
-    <div className="min-h-screen pt-24 flex items-center justify-center" data-testid="quiz-loading">
-      <div className="text-center">
-        <Loader2 className="w-10 h-10 animate-spin text-[#8AB4F8] mx-auto mb-4" />
-        <p className="text-[#636E72]">Učitavanje kviza...</p>
+  if (loading && !currentQuestion) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: 'var(--primary)' }} />
+          <p style={{ color: 'var(--text-secondary)' }}>Učitavanje kviza...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  if (error) return (
-    <div className="min-h-screen pt-24 flex items-center justify-center px-4" data-testid="quiz-error">
-      <div className="glass-card rounded-3xl p-8 text-center max-w-md">
-        <AlertCircle className="w-12 h-12 text-[#d63031] mx-auto mb-4" />
-        <h2 className="font-['Nunito'] text-xl font-bold mb-2">Greška</h2>
-        <p className="text-[#636E72] mb-6">{error}</p>
-        <button onClick={() => navigate('/categories')} className="btn-primary">Natrag na kategorije</button>
+  if (error) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-4">
+        <div className="glass-card rounded-3xl p-8 max-w-md w-full text-center">
+          <AlertCircle className="w-16 h-16 mx-auto mb-4 text-[#d63031]" />
+          <h2 className="text-2xl font-bold mb-2">Greška</h2>
+          <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>{error}</p>
+          <button onClick={() => navigate('/categories')} className="btn-primary w-full">
+            Natrag na kategorije
+          </button>
+        </div>
       </div>
-    </div>
-  );
-
-  // Ambient bg flash colors
-  const flashStyle = bgFlash === 'correct'
-    ? { boxShadow: 'inset 0 0 80px rgba(0,184,148,0.18)' }
-    : bgFlash === 'partial'
-    ? { boxShadow: 'inset 0 0 80px rgba(253,203,110,0.18)' }
-    : bgFlash === 'wrong'
-    ? { boxShadow: 'inset 0 0 80px rgba(214,48,49,0.18)' }
-    : {};
+    );
+  }
 
   return (
-    <div
-      className="min-h-screen pt-24 pb-12 px-4 transition-all duration-500"
-      style={flashStyle}
-      data-testid="quiz-page"
-    >
+    <div className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-500 ${bgFlash === 'correct' ? 'bg-emerald-500/10' : bgFlash === 'wrong' ? 'bg-rose-500/10' : ''}`}>
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6 animate-fade-in gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[#636E72] mb-1 truncate">{categoryName}</p>
-            <h2 className="font-['Nunito'] text-lg sm:text-xl font-bold">
-              Pitanje {questionNumber} / {totalQuestions}
-            </h2>
-          </div>
-          <div className="timer-circle shrink-0" data-testid="quiz-timer" style={{ width: 64, height: 64 }}>
-            <svg width="64" height="64" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="6" />
-              <circle cx="40" cy="40" r="35" fill="none" stroke={getTimerColor()} strokeWidth="6"
-                strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} className="progress" />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-['Nunito'] text-lg font-bold" style={{ color: getTimerColor() }}>{timeLeft}</span>
-            </div>
-          </div>
-        </div>
+        {/* Top Progress & Controls */}
+        <RaceTrack 
+          current={questionNumber} 
+          total={totalQuestions} 
+          onFinish={handleFinishEarly} 
+          isEndless={isEndless} 
+        />
 
-        {/* Race track progress */}
-        <RaceTrack current={questionNumber} total={totalQuestions} />
-
-        {/* Score + streak */}
-        <div className="flex items-center gap-3 mb-8 flex-wrap">
-          <div className="relative glass-card rounded-2xl px-6 py-3 inline-flex items-center gap-2 overflow-visible">
-            <FireParticles streak={streak} />
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Bodovi:</span>
-            <span
-              key={score}
-              className="font-['Nunito'] text-xl font-bold text-[#8AB4F8] score-pop"
-              data-testid="quiz-score"
-            >
+        {/* Score & Timer Status Bar */}
+        <div className="flex items-center justify-between mb-6 glass-card rounded-2xl px-6 py-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Rezultat:</span>
+            <span className="font-['Nunito'] text-xl font-extrabold text-gradient">
               <AnimatedScore value={score} />
             </span>
+            {streak >= 2 && (
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-black bg-orange-500/20 text-orange-400 flex items-center gap-1">
+                🔥 {streak}x
+              </span>
+            )}
           </div>
-          {streak >= 2 && (
-            <div className="glass-card rounded-2xl px-4 py-3 inline-flex items-center gap-2 animate-fade-in" style={{ border: '1px solid #FDCB6E50' }}>
-              <span className="text-lg">🔥</span>
-              <span className="font-bold text-sm text-[#FDCB6E]">{streak} zaredom!</span>
-            </div>
-          )}
+          <div className={`flex items-center gap-2 font-mono font-bold text-lg ${timeLeft <= 5 ? 'text-rose-500 animate-pulse' : ''}`}>
+            <Clock className="w-5 h-5" />
+            <span>{timeLeft}s</span>
+          </div>
         </div>
 
         {/* Question Card */}
-        <div className="glass-strong rounded-3xl p-5 sm:p-8 mb-8 animate-fade-in-up">
-          <div className="mb-4 flex items-center gap-2 flex-wrap">
-            <span className="text-xs px-3 py-1 rounded-full bg-[#8AB4F8]/20 text-[#8AB4F8] font-medium">
-              {currentQuestion.question_type === 'multiple_choice' && 'Višestruki izbor'}
-              {currentQuestion.question_type === 'single_choice' && 'Odaberi jedan'}
-              {currentQuestion.question_type === 'true_false' && 'Točno / Netočno'}
-              {currentQuestion.question_type === 'upis' && 'Upiši odgovor'}
-            </span>
-            {currentQuestion.difficulty && (
-              <span className="text-xs px-3 py-1 rounded-full font-medium" style={{
-                background: currentQuestion.difficulty === 'easy' ? 'rgba(85,239,196,0.2)' : currentQuestion.difficulty === 'hard' ? 'rgba(255,118,117,0.2)' : 'rgba(253,203,110,0.2)',
-                color: currentQuestion.difficulty === 'easy' ? '#55EFC4' : currentQuestion.difficulty === 'hard' ? '#FF7675' : '#FDCB6E'
-              }}>
-                {currentQuestion.difficulty === 'easy' ? 'Lako' : currentQuestion.difficulty === 'hard' ? 'Teško' : 'Srednje'}
+        {currentQuestion && (
+          <div className="glass-card rounded-3xl p-6 sm:p-8 mb-6 relative overflow-hidden animate-fade-in">
+            <FireParticles streak={streak} />
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <span className="text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider" style={{ background: 'var(--primary-glow)', color: 'var(--primary)' }}>
+                {currentQuestion.question_type === 'multiple_choice' ? 'Višestruki izbor' : currentQuestion.question_type === 'true_false' ? 'Točno / Netočno' : currentQuestion.question_type === 'text_input' ? 'Upiši odgovor' : 'Odaberi jedan'}
               </span>
-            )}
-            {currentQuestion.question_type === 'multiple_choice' && (
-              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>(odaberi više odgovora)</span>
-            )}
-          </div>
-          <h3 className="font-['Nunito'] text-xl sm:text-2xl font-bold mb-2" data-testid="question-text">
-            {currentQuestion.question_text}
-          </h3>
-          {currentQuestion.image_url && (
-            <img src={currentQuestion.image_url} alt="question" className="mt-3 rounded-2xl max-h-48 object-cover w-full" onError={e => e.target.style.display='none'} />
-          )}
-          <p className="text-sm text-[#636E72]">{currentQuestion.points} bodova</p>
-        </div>
+              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400">
+                {currentQuestion.points} bodova
+              </span>
+            </div>
 
-        {/* Options or Upis */}
-        {currentQuestion.question_type === 'upis' ? (
-          <div className="mb-8">
-            <textarea
-              value={textAnswer}
-              onChange={e => setTextAnswer(e.target.value)}
-              disabled={isAnswered}
-              placeholder="Upiši odgovor ovdje..."
-              className="glass-input min-h-[100px] text-base resize-none"
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && textAnswer.trim()) { e.preventDefault(); handleSubmitAnswer(false); } }}
-              autoFocus
-            />
-            {/* Typing indicator — only shown before answering */}
-            {!isAnswered && (
-              <TypingIndicator value={textAnswer} correctAnswer={null} />
-            )}
-            {isAnswered && answerResult?.correct_answer && (
-              <div className="mt-3 p-3 rounded-xl text-sm" style={{ background: 'rgba(85,239,196,0.1)', border: '1px solid rgba(85,239,196,0.3)' }}>
-                <span className="font-semibold" style={{ color: '#55EFC4' }}>Točan odgovor: </span>
-                <span>{answerResult.correct_answer}</span>
-                {answerResult.upis_ratio != null && answerResult.upis_ratio < 1 && answerResult.upis_ratio > 0 && (
-                  <span className="ml-2 text-xs" style={{ color: '#FDCB6E' }}>({Math.round(answerResult.upis_ratio * 100)}% točnosti)</span>
-                )}
+            <h2 className="text-xl sm:text-2xl font-bold leading-relaxed mb-6">
+              {currentQuestion.question_text}
+            </h2>
+
+            {/* Options */}
+            {currentQuestion.question_type === 'text_input' ? (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={textAnswer}
+                  onChange={e => setTextAnswer(e.target.value)}
+                  disabled={isAnswered}
+                  placeholder="Upišite vaš odgovor..."
+                  className="glass-input !py-4 !text-lg text-center font-semibold"
+                  onKeyDown={e => { if (e.key === 'Enter' && textAnswer.trim()) handleSubmitAnswer(); }}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {currentQuestion.options?.map((option) => {
+                  const isSelected = selectedOptions.includes(option.id);
+                  let stateClass = '';
+                  if (isAnswered) {
+                    if (option.is_correct) {
+                      stateClass = '!border-emerald-500 !bg-emerald-500/20 text-emerald-300';
+                    } else if (isSelected && !option.is_correct) {
+                      stateClass = '!border-rose-500 !bg-rose-500/20 text-rose-300';
+                    }
+                  } else if (isSelected) {
+                    stateClass = '!border-[var(--primary)] !bg-[var(--primary)]/15';
+                  }
+
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => handleOptionSelect(option.id)}
+                      disabled={isAnswered}
+                      className={`quiz-option w-full text-left flex items-center justify-between p-4 rounded-2xl transition-all duration-200 ${stateClass}`}
+                    >
+                      <span className="text-base font-medium">{option.text}</span>
+                      {isAnswered && option.is_correct && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 ml-2" />}
+                      {isAnswered && isSelected && !option.is_correct && <XCircle className="w-5 h-5 text-rose-400 shrink-0 ml-2" />}
+                    </button>
+                  );
+                })}
               </div>
             )}
-          </div>
-        ) : (
-          <div className="space-y-4 stagger-children mb-8">
-            {(currentQuestion.options || []).map((option, index) => (
-              <button
-                key={option.id}
-                onClick={() => handleOptionSelect(option.id)}
-                disabled={isAnswered}
-                className={`quiz-option w-full text-left flex items-center gap-4 ${getOptionClass(option.id)}`}
-                data-testid={`option-${index}`}
-              >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  selectedOptions.includes(option.id) ? 'bg-[#8AB4F8] text-white' : ''
-                } ${isAnswered && answerResult?.correct_option_ids?.includes(option.id) ? 'bg-[#00b894] text-white' : ''}
-                  ${isAnswered && selectedOptions.includes(option.id) && !answerResult?.correct_option_ids?.includes(option.id) ? 'bg-[#d63031] text-white' : ''}`}
-                style={!selectedOptions.includes(option.id) && !(isAnswered && answerResult?.correct_option_ids?.includes(option.id)) && !(isAnswered && selectedOptions.includes(option.id)) ? { background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' } : {}}
-                >
-                  {isAnswered ? (
-                    answerResult?.correct_option_ids?.includes(option.id) ? <CheckCircle2 className="w-5 h-5" />
-                    : selectedOptions.includes(option.id) ? <XCircle className="w-5 h-5" />
-                    : String.fromCharCode(65 + index)
-                  ) : String.fromCharCode(65 + index)}
-                </div>
-                <span className="font-medium">{option.text}</span>
-              </button>
-            ))}
-          </div>
-        )}
 
-        {/* Result feedback */}
-        {isAnswered && answerResult && (
-          <div className={`glass-card rounded-2xl p-6 mb-8 animate-fade-in ${
-            answerResult.is_correct
-              ? answerResult.upis_ratio != null && answerResult.upis_ratio < 0.9
-                ? 'border-2 border-[#FDCB6E]'
-                : 'border-2 border-[#00b894]'
-              : 'border-2 border-[#d63031]'
-          }`} data-testid="answer-feedback">
-            <div className="flex items-center gap-3 mb-2">
-              {answerResult.is_correct ? (
-                answerResult.upis_ratio != null && answerResult.upis_ratio < 0.9 ? (
-                  <><CheckCircle2 className="w-6 h-6 text-[#FDCB6E]" /><span className="font-['Nunito'] text-lg font-bold text-[#FDCB6E]">Djelomično točno!</span></>
-                ) : (
-                  <><CheckCircle2 className="w-6 h-6 text-[#00b894]" /><span className="font-['Nunito'] text-lg font-bold text-[#00b894]">Točno!</span></>
-                )
+            {/* Submit / Next Button */}
+            <div className="mt-8 pt-4 border-t" style={{ borderColor: 'var(--glass-border)' }}>
+              {!isAnswered ? (
+                <button
+                  onClick={() => handleSubmitAnswer(false)}
+                  disabled={submitting || (currentQuestion.question_type === 'text_input' ? !textAnswer.trim() : selectedOptions.length === 0)}
+                  className="btn-primary w-full flex items-center justify-center gap-2 !py-4 text-lg font-bold disabled:opacity-50"
+                >
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Potvrdi odgovor'}
+                </button>
               ) : (
-                <><XCircle className="w-6 h-6 text-[#d63031]" /><span className="font-['Nunito'] text-lg font-bold text-[#d63031]">Netočno!</span></>
+                <button
+                  onClick={handleNextQuestion}
+                  className="btn-primary w-full flex items-center justify-center gap-2 !py-4 text-lg font-bold"
+                >
+                  <span>{answerResult?.is_completed ? 'Pogledaj rezultate' : 'Sljedeće pitanje'}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               )}
             </div>
-            <p className="text-sm text-[#636E72]">
-              {answerResult.is_correct
-                ? `${answerResult.upis_ratio != null && answerResult.upis_ratio < 0.9 ? 'Djelomičan odgovor! ' : 'Odlično! '}Osvojili ste ${answerResult.points_earned} bodova.`
-                : 'Nažalost, odgovor nije točan.'}
-            </p>
           </div>
         )}
-
-        {/* Action buttons */}
-        <div className="flex justify-center gap-4">
-          {!isAnswered ? (
-            <button
-              onClick={() => handleSubmitAnswer(false)}
-              disabled={(currentQuestion.question_type === 'upis' ? !textAnswer.trim() : selectedOptions.length === 0) || submitting}
-              className="btn-primary flex items-center gap-2 !py-4 !px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-testid="submit-answer-button"
-            >
-              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" />Potvrdi Odgovor</>}
-            </button>
-          ) : answerResult && !answerResult.is_last_question ? (
-            <button onClick={handleNextQuestion} className="btn-primary flex items-center gap-2 !py-4 !px-8" data-testid="next-question-button">
-              Sljedeće Pitanje <ArrowRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <div className="text-center">
-              <Loader2 className="w-6 h-6 animate-spin text-[#8AB4F8] mx-auto mb-2" />
-              <p className="text-sm text-[#636E72]">Učitavanje rezultata...</p>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

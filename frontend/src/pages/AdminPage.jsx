@@ -276,6 +276,9 @@ const AdminPage = () => {
         await axios.delete(`${API_URL}/api/categories/${deleteTarget.item.id}`, { withCredentials: true });
         setCategories(prev => prev.filter(c => c.id !== deleteTarget.item.id));
         setQuestions(prev => prev.filter(q => q.category_id !== deleteTarget.item.id));
+      } else if (deleteTarget.type === 'user') {
+        await axios.delete(`${API_URL}/api/users/${deleteTarget.item.id}`, { withCredentials: true });
+        setUsers(prev => prev.filter(u => u.id !== deleteTarget.item.id));
       } else {
         await axios.delete(`${API_URL}/api/questions/${deleteTarget.item.id}`, { withCredentials: true });
         setQuestions(prev => prev.filter(q => q.id !== deleteTarget.item.id));
@@ -388,14 +391,8 @@ const AdminPage = () => {
     }
   };
 
-  const deleteUser = async (u) => {
-    if (!window.confirm(`Obrisati korisnika "${u.username}"?`)) return;
-    try {
-      await axios.delete(`${API_URL}/api/users/${u.id}`, { withCredentials: true });
-      setUsers(prev => prev.filter(x => x.id !== u.id));
-    } catch (err) {
-      alert(err.response?.data?.detail || 'Greška');
-    }
+  const deleteUser = (u) => {
+    openDeleteModal('user', u);
   };
 
   const setUserGroup = async (u, group) => {
@@ -1849,6 +1846,8 @@ const AdminPage = () => {
               <DialogDescription>
                 {deleteTarget?.type === 'category' 
                   ? `Jeste li sigurni da želite obrisati kategoriju "${deleteTarget?.item?.name}"? Sva pitanja u ovoj kategoriji će također biti obrisana.`
+                  : deleteTarget?.type === 'user'
+                  ? `Jeste li sigurni da želite trajno obrisati korisnika "${deleteTarget?.item?.username}"? Svi rezultati i podaci ovog korisnika bit će nepovratno obrisani.`
                   : `Jeste li sigurni da želite obrisati ovo pitanje?`
                 }
               </DialogDescription>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Users, Plus, LogIn, Loader2, Swords, Trophy, Shield, AlertTriangle, X } from 'lucide-react';import usePageTitle from '../hooks/usePageTitle';
+import { Users, Plus, LogIn, Loader2, Swords, Trophy, Shield, AlertTriangle, X } from 'lucide-react';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -36,36 +37,76 @@ const MultiplayerPage = () => {
 
   useEffect(() => {
     axios.get(`${API_URL}/api/categories`)
-      .then(r => setCategories(r.data.filter(c => c.question_count > 0)))
+      .then(r => {
+        // Load all available categories and subthemes
+        setCategories(r.data);
+      })
       .catch(() => {});
   }, []);
 
   // Helper: render categories hierarchically in select options
   const renderCategoryOptions = (excludeIds = []) => {
     const parents = categories.filter(c => !c.parent_id);
-    const getChildren = (parentId) => categories.filter(c => c.parent_id === parentId && !excludeIds.includes(c.id));
-    return parents.filter(p => !excludeIds.includes(p.id)).map(p => {
-      const children = getChildren(p.id);
+    const getChildren = (parentId) => categories.filter(c => String(c.parent_id) === String(parentId) && !excludeIds.includes(c.id || c._id));
+    
+    const options = [];
+
+    // Mix option
+    if (!excludeIds.includes('mix')) {
+      options.push(
+        <option key="mix" value="mix">
+          🎲 Sve kategorije (Mix)
+        </option>
+      );
+    }
+
+    parents.filter(p => !excludeIds.includes(p.id || p._id)).forEach(p => {
+      const pId = p.id || p._id;
+      const children = getChildren(pId);
       if (children.length > 0) {
-        return (
-          <optgroup key={p.id} label={`${p.icon?.length <= 2 ? p.icon + ' ' : ''}${p.name}`}>
-            {!excludeIds.includes(p.id) && (
-              <option value={p.id}>📚 Sve — {p.name}</option>
+        options.push(
+          <optgroup key={pId} label={`${p.icon?.length <= 2 ? p.icon + ' ' : ''}${p.name}`}>
+            {!excludeIds.includes(pId) && (
+              <option value={pId}>📚 Sve — {p.name}</option>
             )}
             {children.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.icon?.length <= 2 ? c.icon + ' ' : ''}{c.name} ({c.question_count})
+              <option key={c.id || c._id} value={c.id || c._id}>
+                {c.icon?.length <= 2 ? c.icon + ' ' : ''}{c.name}
               </option>
             ))}
           </optgroup>
         );
+      } else {
+        options.push(
+          <option key={pId} value={pId}>
+            {p.icon?.length <= 2 ? p.icon + ' ' : ''}{p.name}
+          </option>
+        );
       }
-      return (
-        <option key={p.id} value={p.id}>
-          {p.icon?.length <= 2 ? p.icon + ' ' : ''}{p.name} ({p.question_count})
-        </option>
-      );
     });
+
+    // Also include any orphan subthemes
+    const renderedIds = new Set(
+      categories
+        .filter(c => !c.parent_id || parents.some(p => String(p.id || p._id) === String(c.parent_id)))
+        .map(c => String(c.id || c._id))
+    );
+    const orphans = categories.filter(
+      c => !renderedIds.has(String(c.id || c._id)) && !excludeIds.includes(c.id || c._id)
+    );
+    if (orphans.length > 0) {
+      options.push(
+        <optgroup key="other" label="Ostale teme">
+          {orphans.map(o => (
+            <option key={o.id || o._id} value={o.id || o._id}>
+              {o.icon?.length <= 2 ? o.icon + ' ' : ''}{o.name}
+            </option>
+          ))}
+        </optgroup>
+      );
+    }
+
+    return options;
   };
 
   const createRoom = async () => {
@@ -98,80 +139,120 @@ const MultiplayerPage = () => {
 
   const joinRoom = async () => {
     const code = joinCode.trim().toUpperCase();
-    if (!code) { setError('Unesite kod'); return; }
+    if (!code) { setError('Unesi kod sobe'); return; }
     setJoining(true); setError('');
     try {
-      // Try room first, then tournament
-      if (code.length === 8) {
-        await axios.get(`${API_URL}/api/tournaments/${code}`, { withCredentials: true });
+      // Check if it's a tournament or room
+      const res = await axios.get(`${API_URL}/api/rooms/${code}`, { withCredentials: true });
+      if (res.data.is_tournament) {
         navigate(`/multiplayer/tournament/${code}`);
       } else {
-        await axios.get(`${API_URL}/api/rooms/${code}`, { withCredentials: true });
         navigate(`/multiplayer/room/${code}`);
       }
     } catch (e) {
-      setError(e.response?.data?.detail || 'Kod nije pronađen');
+      setError(e.response?.data?.detail || 'Soba nije pronađena');
     } finally { setJoining(false); }
   };
 
-  if (authLoading) return <div className="min-h-screen pt-24 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} /></div>;
-
-  if (!isAuthenticated) return (
-    <div className="min-h-screen pt-24 flex items-center justify-center px-4">
-      <div className="glass-card rounded-3xl p-10 text-center max-w-md">
-        <Users className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--primary)' }} />
-        <h2 className="font-['Nunito'] text-2xl font-bold mb-3">Prijavi se za multiplayer</h2>
-        <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>Trebaš račun za igranje s prijateljima.</p>
-        <button onClick={() => navigate('/auth')} className="btn-primary">Prijavi se</button>
+  if (authLoading) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin" style={{ color: 'var(--primary)' }} />
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-4">
+        <div className="glass-card rounded-3xl p-8 max-w-md w-full text-center animate-fade-in-up">
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+            style={{ background: 'rgba(138, 180, 248, 0.15)' }}>
+            <Swords className="w-8 h-8" style={{ color: 'var(--primary)' }} />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Prijava obavezna</h2>
+          <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+            Za igranje multiplayera moraš biti prijavljen kako bi se tvoji rezultati mogli pratiti.
+          </p>
+          <button onClick={() => navigate('/auth?mode=login')} className="btn-primary w-full flex items-center justify-center gap-2">
+            <LogIn className="w-4 h-4" /> Prijavi se
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const selectedMode = MODES.find(m => m.id === mode);
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4">
-      {/* Adblocker notice */}
-      {showAdblockNotice && (
-        <div className="max-w-2xl mx-auto mb-4 animate-fade-in-up">
-          <div className="glass-strong rounded-2xl px-4 py-3 flex items-start gap-3"
-            style={{ border: '1px solid rgba(253,203,110,0.4)', background: 'rgba(253,203,110,0.08)' }}>
-            <span className="text-lg shrink-0">⚠️</span>
-            <p className="text-sm flex-1 text-center" style={{ color: 'var(--text-primary)' }}>
-              Multiplayer ne radi? Isključi <strong>adblocker</strong> (npr. Brave Shields) za ovu stranicu — blokira WebSocket veze.
-            </p>
-            <button onClick={() => { setShowAdblockNotice(false); sessionStorage.setItem('mp-adblock-dismissed', '1'); }}
-              className="shrink-0 hover:opacity-70 transition-opacity p-1">
-              <X className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-            </button>
-          </div>
-        </div>
-      )}
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8 animate-fade-in-up">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: 'rgba(138,180,248,0.2)' }}>
-            <Swords className="w-8 h-8" style={{ color: 'var(--primary)' }} />
+        {/* Header */}
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-3"
+            style={{ background: 'rgba(138,180,248,0.15)', color: 'var(--primary)', border: '1px solid rgba(138,180,248,0.3)' }}>
+            <Swords className="w-3.5 h-3.5" /> Multiplayer Arena
           </div>
-          <h1 className="font-['Nunito'] text-3xl sm:text-4xl font-black mb-2">Multiplayer</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Izazovi prijatelje!</p>
+          <h1 className="font-['Nunito'] text-4xl sm:text-5xl font-black mb-3 tracking-tight">
+            Igraj s <span className="text-gradient">Prijateljima</span>
+          </h1>
+          <p className="text-sm sm:text-base" style={{ color: 'var(--text-secondary)' }}>
+            Kreiraj sobu, podijeli kod i natječi se u stvarnom vremenu.
+          </p>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex rounded-2xl p-1 mb-6 glass">
-          {['create', 'join'].map(t => (
-            <button key={t} onClick={() => { setTab(t); setError(''); }}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all"
-              style={{ background: tab === t ? 'var(--surface-solid)' : 'transparent', color: tab === t ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-              {t === 'create' ? '+ Kreiraj' : '→ Pridruži se'}
+        {/* Adblock notice banner */}
+        {showAdblockNotice && (
+          <div
+            className="mb-6 p-4 rounded-2xl flex items-start gap-3 text-xs leading-relaxed animate-fade-in"
+            style={{
+              background: 'rgba(253, 203, 110, 0.12)',
+              border: '1px solid rgba(253, 203, 110, 0.35)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#FDCB6E' }} />
+            <div className="flex-1">
+              <span className="font-semibold" style={{ color: '#FDCB6E' }}>Savjet za glatku igru: </span>
+              Neki adblockeri i anti-tracker ekstenzije (uBlock, Brave Shields) mogu blokirati WebSocket vezu i usporiti multiplayer. Ako imate problema s pridruživanjem, privremeno ih isključite za ovu stranicu.
+            </div>
+            <button
+              onClick={() => {
+                sessionStorage.setItem('mp-adblock-dismissed', '1');
+                setShowAdblockNotice(false);
+              }}
+              className="p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+              title="Zatvori obavijest"
+            >
+              <X className="w-3.5 h-3.5" style={{ color: 'var(--text-secondary)' }} />
             </button>
-          ))}
+          </div>
+        )}
+
+        {/* Tabs: Kreiraj / Pridruži se */}
+        <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl mb-8 glass-card">
+          <button onClick={() => { setTab('create'); setError(''); }}
+            className={`py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${tab === 'create' ? 'btn-primary' : 'hover:opacity-70'}`}
+            style={tab !== 'create' ? { color: 'var(--text-secondary)' } : {}}>
+            <Plus className="w-4 h-4" /> Kreiraj sobu
+          </button>
+          <button onClick={() => { setTab('join'); setError(''); }}
+            className={`py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${tab === 'join' ? 'btn-primary' : 'hover:opacity-70'}`}
+            style={tab !== 'join' ? { color: 'var(--text-secondary)' } : {}}>
+            <LogIn className="w-4 h-4" /> Pridruži se
+          </button>
         </div>
 
-        {error && <div className="glass-card rounded-2xl p-4 mb-4 text-center text-sm" style={{ color: 'var(--error)', border: '1px solid rgba(214,48,49,0.3)' }}>{error}</div>}
+        {error && (
+          <div className="mb-6 p-4 rounded-2xl text-sm font-medium animate-shake"
+            style={{ background: 'rgba(214, 48, 49, 0.15)', color: '#d63031', border: '1px solid rgba(214, 48, 49, 0.3)' }}>
+            {error}
+          </div>
+        )}
 
         {tab === 'create' ? (
-          <div className="glass-card rounded-3xl p-6 animate-fade-in-up space-y-5">
-            {/* Mode selector */}
+          <div className="glass-card rounded-3xl p-6 sm:p-8 space-y-6 animate-fade-in-up">
+            {/* Mode selection */}
             <div>
               <label className="block text-sm font-medium mb-3">Mod igre</label>
               <div className="grid grid-cols-3 gap-3">
@@ -201,7 +282,7 @@ const MultiplayerPage = () => {
                 <div>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {selectedCategoryIds.map(id => {
-                      const cat = categories.find(c => c.id === id);
+                      const cat = categories.find(c => (c.id || c._id) === id);
                       return cat ? (
                         <span key={id} className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg"
                           style={{ background: `${cat.color || '#8AB4F8'}20`, color: cat.color || '#8AB4F8', border: `1px solid ${cat.color || '#8AB4F8'}40` }}>
@@ -215,7 +296,8 @@ const MultiplayerPage = () => {
                   </div>
                   <select onChange={e => { if (e.target.value && !selectedCategoryIds.includes(e.target.value)) setSelectedCategoryIds(prev => [...prev, e.target.value]); e.target.value = ''; }} className="glass-input">
                     <option value="">Dodaj kategoriju...</option>
-                    {renderCategoryOptions(selectedCategoryIds)}                  </select>
+                    {renderCategoryOptions(selectedCategoryIds)}
+                  </select>
                   <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Odaberi 2+ kategorija za mix</p>
                 </div>
               ) : (
@@ -308,21 +390,18 @@ const MultiplayerPage = () => {
             </button>
           </div>
         ) : (
-          <div className="glass-card rounded-3xl p-6 animate-fade-in-up space-y-4">
+          <div className="glass-card rounded-3xl p-6 sm:p-8 animate-fade-in-up space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Kod sobe ili turnira</label>
+              <label className="block text-sm font-medium mb-2">Kod sobe</label>
               <input type="text" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="npr. AB12CD ili TURNIR12"
-                className="glass-input font-mono text-center text-xl tracking-widest uppercase"
-                maxLength={8} onKeyDown={e => e.key === 'Enter' && joinRoom()} />
-              <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
-                Sobe imaju 6 znakova, turniri 8 znakova.
-              </p>
+                placeholder="npr. ABCD" maxLength={6}
+                className="glass-input text-center text-2xl font-mono tracking-widest uppercase !py-4 font-bold"
+                onKeyDown={e => e.key === 'Enter' && joinRoom()} />
             </div>
             <button onClick={joinRoom} disabled={joining || !joinCode.trim()}
-              className="btn-primary w-full flex items-center justify-center gap-2 !py-4 disabled:opacity-50">
-              {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : '→'}
-              Pridruži se
+              className="btn-primary w-full flex items-center justify-center gap-2 !py-4 text-base font-bold disabled:opacity-50">
+              {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+              Pridruži se sobi
             </button>
           </div>
         )}

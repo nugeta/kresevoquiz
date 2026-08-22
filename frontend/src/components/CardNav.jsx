@@ -266,14 +266,14 @@ const CardNav = ({ className = '' }) => {
         className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-xl shadow-lg relative overflow-hidden will-change-[height] transition-colors duration-300`}
         style={{ 
           background: isDark
-            ? 'rgba(10, 10, 20, 0.55)'
-            : 'rgba(255, 255, 255, 0.45)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          border: `1px solid ${isDark ? 'rgba(124, 58, 237, 0.25)' : 'rgba(255, 255, 255, 0.6)'}`,
+            ? 'linear-gradient(135deg, rgba(16, 16, 32, 0.78) 0%, rgba(12, 12, 24, 0.72) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(245, 247, 255, 0.72) 100%)',
+          backdropFilter: 'blur(24px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+          border: `1px solid ${isDark ? 'rgba(162, 155, 254, 0.28)' : 'rgba(255, 255, 255, 0.85)'}`,
           boxShadow: isDark 
-            ? '0 8px 32px rgba(0, 0, 0, 0.4)' 
-            : '0 8px 32px rgba(0, 0, 0, 0.08)'
+            ? '0 12px 36px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.12)' 
+            : '0 12px 36px rgba(100, 110, 140, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9)'
         }}
       >
         {/* Top Bar */}
