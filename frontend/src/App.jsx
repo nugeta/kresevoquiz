@@ -4,17 +4,18 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import CardNav from "./components/CardNav";
+import GlobalBackground from "./components/GlobalBackground";
 import { Loader2, X } from "lucide-react";
 import axios from "axios";
 import "./App.css";
 
-// Eagerly loaded — critical path pages
+// Eagerly loaded critical path pages
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import BannedPage from "./pages/BannedPage";
 
-// Lazily loaded — only fetched when navigated to
+// Lazily loaded
 const QuizPage = lazy(() => import("./pages/QuizPage"));
 const ResultsPage = lazy(() => import("./pages/ResultsPage"));
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
@@ -41,7 +42,7 @@ const PageLoader = () => (
 const PageWrapper = ({ children }) => {
   const location = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
-  return <div className="page-wrapper">{children}</div>;
+  return <div className="page-wrapper relative z-10">{children}</div>;
 };
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -66,7 +67,7 @@ const AnnouncementBanner = () => {
   };
 
   const colors = { info: '#8AB4F8', warning: '#FDCB6E', update: '#55EFC4' };
-  const icons = { info: 'ℹ️', warning: '⚠️', update: '🆕' };
+  const icons = { info: 'ℹ️', warning: '⚠️', update: '✨' };
 
   return (
     <div className="fixed top-16 left-0 right-0 z-40 px-4 space-y-2 pointer-events-none" style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -89,7 +90,8 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <div className="App min-h-screen transition-colors duration-300" style={{ background: 'var(--background)' }}>
+          <GlobalBackground />
+          <div className="App min-h-screen transition-colors duration-300 relative z-10" style={{ background: 'transparent' }}>
             <CardNav />
             <AnnouncementBanner />
             <Toaster

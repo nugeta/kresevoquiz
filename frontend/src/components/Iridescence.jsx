@@ -45,7 +45,6 @@ export default function Iridescence({ speed = 1.0, amplitude = 0.1, mouseReact =
   const mousePos = useRef({ x: 0.5, y: 0.5 });
 
   // lighter tones for light mode, darker/deeper for dark mode
-  // light: vibrant blue/cyan, dark: deep teal/indigo shift (different hue, not just dimmed)
   const color = isDark ? [0.08, 0.25, 0.35] : [0.5, 0.6, 0.8];
 
   useEffect(() => {
@@ -104,18 +103,20 @@ export default function Iridescence({ speed = 1.0, amplitude = 0.1, mouseReact =
 
     function handleMouseMove(e) {
       const rect = ctn.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = 1.0 - (e.clientY - rect.top) / rect.height;
+      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / (rect.width || 1)));
+      const y = Math.max(0, Math.min(1, 1.0 - (e.clientY - rect.top) / (rect.height || 1)));
       mousePos.current = { x, y };
-      program.uniforms.uMouse.value[0] = x;
-      program.uniforms.uMouse.value[1] = y;
+      if (program?.uniforms?.uMouse?.value) {
+        program.uniforms.uMouse.value[0] = x;
+        program.uniforms.uMouse.value[1] = y;
+      }
     }
-    if (mouseReact) ctn.addEventListener('mousemove', handleMouseMove);
+    if (mouseReact) window.addEventListener('mousemove', handleMouseMove);
 
     return () => {
       cancelAnimationFrame(animateId);
       window.removeEventListener('resize', resize);
-      if (mouseReact) ctn.removeEventListener('mousemove', handleMouseMove);
+      if (mouseReact) window.removeEventListener('mousemove', handleMouseMove);
       if (ctn.contains(gl.canvas)) ctn.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
